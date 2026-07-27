@@ -4,6 +4,9 @@ import { canAccessFullChapter } from "@/lib/chapter-access";
 import { getAdminAuth, getAdminDb, isAdminConfigured } from "@/lib/firebase-admin";
 import { isPremiumUser, normalizeUserProfile, type UserProfile } from "@/types/user";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 interface RouteContext {
   params: Promise<{ chapterId: string }>;
 }

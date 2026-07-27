@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ReaderTopbar } from "@/components/leer/ReaderTopbar";
 import { PaywallBanner } from "@/components/leer/PaywallBanner";
 import { SubscribeModal } from "@/components/subscription/SubscribeModal";
+import { ProtectedContent } from "@/components/ui/ProtectedContent";
 
 const PREVIEW_PARAGRAPHS = 3;
 
@@ -57,7 +58,10 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
         onFontSizeChange={setFontSize}
       />
 
-      <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+      <ProtectedContent
+        blockKeyboard
+        className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14"
+      >
         <h1
           className="font-serif font-bold leading-tight text-ink"
           style={{ fontSize: `${fontSize + 6}px` }}
@@ -84,7 +88,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
           {blurredParagraphs.length > 0 && (
             <div className="relative">
               <div
-                className="pointer-events-none select-none space-y-6 blur-[6px]"
+                className="pointer-events-none space-y-6 blur-[6px]"
                 aria-hidden="true"
               >
                 {blurredParagraphs.map((paragraph, index) => (
@@ -139,7 +143,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
             <div />
           )}
         </nav>
-      </article>
+      </ProtectedContent>
 
       {showSubscribeModal && (
         <SubscribeModal

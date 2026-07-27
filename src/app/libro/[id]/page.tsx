@@ -9,6 +9,7 @@ import { BookCover } from "@/components/ui/BookCover";
 import { ChapterList } from "@/components/libro/ChapterList";
 import { StartReadingButton } from "@/components/auth/StartReadingButton";
 import { FavoriteButton } from "@/components/libro/FavoriteButton";
+import { BookSynopsis } from "@/components/libro/BookSynopsis";
 import { BRAND_NAME } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
@@ -87,10 +88,7 @@ export default async function BookPage({ params }: BookPageProps) {
           </div>
         </header>
 
-        <section className="mt-10">
-          <h2 className="font-serif text-xl font-bold text-ink">Sinopsis</h2>
-          <p className="mt-3 text-base leading-relaxed text-ink/85">{book.synopsis}</p>
-        </section>
+        <BookSynopsis synopsis={book.synopsis} />
 
         {chapters.length > 0 ? (
           <div className="mt-10">

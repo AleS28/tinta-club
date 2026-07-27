@@ -11,6 +11,7 @@ const navLinks = [
   { label: "Explorar", href: "/" },
   { label: "Mis Lecturas", href: "/biblioteca" },
   { label: "Mi Cuenta", href: "/biblioteca" },
+  { label: "Conócenos", href: "/conocenos" },
 ];
 
 export function Navbar() {

@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Book, Chapter } from "@/data/mock";
+import { PREVIEW_PARAGRAPHS } from "@/lib/chapter-access";
 import { DEFAULT_SUBSCRIPTION_PRICE } from "@/lib/subscription";
 import { useAuth } from "@/context/AuthContext";
 import { ReaderTopbar } from "@/components/leer/ReaderTopbar";
+import { ReaderWatermark } from "@/components/leer/ReaderWatermark";
 import { PaywallBanner } from "@/components/leer/PaywallBanner";
 import { SubscribeModal } from "@/components/subscription/SubscribeModal";
 import { ProtectedContent } from "@/components/ui/ProtectedContent";
-
-const PREVIEW_PARAGRAPHS = 3;
 
 interface ReaderViewProps {
   chapter: Chapter;
@@ -24,9 +24,47 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
   const { user, isSubscriber, loading, openAuthModal } = useAuth();
   const [fontSize, setFontSize] = useState(18);
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  const [premiumContent, setPremiumContent] = useState<string[] | null>(null);
+  const [contentLoading, setContentLoading] = useState(false);
+  const [contentError, setContentError] = useState("");
 
   const subscriptionPrice = book.membershipPrice ?? DEFAULT_SUBSCRIPTION_PRICE;
   const isPremiumLocked = chapter.isPremium && !isSubscriber;
+
+  const watermarkLabel = useMemo(() => {
+    if (!user) return "";
+    return user.email ?? user.uid.slice(0, 12);
+  }, [user]);
+
+  const loadPremiumContent = useCallback(async () => {
+    if (!user || !chapter.isPremium || !isSubscriber) return;
+
+    setContentLoading(true);
+    setContentError("");
+
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch(`/api/chapters/${chapter.id}/content`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          setContentError("Se requiere suscripción premium para leer este capítulo.");
+          return;
+        }
+        throw new Error("No se pudo cargar el contenido protegido.");
+      }
+
+      const data = (await response.json()) as { content: string[] };
+      setPremiumContent(data.content);
+    } catch {
+      setContentError("No pudimos verificar tu acceso al capítulo premium.");
+      setPremiumContent(null);
+    } finally {
+      setContentLoading(false);
+    }
+  }, [chapter.id, chapter.isPremium, isSubscriber, user]);
 
   useEffect(() => {
     if (loading) return;
@@ -35,10 +73,19 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
     }
   }, [chapter.id, chapter.isPremium, user, loading, openAuthModal]);
 
-  const visibleParagraphs = isPremiumLocked
-    ? Math.min(PREVIEW_PARAGRAPHS, chapter.content.length)
-    : chapter.content.length;
-  const blurredParagraphs = isPremiumLocked ? chapter.content.slice(visibleParagraphs) : [];
+  useEffect(() => {
+    setPremiumContent(null);
+    setContentError("");
+    if (chapter.isPremium && isSubscriber && user) {
+      loadPremiumContent();
+    }
+  }, [chapter.id, chapter.isPremium, isSubscriber, user, loadPremiumContent]);
+
+  const paragraphs = useMemo(() => {
+    if (!chapter.isPremium) return chapter.content;
+    if (isSubscriber && premiumContent) return premiumContent;
+    return chapter.content.slice(0, PREVIEW_PARAGRAPHS);
+  }, [chapter.content, chapter.isPremium, isSubscriber, premiumContent]);
 
   const handleSubscribeClick = () => {
     if (!user) {
@@ -60,96 +107,99 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
 
       <ProtectedContent
         blockKeyboard
-        className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14"
+        className="relative mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14"
       >
-        <h1
-          className="font-serif font-bold leading-tight text-ink"
-          style={{ fontSize: `${fontSize + 6}px` }}
-        >
-          {chapter.title}
-        </h1>
+        {user && watermarkLabel && <ReaderWatermark identifier={watermarkLabel} />}
 
-        {chapter.isPremium && (
-          <span className="mt-3 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
-            Premium
-          </span>
-        )}
+        <div className="relative z-10">
+          <h1
+            className="font-serif font-bold leading-tight text-ink"
+            style={{ fontSize: `${fontSize + 6}px` }}
+          >
+            {chapter.title}
+          </h1>
 
-        <div className="mt-8 space-y-6">
-          {chapter.content.slice(0, visibleParagraphs).map((paragraph, index) => (
-            <p
-              key={index}
-              className="leading-relaxed text-ink/90"
-              style={{ fontSize: `${fontSize}px`, lineHeight: 1.8 }}
-              dangerouslySetInnerHTML={{ __html: paragraph }}
-            />
-          ))}
+          {chapter.isPremium && (
+            <span className="mt-3 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+              Premium
+            </span>
+          )}
 
-          {blurredParagraphs.length > 0 && (
-            <div className="relative">
-              <div
-                className="pointer-events-none space-y-6 blur-[6px]"
-                aria-hidden="true"
-              >
-                {blurredParagraphs.map((paragraph, index) => (
-                  <p
-                    key={index}
-                    className="leading-relaxed text-ink/90"
-                    style={{ fontSize: `${fontSize}px`, lineHeight: 1.8 }}
-                    dangerouslySetInnerHTML={{ __html: paragraph }}
-                  />
-                ))}
-              </div>
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-paper via-paper/80 to-transparent" />
+          {contentLoading && (
+            <div className="mt-8 flex items-center justify-center gap-2 text-sm text-muted">
+              <Loader2 className="h-4 w-4 animate-spin text-terracotta" />
+              Verificando acceso al capítulo…
             </div>
           )}
+
+          {contentError && (
+            <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              {contentError}
+            </p>
+          )}
+
+          {!contentLoading && (
+            <div className="mt-8 space-y-6">
+              {paragraphs.map((paragraph, index) => (
+                <p
+                  key={index}
+                  className="leading-relaxed text-ink/90"
+                  style={{ fontSize: `${fontSize}px`, lineHeight: 1.8 }}
+                  dangerouslySetInnerHTML={{ __html: paragraph }}
+                />
+              ))}
+            </div>
+          )}
+
+          {isPremiumLocked && user && !contentLoading && (
+            <PaywallBanner price={subscriptionPrice} onSubscribe={handleSubscribeClick} />
+          )}
+
+          <nav className="mt-12 flex items-center justify-between gap-4 border-t border-sidebar pt-8">
+            {prevChapter ? (
+              <Link
+                href={`/leer/${prevChapter.id}`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-sidebar bg-white/70 px-4 py-2.5 text-sm font-medium text-ink transition-all duration-300 hover:scale-105 hover:border-terracotta hover:text-terracotta"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Capítulo Anterior
+              </Link>
+            ) : (
+              <div />
+            )}
+
+            {nextChapter && !isPremiumLocked && !contentLoading ? (
+              <Link
+                href={`/leer/${nextChapter.id}`}
+                className="inline-flex items-center gap-1.5 rounded-full bg-terracotta px-4 py-2.5 text-sm font-medium text-white transition-all duration-300 hover:scale-105 hover:bg-orange-700"
+              >
+                Siguiente Capítulo
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            ) : nextChapter && isPremiumLocked ? (
+              <button
+                type="button"
+                onClick={handleSubscribeClick}
+                className="inline-flex items-center gap-1.5 rounded-full bg-terracotta px-4 py-2.5 text-sm font-medium text-white transition-all duration-300 hover:scale-105 hover:bg-orange-700"
+              >
+                Siguiente Capítulo
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            ) : (
+              <div />
+            )}
+          </nav>
         </div>
-
-        {isPremiumLocked && user && (
-          <PaywallBanner price={subscriptionPrice} onSubscribe={handleSubscribeClick} />
-        )}
-
-        <nav className="mt-12 flex items-center justify-between gap-4 border-t border-sidebar pt-8">
-          {prevChapter ? (
-            <Link
-              href={`/leer/${prevChapter.id}`}
-              className="inline-flex items-center gap-1.5 rounded-full border border-sidebar bg-white/70 px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-terracotta hover:text-terracotta"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Capítulo Anterior
-            </Link>
-          ) : (
-            <div />
-          )}
-
-          {nextChapter && !isPremiumLocked ? (
-            <Link
-              href={`/leer/${nextChapter.id}`}
-              className="inline-flex items-center gap-1.5 rounded-full bg-terracotta px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-700"
-            >
-              Siguiente Capítulo
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          ) : nextChapter && isPremiumLocked ? (
-            <button
-              type="button"
-              onClick={handleSubscribeClick}
-              className="inline-flex items-center gap-1.5 rounded-full bg-terracotta px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-700"
-            >
-              Siguiente Capítulo
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          ) : (
-            <div />
-          )}
-        </nav>
       </ProtectedContent>
 
       {showSubscribeModal && (
         <SubscribeModal
           price={subscriptionPrice}
           authorName={book.author}
-          onSuccess={() => setShowSubscribeModal(false)}
+          onSuccess={() => {
+            setShowSubscribeModal(false);
+            loadPremiumContent();
+          }}
           onClose={() => setShowSubscribeModal(false)}
         />
       )}

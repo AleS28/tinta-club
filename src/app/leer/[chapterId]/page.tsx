@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getAdjacentChapters, getBookById, getChapterById } from "@/lib/db";
+import { stripPremiumChapterContent } from "@/lib/chapter-access";
 import { ReaderView } from "@/components/leer/ReaderView";
 import { BRAND_NAME } from "@/lib/brand";
 
@@ -30,8 +31,14 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
   if (!book) notFound();
 
   const { prev, next } = await getAdjacentChapters(chapterId);
+  const safeChapter = stripPremiumChapterContent(chapter);
 
   return (
-    <ReaderView chapter={chapter} book={book} prevChapter={prev} nextChapter={next} />
+    <ReaderView
+      chapter={safeChapter}
+      book={book}
+      prevChapter={prev}
+      nextChapter={next}
+    />
   );
 }

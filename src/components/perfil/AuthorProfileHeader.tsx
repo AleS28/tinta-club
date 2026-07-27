@@ -37,7 +37,7 @@ export function AuthorProfileHeader({ author, bookCount }: AuthorProfileHeaderPr
             {author.isAuthor && (
               <span className="inline-flex items-center gap-1 rounded-full bg-terracotta/10 px-3 py-1 text-xs font-semibold text-terracotta">
                 <Feather className="h-3.5 w-3.5" />
-                Autor de Tinta Club
+                Autor del Imperio
               </span>
             )}
           </div>
@@ -47,7 +47,7 @@ export function AuthorProfileHeader({ author, bookCount }: AuthorProfileHeaderPr
           {author.joinedAt && (
             <p className="mt-2 flex items-center justify-center gap-1.5 text-sm text-muted sm:justify-start">
               <Calendar className="h-4 w-4" />
-              En Tinta Club desde {author.joinedAt}
+              En el Imperio desde {author.joinedAt}
             </p>
           )}
 

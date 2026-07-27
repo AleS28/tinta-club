@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getAdjacentChapters, getBookById, getChapterById } from "@/lib/db";
 import { ReaderView } from "@/components/leer/ReaderView";
+import { BRAND_NAME } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export async function generateMetadata({ params }: ReaderPageProps) {  const { c
   if (!chapter || !book) return { title: "Capítulo no encontrado" };
 
   return {
-    title: `${chapter.title} — ${book.title} | Tinta Club`,
+    title: `${chapter.title} — ${book.title} | ${BRAND_NAME}`,
   };
 }
 

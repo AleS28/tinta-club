@@ -3,11 +3,13 @@ import { notFound } from "next/navigation";
 import { Star } from "lucide-react";
 import { getBookById, getChaptersByBookId } from "@/lib/db";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
+import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { BookCover } from "@/components/ui/BookCover";
 import { ChapterList } from "@/components/libro/ChapterList";
 import { StartReadingButton } from "@/components/auth/StartReadingButton";
 import { FavoriteButton } from "@/components/libro/FavoriteButton";
+import { BRAND_NAME } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +23,7 @@ export async function generateMetadata({ params }: BookPageProps) {
   if (!book) return { title: "Libro no encontrado" };
 
   return {
-    title: `${book.title} — Tinta Club`,
+    title: `${book.title} — ${BRAND_NAME}`,
     description: book.synopsis,
   };
 }
@@ -100,6 +102,7 @@ export default async function BookPage({ params }: BookPageProps) {
           </p>
         )}
       </main>
+      <Footer />
     </>
   );
 }

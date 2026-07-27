@@ -1,4 +1,5 @@
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
+import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { FeaturedCarousel } from "@/components/home/FeaturedCarousel";
 import { GenreFilter } from "@/components/home/GenreFilter";
@@ -30,6 +31,7 @@ export default async function HomePage() {
           </aside>
         </div>
       </main>
+      <Footer />
     </>
   );
 }

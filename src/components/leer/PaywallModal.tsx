@@ -1,6 +1,7 @@
 "use client";
 
 import { Sparkles, X } from "lucide-react";
+import { BRAND_NAME } from "@/lib/brand";
 
 interface PaywallModalProps {
   authorName: string;
@@ -36,7 +37,7 @@ export function PaywallModal({ authorName, onClose }: PaywallModalProps) {
 
         <div className="px-6 py-6">
           <p className="text-sm leading-relaxed text-ink">
-            Este capítulo es exclusivo para suscriptores. Únete a Tinta Club por{" "}
+            Este capítulo es exclusivo para suscriptores. Únete a {BRAND_NAME} por{" "}
             <span className="font-semibold text-terracotta">$4.99/mes</span> para continuar
             leyendo y apoyar directamente a{" "}
             <span className="font-semibold">{authorName}</span>.

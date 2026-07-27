@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Feather, ChevronDown, LogOut, PenLine, User } from "lucide-react";
+import { ChevronDown, LogOut, PenLine, User } from "lucide-react";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -56,9 +57,8 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-sidebar bg-paper/95 backdrop-blur-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-        <Link href="/" className="flex items-center gap-2">
-          <Feather className="h-6 w-6 text-terracotta" />
-          <span className="font-serif text-xl font-bold text-ink">Tinta Club</span>
+        <Link href="/" className="group transition-opacity hover:opacity-90">
+          <BrandLogo />
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
@@ -84,7 +84,7 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           {isSubscriber && showProfile && (
             <span className="hidden items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800 sm:inline-flex">
-              Socio Premium ✦
+              Socio del Imperio ✦
             </span>
           )}
           {loading && !user ? (
@@ -148,7 +148,7 @@ export function Navbar() {
                 >
                   {isSubscriber && (
                     <div className="border-b border-sidebar px-4 py-2.5">
-                      <span className="text-xs font-semibold text-amber-700">Socio Premium ✦</span>
+                      <span className="text-xs font-semibold text-amber-700">Socio del Imperio ✦</span>
                       <p className="text-xs text-muted">Acceso ilimitado activo</p>
                     </div>
                   )}

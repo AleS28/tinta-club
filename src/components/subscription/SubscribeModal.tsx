@@ -3,6 +3,7 @@
 import { Loader2, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { BRAND_NAME } from "@/lib/brand";
 
 interface SubscribeModalProps {
   price: number;
@@ -49,7 +50,7 @@ export function SubscribeModal({ price, authorName, onSuccess, onClose }: Subscr
 
         <div className="bg-gradient-to-br from-terracotta to-orange-700 px-6 py-8 text-white">
           <Sparkles className="h-7 w-7 text-amber-200" />
-          <h2 className="mt-3 font-serif text-2xl font-bold">Únete a Tinta Club</h2>
+          <h2 className="mt-3 font-serif text-2xl font-bold">Únete a {BRAND_NAME}</h2>
           <p className="mt-1 text-sm text-white/85">Acceso ilimitado a toda la biblioteca</p>
         </div>
 

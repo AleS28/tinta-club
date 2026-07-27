@@ -1,7 +1,9 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Feather, Loader2, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
+import { BrandLogo } from "@/components/layout/BrandLogo";
+import { BRAND_NAME } from "@/lib/brand";
 import { useAuth } from "@/context/AuthContext";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { getAuthErrorMessage, isAuthCancellation } from "@/lib/auth-errors";
@@ -137,11 +139,10 @@ export function AuthModal() {
 
         <div className="bg-gradient-to-br from-terracotta to-orange-700 px-6 py-8 text-white">
           <div className="flex items-center gap-2">
-            <Feather className="h-6 w-6" />
-            <span className="font-serif text-lg font-bold">Tinta Club</span>
+            <BrandLogo size="sm" variant="light" />
           </div>
           <h2 className="mt-4 font-serif text-2xl font-bold">
-            {mode === "login" ? "Bienvenido de vuelta" : "Únete a Tinta Club"}
+            {mode === "login" ? "Bienvenido de vuelta" : `Únete a ${BRAND_NAME}`}
           </h2>
           <p className="mt-1 text-sm text-white/85">
             {mode === "login"

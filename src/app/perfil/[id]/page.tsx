@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
+import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { AuthorProfileHeader } from "@/components/perfil/AuthorProfileHeader";
 import { BookCard } from "@/components/home/BookCard";
 import { getBooksByAuthorId } from "@/lib/db";
 import { getPublicAuthorProfile } from "@/lib/users";
+import { BRAND_NAME } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +20,7 @@ export async function generateMetadata({ params }: ProfilePageProps) {
   if (!author) return { title: "Autor no encontrado" };
 
   return {
-    title: `${author.displayName} — Tinta Club`,
+    title: `${author.displayName} — ${BRAND_NAME}`,
     description: author.bio,
   };
 }
@@ -60,6 +62,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           )}
         </section>
       </main>
+      <Footer />
     </>
   );
 }

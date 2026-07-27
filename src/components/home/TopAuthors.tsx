@@ -8,7 +8,7 @@ interface TopAuthorsProps {
 export function TopAuthors({ authors }: TopAuthorsProps) {
   return (
     <section className="rounded-2xl bg-sidebar p-5">
-      <h2 className="font-serif text-lg font-bold text-ink">Top Autores de Tinta Club</h2>
+      <h2 className="font-serif text-lg font-bold text-ink">Top Autores del Imperio</h2>
       <ul className="mt-4 space-y-3">
         {authors.map((author, index) => (
           <li key={author.id} className="flex items-center gap-3">

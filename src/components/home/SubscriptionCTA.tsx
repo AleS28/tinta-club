@@ -1,4 +1,5 @@
 import { BookOpen, Sparkles } from "lucide-react";
+import { BRAND_NAME } from "@/lib/brand";
 
 export function SubscriptionCTA() {
   return (
@@ -9,11 +10,11 @@ export function SubscriptionCTA() {
       <div className="relative">
         <Sparkles className="h-6 w-6 text-amber-200" />
         <h2 className="mt-3 font-serif text-xl font-bold leading-tight">
-          Suscríbete para Acceso Ilimitado
+          Únete al {BRAND_NAME}
         </h2>
         <p className="mt-2 text-sm text-white/85">
-          Lee todas las historias, apoya a autores independientes y descubre nuevos capítulos cada
-          semana.
+          Acceso ilimitado a toda la biblioteca, apoya a autores independientes y descubre nuevos
+          capítulos cada semana.
         </p>
 
         <ul className="mt-4 space-y-1.5 text-sm text-white/90">

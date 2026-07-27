@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Feather, PenLine } from "lucide-react";
+import { BRAND_NAME } from "@/lib/brand";
 import { Book } from "@/data/mock";
 import { getBooksByAuthorId, getChaptersByAuthorBooks } from "@/lib/db";
 import { useAuth } from "@/context/AuthContext";
@@ -62,7 +63,7 @@ export function AuthorPanel() {
               </h1>
               <p className="text-sm text-muted">
                 Bienvenida, {userProfile?.displayName ?? "Autor"} ·{" "}
-                <Feather className="inline h-3.5 w-3.5 text-terracotta" /> Tinta Club
+                <Feather className="inline h-3.5 w-3.5 text-terracotta" /> Autor del Imperio · {BRAND_NAME}
               </p>
             </div>
           </div>

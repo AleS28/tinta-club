@@ -1,6 +1,7 @@
 "use client";
 
 import { Lock, Sparkles } from "lucide-react";
+import { BRAND_NAME } from "@/lib/brand";
 
 interface PaywallBannerProps {
   price: number;
@@ -29,7 +30,7 @@ export function PaywallBanner({ price, onSubscribe }: PaywallBannerProps) {
             Este capítulo forma parte del contenido exclusivo
           </p>
           <p className="mt-1 text-sm text-muted">
-            Suscríbete a Tinta Club para continuar leyendo y apoyar a autores independientes.
+            Suscríbete a {BRAND_NAME} para continuar leyendo y apoyar a autores independientes.
           </p>
         </div>
 

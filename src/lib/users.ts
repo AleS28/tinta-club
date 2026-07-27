@@ -29,7 +29,7 @@ function fromMockAuthor(authorId: string): PublicAuthorProfile | undefined {
   return {
     id: mock.id,
     displayName: mock.name,
-    bio: "Autor independiente de narrativa en español en Tinta Club.",
+    bio: "Autor independiente de narrativa en español en El Imperio de la Tinta.",
     role: "author",
     isAuthor: true,
     joinedAt: "Enero 2024",
@@ -53,7 +53,7 @@ export async function getPublicAuthorProfile(authorId: string): Promise<PublicAu
         return {
           id: authorId,
           displayName: data.displayName,
-          bio: data.bio ?? "Autor de narrativa independiente en Tinta Club.",
+          bio: data.bio ?? "Autor de narrativa independiente en El Imperio de la Tinta.",
           photoURL: data.photoURL,
           role: data.role,
           joinedAt: formatJoinedAt(data.createdAt),

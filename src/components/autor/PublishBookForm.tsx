@@ -61,7 +61,7 @@ export function PublishBookForm({ onSuccess }: PublishBookFormProps) {
     <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-sidebar bg-white/70 p-6 shadow-sm">
       <div>
         <h3 className="font-serif text-lg font-bold text-ink">Publicar nuevo libro</h3>
-        <p className="mt-1 text-sm text-muted">Tu obra aparecerá en Tinta Club para todos los lectores.</p>
+        <p className="mt-1 text-sm text-muted">Tu obra aparecerá en El Imperio de la Tinta para todos los lectores.</p>
       </div>
 
       <div>

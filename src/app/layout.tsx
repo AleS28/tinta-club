@@ -15,9 +15,9 @@ const merriweather = Merriweather({
 });
 
 export const metadata: Metadata = {
-  title: "Tinta Club — Narrativa independiente en español",
+  title: "El Imperio de la Tinta — Plataforma de Narrativa Independiente",
   description:
-    "Lee historias únicas y apoya a autores independientes. Plataforma de lectura por suscripción estilo Netflix para narrativa en español.",
+    "Lee historias únicas y apoya a autores independientes. Plataforma de lectura por suscripción para narrativa en español.",
 };
 
 export default function RootLayout({

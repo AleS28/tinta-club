@@ -53,7 +53,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
       if (!response.ok) {
         if (response.status === 403) {
           setContentError(
-            "Se requiere suscripción premium. Suscríbete desde el banner para desbloquear este capítulo.",
+            "Tu cuenta aún no tiene premium activo en el servidor. Vuelve a suscribirte o recarga en unos segundos.",
           );
           return;
         }
@@ -71,8 +71,14 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
         return;
       }
 
-      const data = payload as { content: string[] };
+      const data = payload as { content?: string[] };
+      if (!Array.isArray(data.content) || data.content.length === 0) {
+        setContentError("El capítulo premium no tiene contenido disponible.");
+        return;
+      }
+
       setPremiumContent(data.content);
+      setContentError("");
     } catch {
       setContentError("No pudimos conectar con el servidor. Intenta recargar la página.");
       setPremiumContent(null);
@@ -95,6 +101,9 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
       loadPremiumContent();
     }
   }, [chapter.id, chapter.isPremium, isSubscriber, user, loadPremiumContent]);
+
+  const hasFullPremiumAccess =
+    chapter.isPremium && isSubscriber && premiumContent !== null && premiumContent.length > 0;
 
   const paragraphs = useMemo(() => {
     if (!chapter.isPremium) return chapter.content;
@@ -147,9 +156,15 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
             </div>
           )}
 
-          {contentError && (
+          {contentError && !hasFullPremiumAccess && (
             <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               {contentError}
+            </p>
+          )}
+
+          {hasFullPremiumAccess && (
+            <p className="mt-4 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+              Socio del Imperio ✦ — Acceso premium verificado
             </p>
           )}
 

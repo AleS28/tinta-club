@@ -1,35 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getChapterById as getMockChapterById, type Chapter } from "@/data/mock";
 import { canAccessFullChapter } from "@/lib/chapter-access";
-import {
-  getAdminDb,
-  isAdminConfigured,
-  verifyFirebaseIdToken,
-} from "@/lib/firebase-admin";
-import { isPremiumUser, normalizeUserProfile, type UserProfile } from "@/types/user";
+import { getChapterForApi, getUserProfileFromFirestore } from "@/lib/firestore-admin";
+import { isAdminConfigured, verifyFirebaseIdToken, getAdminAuth } from "@/lib/firebase-admin";
+import { isPremiumUser } from "@/types/user";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 interface RouteContext {
   params: Promise<{ chapterId: string }>;
-}
-
-async function getChapterForApi(chapterId: string): Promise<Chapter | undefined> {
-  const adminDb = await getAdminDb();
-
-  if (adminDb) {
-    try {
-      const snap = await adminDb.collection("chapters").doc(chapterId).get();
-      if (snap.exists) {
-        return { id: snap.id, ...snap.data() } as Chapter;
-      }
-    } catch (error) {
-      console.error("[chapter-content] Firestore read:", error);
-    }
-  }
-
-  return getMockChapterById(chapterId);
 }
 
 export async function GET(request: NextRequest, context: RouteContext) {
@@ -56,39 +35,54 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Autenticación requerida" }, { status: 401 });
     }
 
-    const decoded = await verifyFirebaseIdToken(idToken);
-    if (!decoded) {
-      return NextResponse.json({ error: "Token inválido o expirado" }, { status: 401 });
-    }
-
-    const adminDb = await getAdminDb();
-    if (!adminDb || !(await isAdminConfigured())) {
+    if (!(await isAdminConfigured())) {
       return NextResponse.json(
         { error: "Verificación de suscripción no disponible en el servidor" },
         { status: 503 },
       );
     }
 
-    const userSnap = await adminDb.collection("users").doc(decoded.uid).get();
+    const adminAuth = await getAdminAuth();
+    let hasPremiumAccess = false;
 
-    const profile = userSnap.exists
-      ? normalizeUserProfile({
-          uid: decoded.uid,
-          email: userSnap.data()?.email ?? decoded.email ?? "",
-          displayName: userSnap.data()?.displayName ?? "Lector",
-          role: userSnap.data()?.role ?? "reader",
-          ...userSnap.data(),
-        } as UserProfile)
-      : null;
+    if (adminAuth) {
+      try {
+        const adminDecoded = await adminAuth.verifyIdToken(idToken);
+        if (adminDecoded.premium === true || adminDecoded.subscriptionStatus === "premium") {
+          hasPremiumAccess = true;
+        }
+      } catch {
+        // fallback abajo
+      }
+    }
 
-    if (!canAccessFullChapter(chapter, profile) || !isPremiumUser(profile)) {
+    if (!hasPremiumAccess) {
+      const decoded = await verifyFirebaseIdToken(idToken);
+      if (!decoded) {
+        return NextResponse.json({ error: "Token inválido o expirado" }, { status: 401 });
+      }
+
+      let profile = null;
+      try {
+        profile = await getUserProfileFromFirestore(decoded.uid, decoded.email);
+      } catch {
+        return NextResponse.json(
+          { error: "No se pudo leer tu perfil. Intenta de nuevo en unos segundos." },
+          { status: 503 },
+        );
+      }
+
+      hasPremiumAccess =
+        !!profile && canAccessFullChapter(chapter, profile) && isPremiumUser(profile);
+    }
+
+    if (!hasPremiumAccess) {
       return NextResponse.json({ error: "Suscripción premium requerida" }, { status: 403 });
     }
 
     return NextResponse.json({
       content: chapter.content,
       access: "premium",
-      uid: decoded.uid,
     });
   } catch (error) {
     console.error("[chapter-content] API error:", error);

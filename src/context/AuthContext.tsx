@@ -61,6 +61,21 @@ const defaultProfile = (user: User): UserProfile => ({
 const AUTH_REDIRECT_KEY = "tinta-club-auth-redirect";
 const AUTH_PENDING_KEY = "tinta-club-auth-pending";
 
+async function syncPremiumClaims(firebaseUser: User): Promise<void> {
+  try {
+    const token = await firebaseUser.getIdToken(true);
+    const response = await fetch("/api/subscription/sync", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (response.ok) {
+      await firebaseUser.getIdToken(true);
+    }
+  } catch {
+    // Firestore ya tiene la suscripción; sync refuerza el token del servidor.
+  }
+}
+
 async function fetchOrCreateUserProfile(user: User): Promise<UserProfile> {
   if (!db) return defaultProfile(user);
 
@@ -119,7 +134,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (firebaseUser) {
         fetchOrCreateUserProfile(firebaseUser)
-          .then((profile) => setUserProfile(normalizeUserProfile(profile)))
+          .then((profile) => {
+            const normalized = normalizeUserProfile(profile);
+            setUserProfile(normalized);
+            if (isPremiumUser(normalized)) {
+              void syncPremiumClaims(firebaseUser);
+            }
+          })
           .catch(() => setUserProfile(normalizeUserProfile(defaultProfile(firebaseUser))));
 
         if (sessionStorage.getItem(AUTH_PENDING_KEY)) {
@@ -214,6 +235,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           })
         : null,
     );
+
+    try {
+      await syncPremiumClaims(user);
+    } catch {
+      // La suscripción en Firestore ya quedó activa; sync es un refuerzo.
+    }
   }, [user]);
 
   const logout = useCallback(async () => {

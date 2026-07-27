@@ -1,0 +1,35 @@
+import type { Metadata } from "next";
+import { Inter, Merriweather } from "next/font/google";
+import { Providers } from "@/components/providers/Providers";
+import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+const merriweather = Merriweather({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-merriweather",
+});
+
+export const metadata: Metadata = {
+  title: "Tinta Club — Narrativa independiente en español",
+  description:
+    "Lee historias únicas y apoya a autores independientes. Plataforma de lectura por suscripción estilo Netflix para narrativa en español.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="es">
+      <body className={`${inter.variable} ${merriweather.variable} font-sans`}>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}

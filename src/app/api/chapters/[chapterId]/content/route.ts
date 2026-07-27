@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getChapterById as getMockChapterById, type Chapter } from "@/data/mock";
 import { canAccessFullChapter } from "@/lib/chapter-access";
-import { getAdminAuth, getAdminDb, isAdminConfigured } from "@/lib/firebase-admin";
+import {
+  getAdminDb,
+  isAdminConfigured,
+  verifyFirebaseIdToken,
+} from "@/lib/firebase-admin";
 import { isPremiumUser, normalizeUserProfile, type UserProfile } from "@/types/user";
 
 export const runtime = "nodejs";
@@ -12,7 +16,7 @@ interface RouteContext {
 }
 
 async function getChapterForApi(chapterId: string): Promise<Chapter | undefined> {
-  const adminDb = getAdminDb();
+  const adminDb = await getAdminDb();
 
   if (adminDb) {
     try {
@@ -52,24 +56,19 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Autenticación requerida" }, { status: 401 });
     }
 
-    if (!isAdminConfigured()) {
+    const decoded = await verifyFirebaseIdToken(idToken);
+    if (!decoded) {
+      return NextResponse.json({ error: "Token inválido o expirado" }, { status: 401 });
+    }
+
+    const adminDb = await getAdminDb();
+    if (!adminDb || !(await isAdminConfigured())) {
       return NextResponse.json(
         { error: "Verificación de suscripción no disponible en el servidor" },
         { status: 503 },
       );
     }
 
-    const adminAuth = getAdminAuth();
-    const adminDb = getAdminDb();
-
-    if (!adminAuth || !adminDb) {
-      return NextResponse.json(
-        { error: "Servicio de autenticación no disponible" },
-        { status: 503 },
-      );
-    }
-
-    const decoded = await adminAuth.verifyIdToken(idToken);
     const userSnap = await adminDb.collection("users").doc(decoded.uid).get();
 
     const profile = userSnap.exists

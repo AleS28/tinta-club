@@ -1,45 +1,50 @@
 "use client";
 
-import { useState } from "react";
-import { Ghost, Heart, Rocket, Sparkles } from "lucide-react";
-import { Genre, genres } from "@/data/mock";
+export type CategoryFilter = "Todas" | "Romance" | "Fantasía" | "Suspenso" | "Poesía";
 
-const iconMap = {
-  heart: Heart,
-  sparkles: Sparkles,
-  ghost: Ghost,
-  rocket: Rocket,
-};
+const categories: CategoryFilter[] = ["Todas", "Romance", "Fantasía", "Suspenso", "Poesía"];
 
-export function GenreFilter() {
-  const [active, setActive] = useState<Genre | null>(null);
+interface GenreFilterProps {
+  active: CategoryFilter;
+  onChange: (category: CategoryFilter) => void;
+}
 
+export function GenreFilter({ active, onChange }: GenreFilterProps) {
   return (
     <section>
-      <h2 className="font-serif text-xl font-bold text-ink">Géneros</h2>
-      <div className="mt-4 flex flex-wrap gap-4">
-        {genres.map((genre) => {
-          const Icon = iconMap[genre.icon as keyof typeof iconMap];
-          const isActive = active === genre.id;
+      <h2 className="font-serif text-xl font-bold text-ink">Explorar por Categoría</h2>
+      <p className="mt-1 text-sm text-muted">Encuentra tu próxima lectura favorita</p>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {categories.map((category) => {
+          const isActive = active === category;
 
           return (
             <button
-              key={genre.id}
-              onClick={() => setActive(isActive ? null : genre.id)}
-              className={`flex flex-col items-center gap-2 transition-transform hover:scale-105`}
+              key={category}
+              type="button"
+              onClick={() => onChange(category)}
+              className={`rounded-full border px-4 py-2 text-sm font-medium transition-all duration-300 hover:scale-105 active:scale-95 ${
+                isActive
+                  ? "border-imperial-deep bg-imperial-deep text-gold-cream shadow-md shadow-imperial-deep/20"
+                  : "border-amber-900/15 bg-white text-ink shadow-sm hover:border-gold/50 hover:bg-gold-cream/30 hover:shadow-md"
+              }`}
             >
-              <div
-                className={`flex h-16 w-16 items-center justify-center rounded-full transition-all ${genre.color} ${
-                  isActive ? "ring-2 ring-terracotta ring-offset-2" : ""
-                }`}
-              >
-                <Icon className="h-6 w-6" />
-              </div>
-              <span className="text-xs font-medium text-ink">{genre.id}</span>
+              {category}
             </button>
           );
         })}
       </div>
     </section>
   );
+}
+
+export function matchesCategoryFilter(
+  genre: string,
+  filter: CategoryFilter,
+): boolean {
+  if (filter === "Todas") return true;
+  if (filter === "Suspenso") return genre === "Terror";
+  if (filter === "Poesía") return genre === "Poesía";
+  return genre === filter;
 }

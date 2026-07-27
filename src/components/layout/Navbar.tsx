@@ -57,7 +57,7 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-sidebar bg-paper/95 backdrop-blur-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-        <Link href="/" className="group transition-opacity hover:opacity-90">
+        <Link href="/" className="group transition-all duration-300 hover:scale-105">
           <BrandLogo />
         </Link>
 
@@ -66,7 +66,7 @@ export function Navbar() {
             <Link
               key={link.label}
               href={link.href}
-              className="text-sm font-medium text-muted transition-colors hover:text-ink"
+              className="text-sm font-medium text-muted transition-all duration-300 hover:scale-105 hover:text-ink"
             >
               {link.label}
             </Link>
@@ -74,7 +74,7 @@ export function Navbar() {
           {showProfile && (
             <Link
               href="/autor"
-              className="text-sm font-medium text-terracotta transition-colors hover:text-orange-700"
+              className="text-sm font-medium text-terracotta transition-all duration-300 hover:scale-105 hover:text-orange-700"
             >
               Panel del Autor
             </Link>
@@ -97,14 +97,14 @@ export function Navbar() {
               <button
                 type="button"
                 onClick={() => openAuthModal()}
-                className="hidden text-sm font-medium text-muted transition-colors hover:text-terracotta sm:block"
+                className="hidden text-sm font-medium text-muted transition-all duration-300 hover:scale-105 hover:text-terracotta sm:block"
               >
                 Iniciar Sesión
               </button>
               <button
                 type="button"
                 onClick={handleStartReading}
-                className="rounded-full bg-terracotta px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-orange-700 sm:px-5 sm:text-sm"
+                className="rounded-full bg-terracotta px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition-all duration-300 hover:scale-105 hover:bg-orange-700 sm:px-5 sm:text-sm"
               >
                 Comenzar Lectura
               </button>

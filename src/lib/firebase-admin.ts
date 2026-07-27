@@ -3,9 +3,27 @@ import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
 let adminApp: App | null = null;
+let adminInitFailed = false;
+
+function normalizePrivateKey(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+
+  let key = raw.trim();
+
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1);
+  }
+
+  return key.replace(/\\n/g, "\n");
+}
 
 export function getAdminApp(): App | null {
+  if (adminInitFailed) return null;
   if (adminApp) return adminApp;
+
   if (getApps().length > 0) {
     adminApp = getApps()[0]!;
     return adminApp;
@@ -14,17 +32,22 @@ export function getAdminApp(): App | null {
   const projectId =
     process.env.FIREBASE_PROJECT_ID ?? process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  const privateKey = normalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY);
 
   if (!projectId || !clientEmail || !privateKey) {
     return null;
   }
 
-  adminApp = initializeApp({
-    credential: cert({ projectId, clientEmail, privateKey }),
-  });
-
-  return adminApp;
+  try {
+    adminApp = initializeApp({
+      credential: cert({ projectId, clientEmail, privateKey }),
+    });
+    return adminApp;
+  } catch (error) {
+    adminInitFailed = true;
+    console.error("[firebase-admin] Error al inicializar:", error);
+    return null;
+  }
 }
 
 export function getAdminAuth() {

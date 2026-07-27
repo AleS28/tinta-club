@@ -46,14 +46,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const userSnap = await adminDb.collection("users").doc(decoded.uid).get();
 
     const profile = userSnap.exists
-      ? normalizeUserProfile(userSnap.data() as UserProfile)
+      ? normalizeUserProfile({ uid: decoded.uid, ...userSnap.data() } as UserProfile)
       : null;
 
-    if (!canAccessFullChapter(chapter, profile)) {
-      return NextResponse.json({ error: "Suscripción premium requerida" }, { status: 403 });
-    }
-
-    if (!isPremiumUser(profile)) {
+    if (!canAccessFullChapter(chapter, profile) || !isPremiumUser(profile)) {
       return NextResponse.json({ error: "Suscripción premium requerida" }, { status: 403 });
     }
 
@@ -62,7 +58,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
       access: "premium",
       uid: decoded.uid,
     });
-  } catch {
+  } catch (error) {
+    console.error("[chapter-content] verifyIdToken:", error);
     return NextResponse.json({ error: "Token inválido o expirado" }, { status: 401 });
   }
 }

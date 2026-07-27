@@ -43,23 +43,38 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
     setContentError("");
 
     try {
-      const token = await user.getIdToken();
+      const token = await user.getIdToken(true);
       const response = await fetch(`/api/chapters/${chapter.id}/content`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
       if (!response.ok) {
         if (response.status === 403) {
-          setContentError("Se requiere suscripción premium para leer este capítulo.");
+          setContentError(
+            "Se requiere suscripción premium. Suscríbete desde el banner para desbloquear este capítulo.",
+          );
           return;
         }
-        throw new Error("No se pudo cargar el contenido protegido.");
+        if (response.status === 503) {
+          setContentError(
+            "El servidor no pudo verificar tu suscripción. Revisa que las variables FIREBASE_* estén configuradas en Vercel.",
+          );
+          return;
+        }
+        if (response.status === 401) {
+          setContentError("Tu sesión expiró. Cierra sesión e inicia de nuevo.");
+          return;
+        }
+        setContentError(payload.error ?? "No se pudo cargar el capítulo premium.");
+        return;
       }
 
-      const data = (await response.json()) as { content: string[] };
+      const data = payload as { content: string[] };
       setPremiumContent(data.content);
     } catch {
-      setContentError("No pudimos verificar tu acceso al capítulo premium.");
+      setContentError("No pudimos conectar con el servidor. Intenta recargar la página.");
       setPremiumContent(null);
     } finally {
       setContentLoading(false);

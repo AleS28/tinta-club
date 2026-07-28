@@ -1,7 +1,11 @@
 import type { App } from "firebase-admin/app";
+import type { Auth } from "firebase-admin/auth";
+import type { Firestore } from "firebase-admin/firestore";
 
 let adminApp: App | null = null;
 let adminInitFailed = false;
+let adminAuthInstance: Auth | null = null;
+let adminDbInstance: Firestore | null = null;
 
 function normalizePrivateKey(raw: string | undefined): string | undefined {
   if (!raw) return undefined;
@@ -51,39 +55,98 @@ async function initAdminApp(): Promise<App | null> {
   }
 }
 
-export async function getAdminAuth() {
-  const app = await initAdminApp();
-  if (!app) return null;
-  const { getAuth } = await import("firebase-admin/auth");
-  return getAuth(app);
+export async function getAdminAuth(): Promise<Auth | null> {
+  if (adminAuthInstance) return adminAuthInstance;
+
+  try {
+    const app = await initAdminApp();
+    if (!app) return null;
+
+    const { getAuth } = await import("firebase-admin/auth");
+    adminAuthInstance = getAuth(app);
+    return adminAuthInstance;
+  } catch (error) {
+    console.error("[firebase-admin] getAdminAuth:", error);
+    return null;
+  }
 }
 
-export async function getAdminDb() {
-  const app = await initAdminApp();
-  if (!app) return null;
-  const { getFirestore } = await import("firebase-admin/firestore");
-  return getFirestore(app);
+export async function getAdminDb(): Promise<Firestore | null> {
+  if (adminDbInstance) return adminDbInstance;
+
+  try {
+    const app = await initAdminApp();
+    if (!app) return null;
+
+    const { getFirestore } = await import("firebase-admin/firestore");
+    adminDbInstance = getFirestore(app);
+    return adminDbInstance;
+  } catch (error) {
+    console.error("[firebase-admin] getAdminDb:", error);
+    return null;
+  }
 }
 
 export async function isAdminConfigured(): Promise<boolean> {
   return (await initAdminApp()) !== null;
 }
 
+export async function probeAdminServices(): Promise<{
+  auth: boolean;
+  firestore: boolean;
+}> {
+  const result = { auth: false, firestore: false };
+
+  try {
+    const auth = await getAdminAuth();
+    result.auth = auth !== null;
+  } catch {
+    result.auth = false;
+  }
+
+  try {
+    const db = await getAdminDb();
+    if (db) {
+      await db.collection("users").limit(1).get();
+      result.firestore = true;
+    }
+  } catch (error) {
+    console.error("[firebase-admin] probe firestore:", error);
+    result.firestore = false;
+  }
+
+  return result;
+}
+
 interface VerifiedToken {
   uid: string;
   email?: string;
+  premium?: boolean;
+  subscriptionStatus?: string;
 }
 
 export async function verifyFirebaseIdToken(idToken: string): Promise<VerifiedToken | null> {
-  const adminAuth = await getAdminAuth();
+  try {
+    const adminAuth = await getAdminAuth();
 
-  if (adminAuth) {
-    try {
-      const decoded = await adminAuth.verifyIdToken(idToken);
-      return { uid: decoded.uid, email: decoded.email };
-    } catch (error) {
-      console.error("[firebase-admin] verifyIdToken:", error);
+    if (adminAuth) {
+      try {
+        const decoded = await adminAuth.verifyIdToken(idToken);
+        return {
+          uid: decoded.uid,
+          email: decoded.email,
+          premium: decoded.premium === true,
+          subscriptionStatus:
+            typeof decoded.subscriptionStatus === "string"
+              ? decoded.subscriptionStatus
+              : undefined,
+        };
+      } catch (error) {
+        console.error("[firebase-admin] verifyIdToken:", error);
+      }
     }
+  } catch (error) {
+    console.error("[firebase-admin] verifyFirebaseIdToken:", error);
   }
 
   const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getChapterById as getMockChapterById } from "@/data/mock";
 import { canAccessFullChapter } from "@/lib/chapter-access";
-import { getChapterForApi, getUserProfileFromFirestore } from "@/lib/firestore-admin";
-import { isAdminConfigured, verifyFirebaseIdToken, getAdminAuth } from "@/lib/firebase-admin";
+import {
+  getChapterForApi,
+  getUserProfileFromFirestore,
+  sanitizeChapterContent,
+} from "@/lib/firestore-admin";
+import { isAdminConfigured, verifyFirebaseIdToken } from "@/lib/firebase-admin";
 import { isPremiumUser } from "@/types/user";
 
 export const runtime = "nodejs";
@@ -11,21 +16,30 @@ interface RouteContext {
   params: Promise<{ chapterId: string }>;
 }
 
+function hasPremiumClaims(decoded: {
+  premium?: boolean;
+  subscriptionStatus?: string;
+}): boolean {
+  return decoded.premium === true || decoded.subscriptionStatus === "premium";
+}
+
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { chapterId } = await context.params;
-    const chapter = await getChapterForApi(chapterId);
+    const mockChapter = getMockChapterById(chapterId);
+    const chapter = mockChapter ?? (await getChapterForApi(chapterId));
 
     if (!chapter) {
       return NextResponse.json({ error: "Capítulo no encontrado" }, { status: 404 });
     }
 
-    if (!Array.isArray(chapter.content) || chapter.content.length === 0) {
+    const content = sanitizeChapterContent(chapter.content);
+    if (content.length === 0) {
       return NextResponse.json({ error: "Contenido del capítulo no disponible" }, { status: 404 });
     }
 
     if (!chapter.isPremium) {
-      return NextResponse.json({ content: chapter.content, access: "public" });
+      return NextResponse.json({ content, access: "public" });
     }
 
     const authHeader = request.headers.get("authorization");
@@ -42,36 +56,15 @@ export async function GET(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const adminAuth = await getAdminAuth();
-    let hasPremiumAccess = false;
-
-    if (adminAuth) {
-      try {
-        const adminDecoded = await adminAuth.verifyIdToken(idToken);
-        if (adminDecoded.premium === true || adminDecoded.subscriptionStatus === "premium") {
-          hasPremiumAccess = true;
-        }
-      } catch {
-        // fallback abajo
-      }
+    const decoded = await verifyFirebaseIdToken(idToken);
+    if (!decoded) {
+      return NextResponse.json({ error: "Token inválido o expirado" }, { status: 401 });
     }
 
+    let hasPremiumAccess = hasPremiumClaims(decoded);
+
     if (!hasPremiumAccess) {
-      const decoded = await verifyFirebaseIdToken(idToken);
-      if (!decoded) {
-        return NextResponse.json({ error: "Token inválido o expirado" }, { status: 401 });
-      }
-
-      let profile = null;
-      try {
-        profile = await getUserProfileFromFirestore(decoded.uid, decoded.email);
-      } catch {
-        return NextResponse.json(
-          { error: "No se pudo leer tu perfil. Intenta de nuevo en unos segundos." },
-          { status: 503 },
-        );
-      }
-
+      const profile = await getUserProfileFromFirestore(decoded.uid, decoded.email);
       hasPremiumAccess =
         !!profile && canAccessFullChapter(chapter, profile) && isPremiumUser(profile);
     }
@@ -81,7 +74,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     return NextResponse.json({
-      content: chapter.content,
+      content,
       access: "premium",
     });
   } catch (error) {

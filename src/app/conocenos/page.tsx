@@ -2,6 +2,7 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { AboutContent } from "@/components/conocenos/AboutContent";
+import { DiscordCommunityCard } from "@/components/conocenos/DiscordCommunityCard";
 import { FeedbackForm } from "@/components/conocenos/FeedbackForm";
 import { BRAND_NAME } from "@/lib/brand";
 
@@ -20,6 +21,7 @@ export default function ConocenosPage() {
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
         <AboutContent />
         <FeedbackForm />
+        <DiscordCommunityCard />
       </main>
 
       <Footer />

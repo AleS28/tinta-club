@@ -8,6 +8,7 @@ import { getBooksByAuthorId, getChaptersByAuthorBooks } from "@/lib/db";
 import { useAuth } from "@/context/AuthContext";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AuthorStats } from "@/components/autor/AuthorStats";
+import { AuthorDiscordBanner } from "@/components/autor/AuthorDiscordBanner";
 import { MyBooksList } from "@/components/autor/MyBooksList";
 import { PublishBookForm } from "@/components/autor/PublishBookForm";
 import { PublishChapterForm } from "@/components/autor/PublishChapterForm";
@@ -68,6 +69,8 @@ export function AuthorPanel() {
             </div>
           </div>
         </header>
+
+        <AuthorDiscordBanner />
 
         <AuthorStats
           bookCount={books.length}

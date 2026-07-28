@@ -7,9 +7,15 @@ import { subscribeToFollow, toggleFollow } from "@/lib/library";
 
 interface FollowAuthorButtonProps {
   authorId: string;
+  redirectPath?: string;
+  className?: string;
 }
 
-export function FollowAuthorButton({ authorId }: FollowAuthorButtonProps) {
+export function FollowAuthorButton({
+  authorId,
+  redirectPath,
+  className = "",
+}: FollowAuthorButtonProps) {
   const { user, openAuthModal } = useAuth();
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -37,7 +43,7 @@ export function FollowAuthorButton({ authorId }: FollowAuthorButtonProps) {
 
   const handleClick = async () => {
     if (!user) {
-      openAuthModal(`/perfil/${authorId}`);
+      openAuthModal(redirectPath ?? `/perfil/${authorId}`);
       return;
     }
 
@@ -58,7 +64,7 @@ export function FollowAuthorButton({ authorId }: FollowAuthorButtonProps) {
         isFollowing
           ? "border border-terracotta bg-terracotta/10 text-terracotta"
           : "bg-terracotta text-white hover:bg-orange-700"
-      }`}
+      } ${className}`}
     >
       {loading ? (
         <Loader2 className="h-4 w-4 animate-spin" />

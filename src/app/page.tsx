@@ -5,6 +5,7 @@ import { FeaturedHero } from "@/components/home/FeaturedHero";
 import { HomeCatalog } from "@/components/home/HomeCatalog";
 import { TopAuthors } from "@/components/home/TopAuthors";
 import { SubscriptionCTA } from "@/components/home/SubscriptionCTA";
+import { AuthorFounderSpotlight } from "@/components/autor-public/AuthorFounderSpotlight";
 import { featuredBook, topAuthors } from "@/data/mock";
 import { buildBookMetaMap, getBookMeta } from "@/lib/book-meta";
 import { getBooks } from "@/lib/db";
@@ -21,6 +22,10 @@ export default async function HomePage() {
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <FeaturedHero book={featuredBook} meta={featuredMeta} />
+
+        <div className="mt-8">
+          <AuthorFounderSpotlight />
+        </div>
 
         <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
           <HomeCatalog

@@ -1,5 +1,7 @@
 import { BookOpen, Feather, Heart, Users } from "lucide-react";
+import Link from "next/link";
 import { BRAND_NAME } from "@/lib/brand";
+import { AuthorFounderSpotlight } from "@/components/autor-public/AuthorFounderSpotlight";
 
 const pillars = [
   {
@@ -68,6 +70,23 @@ export function AboutContent() {
             <p className="mt-2 text-sm leading-relaxed text-muted">{body}</p>
           </article>
         ))}
+      </section>
+
+      <section className="mt-12">
+        <div className="mb-6 text-center">
+          <h2 className="font-serif text-2xl font-bold text-ink sm:text-3xl">Nuestro Autor Fundador</h2>
+          <p className="mt-2 text-sm text-muted">
+            Conoce a quien da forma a las primeras historias del {BRAND_NAME}.
+          </p>
+        </div>
+        <AuthorFounderSpotlight />
+        <p className="mt-4 text-center text-sm text-muted">
+          Descubre su novela{" "}
+          <Link href="/autor/pedro-garcia-martinez" className="font-medium text-terracotta hover:underline">
+            Amor con aroma a café
+          </Link>{" "}
+          y lee los primeros capítulos gratis.
+        </p>
       </section>
 
       <section className="mt-12 rounded-2xl border border-amber-900/10 bg-sidebar/60 p-8 sm:p-10">

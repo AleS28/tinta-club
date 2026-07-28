@@ -1,3 +1,5 @@
+import { pedroAmorCafeChapters } from "./pedro-amor-cafe-chapters";
+
 export type Genre = "Romance" | "Fantasía" | "Terror" | "Ciencia Ficción";
 
 export interface Book {
@@ -283,58 +285,7 @@ export const chapters: Chapter[] = [
       "El silencio entre ellos pesó como un reloj detenido. Finalmente, Clara habló: «Entonces empieza de nuevo. Sin secretos.»",
     ],
   },
-  {
-    id: "pedro-amor-cafe-cap-1",
-    bookId: "pedro-amor-cafe",
-    number: 1,
-    title: "Cenas tregua",
-    isPremium: false,
-    content: [
-      "El vapor del café subía entre ellos como una tregua silenciosa. Pedro removió el azúcar sin prisa; Kaori observaba la llama de la vela de cumpleaños que aún no apagaban del todo, como si posponer ese gesto pudiera posponer también lo que llevaban semanas evitando nombrar.",
-      "«Otra cena tregua», murmuró ella, con una sonrisa pequeña que no llegaba del todo a los ojos. En la mesa había dos tazas desportilladas, pan tostado y la certeza compartida de que el amor, cuando es verdadero, también se defiende con rutinas frágiles.",
-      "Pedro extendió la mano sobre la madera rayada. Kaori la tomó. Afuera, la ciudad seguía siendo ruidosa, indiferente, precaria. Adentro, el aroma a café recién hecho prometía — por unas horas — que todo podía sostenerse.",
-      "Ninguno de los dos supo entonces que esa noche sería la última en la que el silencio les pareciera refugio y no advertencia.",
-    ],
-  },
-  {
-    id: "pedro-amor-cafe-cap-2",
-    bookId: "pedro-amor-cafe",
-    number: 2,
-    title: "Turnos imposibles",
-    isPremium: false,
-    content: [
-      "Pedro llegó cuando el reloj de la pared marcaba las once y el olor a sopa instantánea aún flotaba en el departamento. Kaori ya estaba dormida en el sofá, con el celular en la mano y una notificación sin leer brillando en la pantalla.",
-      "En el trabajo, las horas se habían vuelto un enemigo sin rostro. Cada quincena era una ecuación imposible: renta, transporte, la deuda de la tarjeta que aún no terminaba de pagarse. Pedro se sentó en el suelo para no despertarla, pero ella abrió los ojos de inmediato, como si llevara días esperando una conversación que ninguno iniciaba.",
-      "«¿Te quedaste otra vez?», preguntó. No era reproche, era cansancio. Pedro asintió. Kaori se incorporó y le acarició el cabello con un gesto tan tierno que dolió.",
-      "Entre los dos flotó la pregunta que no dijeron: cuánto tiempo podría aguantar un amor construido sobre turnos que nunca coinciden.",
-    ],
-  },
-  {
-    id: "pedro-amor-cafe-cap-3",
-    bookId: "pedro-amor-cafe",
-    number: 3,
-    title: "Lo que no se dice en voz alta",
-    isPremium: false,
-    content: [
-      "Kaori se arregló el cabello frente al espejo del baño con más cuidado de lo habitual. Pedro lo notó, pero no preguntó. Habían aprendido — demasiado pronto — que algunas preguntas abrían grietas difíciles de cerrar.",
-      "Ella salió a trabajar con un beso rápido y una sonrisa entrenada. En el camino, revisó tres veces el mensaje que no se atrevía a enviarle: «Hoy otra vez me invitó a quedarme después del horario». Lo borró. Lo escribió otra vez. Lo guardó en borradores.",
-      "Pedro, mientras tanto, recibió la llamada del banco. La voz automatizada le informó que su pago mínimo vencía en dos días. Colgó y preparó café, aunque ya no tenía hambre.",
-      "Esa tarde, cuando Kaori regresó, encontró la mesa puesta otra vez. «Cena tregua», dijo Pedro. Ella asintió, agradecida y culpable, sin saber cuál de las dos sensaciones pesaba más.",
-    ],
-  },
-  {
-    id: "pedro-amor-cafe-cap-4",
-    bookId: "pedro-amor-cafe",
-    number: 4,
-    title: "La grieta",
-    isPremium: true,
-    content: [
-      "Kaori dejó caer la bolsa sobre la mesa con un ruido seco. Pedro levantó la vista del cuaderno donde anotaba gastos imposibles. «Tenemos que hablar», dijo ella. Su voz temblaba, pero no de frío.",
-      "Lo que siguió fue una conversación que ninguno había querido tener: mensajes borrados, miradas evitadas, noches enteras fingiendo sueño. Pedro escuchó sin interrumpir. Kaori habló hasta quedarse sin aliento.",
-      "Cuando terminó, el departamento pareció más grande y más vacío. El café de la mañana — el que siempre los había salvado — se enfrió en la cocina sin que nadie lo tocara.",
-      "Por primera vez, la tregua no alcanzó. Y ambos supieron, con un miedo nuevo, que el amor también puede quebrarse en silencio.",
-    ],
-  },
+  ...pedroAmorCafeChapters,
 ];
 
 export const allBooks: Book[] = [featuredBook, pedroAmorCafeBook, ...sideBooks, ...books];

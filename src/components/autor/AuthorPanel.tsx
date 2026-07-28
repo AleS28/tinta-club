@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AuthorStats } from "@/components/autor/AuthorStats";
 import { AuthorDiscordBanner } from "@/components/autor/AuthorDiscordBanner";
+import { AuthorAgreementBanner } from "@/components/autor/AuthorAgreementBanner";
 import { MyBooksList } from "@/components/autor/MyBooksList";
 import { PublishBookForm } from "@/components/autor/PublishBookForm";
 import { PublishChapterForm } from "@/components/autor/PublishChapterForm";
@@ -51,7 +52,7 @@ export function AuthorPanel() {
   const simulatedEarnings = totalChapters * 12.5 + books.length * 45;
 
   return (
-    <AuthGuard redirectTo="/">
+    <AuthGuard redirectTo="/" authModalRedirect="/autor">
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
         <header className="mb-8">
           <div className="flex items-center gap-3">
@@ -71,6 +72,7 @@ export function AuthorPanel() {
         </header>
 
         <AuthorDiscordBanner />
+        <AuthorAgreementBanner />
 
         <AuthorStats
           bookCount={books.length}

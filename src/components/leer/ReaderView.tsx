@@ -10,7 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ReaderTopbar } from "@/components/leer/ReaderTopbar";
 import { ReaderWatermark } from "@/components/leer/ReaderWatermark";
 import { PaywallBanner } from "@/components/leer/PaywallBanner";
-import { SubscribeModal } from "@/components/subscription/SubscribeModal";
+import { TermsAcceptanceModal } from "@/components/legal/TermsAcceptanceModal";
 import { ProtectedContent } from "@/components/ui/ProtectedContent";
 
 interface ReaderViewProps {
@@ -223,9 +223,13 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
       </ProtectedContent>
 
       {showSubscribeModal && (
-        <SubscribeModal
-          price={subscriptionPrice}
+        <TermsAcceptanceModal
+          bookTitle={book.title}
+          bookId={book.id}
+          chapterNumber={chapter.number >= 4 ? chapter.number : 4}
+          priceUsd={subscriptionPrice}
           authorName={book.author}
+          redirectTo={`/leer/${chapter.id}`}
           onSuccess={() => {
             setShowSubscribeModal(false);
             loadPremiumContent();

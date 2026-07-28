@@ -8,18 +8,23 @@ import { useAuth } from "@/context/AuthContext";
 interface AuthGuardProps {
   children: ReactNode;
   redirectTo?: string;
+  authModalRedirect?: string;
 }
 
-export function AuthGuard({ children, redirectTo = "/" }: AuthGuardProps) {
+export function AuthGuard({
+  children,
+  redirectTo = "/",
+  authModalRedirect,
+}: AuthGuardProps) {
   const router = useRouter();
   const { user, loading, openAuthModal } = useAuth();
 
   useEffect(() => {
     if (!loading && !user) {
-      openAuthModal("/autor");
+      openAuthModal(authModalRedirect ?? redirectTo);
       router.push(redirectTo);
     }
-  }, [user, loading, openAuthModal, router, redirectTo]);
+  }, [user, loading, openAuthModal, router, redirectTo, authModalRedirect]);
 
   if (loading) {
     return (

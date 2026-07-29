@@ -4,12 +4,18 @@
 
 @layer base {
   body {
-    @apply bg-paper text-ink antialiased;
-    background-image: radial-gradient(ellipse at 50% 0%, rgba(201, 169, 97, 0.06) 0%, transparent 50%);
+    @apply bg-[#1A100C] text-ink antialiased;
   }
 }
 
 @layer utilities {
+  .literary-pattern {
+    background-color: #1a100c;
+    background-image: url("/patterns/literary-pattern.svg");
+    background-size: 320px 320px;
+    background-repeat: repeat;
+  }
+
   .protected-content {
     -webkit-user-select: none;
     user-select: none;

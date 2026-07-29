@@ -47,7 +47,7 @@ export default async function BookPage({ params }: BookPageProps) {
         <header className="flex flex-col gap-8 sm:flex-row sm:items-start">
           <BookCover
             book={book}
-            showOverlay
+            showOverlay={!book.coverUrl}
             className="mx-auto aspect-[2/3] w-48 shrink-0 shadow-xl sm:mx-0 sm:w-56"
           />
 

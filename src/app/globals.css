@@ -9,13 +9,12 @@
 }
 
 @layer utilities {
-  .literary-pattern {
+  .bg-literary-pattern {
     background-color: #1a100c;
-    background-image: url("/patterns/literary-pattern.svg");
-    background-size: 320px 320px;
+    background-image: url("/textures/literary-pattern.png");
     background-repeat: repeat;
+    background-size: 480px auto;
   }
-
   .protected-content {
     -webkit-user-select: none;
     user-select: none;

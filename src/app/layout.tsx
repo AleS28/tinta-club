@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Merriweather } from "next/font/google";
 import { Providers } from "@/components/providers/Providers";
-import { AppShell } from "@/components/layout/AppShell";
+import { SiteShell } from "@/components/layout/SiteShell";
 import "./globals.css";
 
 const inter = Inter({
@@ -30,7 +30,7 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${inter.variable} ${merriweather.variable} font-sans`}>
         <Providers>
-          <AppShell>{children}</AppShell>
+          <SiteShell>{children}</SiteShell>
         </Providers>
       </body>
     </html>

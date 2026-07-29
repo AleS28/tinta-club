@@ -22,6 +22,11 @@ import {
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { getClientAuth, db, isFirebaseConfigured } from "@/lib/firebase";
+import {
+  clearAuthSessionHint,
+  markAuthSessionHint,
+  readAuthSessionHint,
+} from "@/lib/auth-session";
 import { activateSubscription } from "@/lib/subscription";
 import {
   isPremiumUser,
@@ -34,6 +39,7 @@ interface AuthContextValue {
   user: User | null;
   userProfile: UserProfile | null;
   loading: boolean;
+  restoringSession: boolean;
   isSubscriber: boolean;
   role: UserRole;
   authModalOpen: boolean;
@@ -100,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [restoringSession, setRestoringSession] = useState(() => Boolean(readAuthSessionHint()));
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authRedirectPath, setAuthRedirectPath] = useState<string | null>(null);
 
@@ -125,37 +132,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const auth = getClientAuth();
     if (!auth || !isFirebaseConfigured) {
       setLoading(false);
+      setRestoringSession(false);
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setLoading(false);
+    let unsubscribe: (() => void) | undefined;
 
-      if (firebaseUser) {
-        fetchOrCreateUserProfile(firebaseUser)
-          .then((profile) => {
-            const normalized = normalizeUserProfile(profile);
-            setUserProfile(normalized);
-            if (isPremiumUser(normalized)) {
-              void syncPremiumClaims(firebaseUser);
+    auth
+      .authStateReady()
+      .then(() => {
+        unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+          setUser(firebaseUser);
+          setLoading(false);
+          setRestoringSession(false);
+
+          if (firebaseUser) {
+            markAuthSessionHint(firebaseUser.uid);
+            fetchOrCreateUserProfile(firebaseUser)
+              .then((profile) => {
+                const normalized = normalizeUserProfile(profile);
+                setUserProfile(normalized);
+                if (isPremiumUser(normalized)) {
+                  void syncPremiumClaims(firebaseUser);
+                }
+              })
+              .catch(() => setUserProfile(normalizeUserProfile(defaultProfile(firebaseUser))));
+
+            if (sessionStorage.getItem(AUTH_PENDING_KEY)) {
+              sessionStorage.removeItem(AUTH_PENDING_KEY);
+              const storedRedirect = sessionStorage.getItem(AUTH_REDIRECT_KEY);
+              sessionStorage.removeItem(AUTH_REDIRECT_KEY);
+              closeAuthModal();
+              if (storedRedirect) router.push(storedRedirect);
             }
-          })
-          .catch(() => setUserProfile(normalizeUserProfile(defaultProfile(firebaseUser))));
+          } else {
+            clearAuthSessionHint();
+            setUserProfile(null);
+          }
+        });
+      })
+      .catch(() => {
+        setLoading(false);
+        setRestoringSession(false);
+      });
 
-        if (sessionStorage.getItem(AUTH_PENDING_KEY)) {
-          sessionStorage.removeItem(AUTH_PENDING_KEY);
-          const storedRedirect = sessionStorage.getItem(AUTH_REDIRECT_KEY);
-          sessionStorage.removeItem(AUTH_REDIRECT_KEY);
-          closeAuthModal();
-          if (storedRedirect) router.push(storedRedirect);
-        }
-      } else {
-        setUserProfile(null);
-      }
-    });
-
-    return unsubscribe;
+    return () => unsubscribe?.();
   }, [closeAuthModal, router]);
 
   const loginWithGoogle = useCallback(async () => {
@@ -246,6 +267,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     const auth = getClientAuth();
     if (!auth) return;
+    clearAuthSessionHint();
     await signOut(auth);
     router.push("/");
   }, [router]);
@@ -255,6 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       userProfile,
       loading,
+      restoringSession,
       isSubscriber: isPremiumUser(userProfile),
       role: userProfile?.role ?? "reader",
       authModalOpen,
@@ -271,6 +294,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       userProfile,
       loading,
+      restoringSession,
       authModalOpen,
       authRedirectPath,
       openAuthModal,

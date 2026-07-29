@@ -1,9 +1,12 @@
 import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
 import {
   Auth,
+  browserLocalPersistence,
   browserPopupRedirectResolver,
   getAuth,
+  indexedDBLocalPersistence,
   initializeAuth,
+  setPersistence,
 } from "firebase/auth";
 import { Firestore, getFirestore } from "firebase/firestore";
 
@@ -49,10 +52,12 @@ export function getClientAuth(): Auth | null {
   if (!authInstance) {
     try {
       authInstance = initializeAuth(app, {
+        persistence: indexedDBLocalPersistence,
         popupRedirectResolver: browserPopupRedirectResolver,
       });
     } catch {
       authInstance = getAuth(app);
+      void setPersistence(authInstance, browserLocalPersistence).catch(() => undefined);
     }
   }
 

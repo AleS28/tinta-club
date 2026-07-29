@@ -16,7 +16,7 @@ const navLinks = [
 
 export function Navbar() {
   const router = useRouter();
-  const { user, userProfile, loading, isSubscriber, openAuthModal, logout } = useAuth();
+  const { user, userProfile, loading, restoringSession, isSubscriber, openAuthModal, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -52,8 +52,9 @@ export function Navbar() {
     .slice(0, 2)
     .toUpperCase();
 
-  const showLogin = !user && !loading;
+  const showLogin = !user && !loading && !restoringSession;
   const showProfile = !!user;
+  const showSessionPlaceholder = (loading || restoringSession) && !user;
 
   return (
     <header className="sticky top-0 z-50 border-b-2 border-[#D27C5A] bg-[#2A1810] shadow-xl">
@@ -88,10 +89,10 @@ export function Navbar() {
               Socio del Imperio ✦
             </span>
           )}
-          {loading && !user ? (
+          {showSessionPlaceholder ? (
             <div
               className="h-9 w-9 animate-pulse rounded-full bg-[#3D2518]"
-              aria-label="Cargando sesión"
+              aria-label="Restaurando sesión"
             />
           ) : showLogin ? (
             <>

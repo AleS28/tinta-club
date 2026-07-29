@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "seed:firestore": "tsx scripts/seed-firestore.ts",
-    "link:founder": "tsx scripts/link-founder-author.ts"
+    "link:founder": "tsx scripts/link-founder-author.ts",
+    "revoke:member": "tsx scripts/revoke-member.ts"
   },
   "dependencies": {
     "firebase": "^12.16.0",

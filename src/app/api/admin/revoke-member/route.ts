@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminAuth, getAdminDb, isAdminConfigured } from "@/lib/firebase-admin";
+import { getAdminDb, isAdminConfigured } from "@/lib/firebase-admin";
+import { resolveUserByEmailOrUid } from "@/lib/admin-user-lookup";
 import { deactivateSubscriptionAdmin } from "@/lib/subscription-admin";
 
 export const runtime = "nodejs";
@@ -28,29 +29,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Firebase Admin no configurado" }, { status: 503 });
     }
 
-    const body = (await request.json()) as RevokeBody;
-    const adminAuth = await getAdminAuth();
     const adminDb = await getAdminDb();
-
-    if (!adminAuth || !adminDb) {
-      return NextResponse.json({ error: "Servicios Admin no disponibles" }, { status: 503 });
+    if (!adminDb) {
+      return NextResponse.json({ error: "Firestore Admin no disponible" }, { status: 503 });
     }
 
-    let uid = body.uid?.trim();
-    let email = body.email?.trim().toLowerCase();
-
-    if (!uid && email) {
-      const user = await adminAuth.getUserByEmail(email);
-      uid = user.uid;
-      email = user.email ?? email;
-    } else if (uid && !email) {
-      const user = await adminAuth.getUser(uid);
-      email = user.email ?? "";
-    }
-
-    if (!uid) {
-      return NextResponse.json({ error: "Indica email o uid" }, { status: 400 });
-    }
+    const body = (await request.json()) as RevokeBody;
+    const { uid, email } = await resolveUserByEmailOrUid(body);
 
     const before = (await adminDb.collection("users").doc(uid).get()).data() ?? {};
 
@@ -58,6 +43,8 @@ export async function POST(request: NextRequest) {
 
     await adminDb.collection("users").doc(uid).set(
       {
+        uid,
+        email,
         role: "reader",
         subscriptionStatus: "free",
         isPremium: false,
@@ -75,10 +62,8 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("[admin/revoke-member]", error);
-    const message =
-      error instanceof Error && error.message.includes("no user record")
-        ? "No existe cuenta con ese email"
-        : "Error al revocar membresía";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Error al revocar membresía";
+    const status = message.includes("No se encontró") ? 404 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

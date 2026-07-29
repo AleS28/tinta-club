@@ -7,7 +7,8 @@
  */
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { getAdminAuth, getAdminDb } from "../src/lib/firebase-admin";
+import { getAdminDb } from "../src/lib/firebase-admin";
+import { resolveUserByEmailOrUid } from "../src/lib/admin-user-lookup";
 import { deactivateSubscriptionAdmin } from "../src/lib/subscription-admin";
 
 function normalizePrivateKey(raw: string | undefined): string | undefined {
@@ -52,27 +53,6 @@ function loadEnvLocal() {
   }
 }
 
-async function resolveUser(
-  emailOrUidFlag: string,
-  value: string,
-): Promise<{ uid: string; email: string }> {
-  const adminAuth = await getAdminAuth();
-  if (!adminAuth) throw new Error("Firebase Admin no configurado (FIREBASE_* en .env.local)");
-
-  if (emailOrUidFlag === "--uid") {
-    const user = await adminAuth.getUser(value);
-    if (!user.email) throw new Error(`El UID ${value} no tiene email asociado`);
-    return { uid: user.uid, email: user.email };
-  }
-
-  try {
-    const user = await adminAuth.getUserByEmail(emailOrUidFlag);
-    return { uid: user.uid, email: user.email ?? emailOrUidFlag };
-  } catch {
-    throw new Error(`No existe cuenta Firebase con email: ${emailOrUidFlag}`);
-  }
-}
-
 async function main() {
   loadEnvLocal();
 
@@ -88,8 +68,8 @@ async function main() {
 
   const { uid, email } =
     emailArg === "--uid" && uidArg
-      ? await resolveUser("--uid", uidArg)
-      : await resolveUser(emailArg, emailArg);
+      ? await resolveUserByEmailOrUid({ uid: uidArg })
+      : await resolveUserByEmailOrUid({ email: emailArg });
 
   const adminDb = await getAdminDb();
   if (!adminDb) throw new Error("Firestore Admin no configurado");

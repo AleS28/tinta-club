@@ -7,6 +7,7 @@ import { BRAND_NAME } from "@/lib/brand";
 import { Book } from "@/data/mock";
 import { getBooksByAuthorId, getChaptersByAuthorBooks } from "@/lib/db";
 import { useAuth } from "@/context/AuthContext";
+import { hasAuthorPanelAccess, isAdminUser } from "@/types/user";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AuthorStats } from "@/components/autor/AuthorStats";
 import { AuthorDiscordBanner } from "@/components/autor/AuthorDiscordBanner";
@@ -18,7 +19,7 @@ import { PublishChapterForm } from "@/components/autor/PublishChapterForm";
 type Tab = "books" | "publish";
 
 export function AuthorPanel() {
-  const { user, userProfile, role } = useAuth();
+  const { user, userProfile } = useAuth();
   const [tab, setTab] = useState<Tab>("books");
   const [books, setBooks] = useState<Book[]>([]);
   const [chapterCounts, setChapterCounts] = useState<Record<string, number>>({});
@@ -54,12 +55,12 @@ export function AuthorPanel() {
 
   return (
     <AuthGuard redirectTo="/" authModalRedirect="/autor">
-      {role !== "author" ? (
+      {!hasAuthorPanelAccess(userProfile) ? (
         <main className="mx-auto max-w-lg px-4 py-20 text-center">
           <h2 className="font-serif text-2xl font-bold text-ink">Panel solo para autores</h2>
           <p className="mt-4 text-sm leading-relaxed text-muted">
-            Esta sección es para autores del Imperio. Si eres autor fundador y acabas de
-            registrarte, cierra sesión e inicia de nuevo con el email autorizado.
+            Esta sección es para autores y administradoras del Imperio. Si acabas de
+            registrarte con un email autorizado, cierra sesión e inicia de nuevo.
           </p>
           <Link
             href="/"
@@ -77,11 +78,12 @@ export function AuthorPanel() {
             </div>
             <div>
               <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
-                Panel del Autor
+                {isAdminUser(userProfile) ? "Panel de Administración" : "Panel del Autor"}
               </h1>
               <p className="text-sm text-muted">
                 Bienvenida, {userProfile?.displayName ?? "Autor"} ·{" "}
-                <Feather className="inline h-3.5 w-3.5 text-terracotta" /> Autor del Imperio · {BRAND_NAME}
+                <Feather className="inline h-3.5 w-3.5 text-terracotta" />{" "}
+                {isAdminUser(userProfile) ? "Administradora del Imperio" : "Autor del Imperio"} · {BRAND_NAME}
                 {userProfile?.authorSlug && (
                   <>
                     {" "}

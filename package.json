@@ -9,6 +9,8 @@
     "lint": "next lint",
     "seed:firestore": "tsx scripts/seed-firestore.ts",
     "link:founder": "tsx scripts/link-founder-author.ts",
+    "link:admin": "tsx scripts/link-site-admin.ts",
+    "extract:will": "python scripts/extract-will-chica-cafe.py",
     "revoke:member": "tsx scripts/revoke-member.ts"
   },
   "dependencies": {

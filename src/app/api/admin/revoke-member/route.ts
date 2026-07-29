@@ -39,6 +39,13 @@ export async function POST(request: NextRequest) {
 
     const before = (await adminDb.collection("users").doc(uid).get()).data() ?? {};
 
+    if (before.role === "admin") {
+      return NextResponse.json(
+        { error: "No se puede revocar la membresía de una administradora del sitio." },
+        { status: 403 },
+      );
+    }
+
     await deactivateSubscriptionAdmin(uid);
 
     await adminDb.collection("users").doc(uid).set(

@@ -107,6 +107,33 @@ async function fetchOrCreateUserProfile(user: User): Promise<UserProfile> {
   return profile;
 }
 
+async function tryLinkSiteAdmin(user: User): Promise<UserProfile | null> {
+  if (!user.email) return null;
+
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch("/api/auth/link-admin", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) return null;
+
+    const payload = (await response.json()) as {
+      linked?: boolean;
+      profile?: UserProfile;
+    };
+
+    if (payload.profile?.role === "admin") {
+      return normalizeUserProfile(payload.profile);
+    }
+  } catch {
+    // El enlace es opcional; no bloquea el login.
+  }
+
+  return null;
+}
+
 async function tryLinkFounderAuthor(user: User): Promise<UserProfile | null> {
   if (!user.email) return null;
 
@@ -184,9 +211,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             fetchOrCreateUserProfile(firebaseUser)
               .then(async (profile) => {
                 let normalized = normalizeUserProfile(profile);
-                const linkedProfile = await tryLinkFounderAuthor(firebaseUser);
-                if (linkedProfile) {
-                  normalized = linkedProfile;
+                const adminProfile = await tryLinkSiteAdmin(firebaseUser);
+                if (adminProfile) {
+                  normalized = adminProfile;
+                } else {
+                  const linkedProfile = await tryLinkFounderAuthor(firebaseUser);
+                  if (linkedProfile) {
+                    normalized = linkedProfile;
+                  }
                 }
                 setUserProfile(normalized);
                 if (isPremiumUser(normalized)) {
@@ -315,8 +347,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const firebaseUser = auth?.currentUser;
     if (!firebaseUser || !db) return;
 
-    const profile = await fetchOrCreateUserProfile(firebaseUser);
-    const normalized = normalizeUserProfile(profile);
+    let normalized = normalizeUserProfile(await fetchOrCreateUserProfile(firebaseUser));
+    const adminProfile = await tryLinkSiteAdmin(firebaseUser);
+    if (adminProfile) {
+      normalized = adminProfile;
+    }
     setUserProfile(normalized);
 
     if (isPremiumUser(normalized)) {

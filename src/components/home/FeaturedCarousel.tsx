@@ -62,9 +62,8 @@ export function FeaturedCarousel() {
       </div>
 
       <div className="flex items-end gap-3 lg:gap-4">
-        <FeaturedCard book={sideBooks[0]} size="small" />
+        {sideBooks[0] && <FeaturedCard book={sideBooks[0]} size="small" />}
         <FeaturedCard book={featuredBook} size="large" />
-        <FeaturedCard book={sideBooks[1]} size="small" />
       </div>
     </section>
   );

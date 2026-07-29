@@ -35,6 +35,28 @@ export const authorProfiles: AuthorPublicProfile[] = [
       },
     ],
   },
+  {
+    id: "author-will-flechas",
+    slug: "will-flechas",
+    name: "WillFlechas",
+    badge: "✨ Autor Fundador",
+    bio: "Escritor mexicano apasionado por narrar lo íntimo con crudeza y ternura. Su prosa explora la soledad urbana, la timidez compartida y esos pequeños instantes —como una sonrisa tras el mostrador— que pueden sostener o quebrar una vida.",
+    photoUrl: "",
+    social: {},
+    featuredWork: {
+      bookId: "will-chica-cafe",
+      title: "La chica del café",
+      genres: ["Drama urbano", "Romance contemporáneo"],
+      synopsis:
+        "Un hombre solitario vive hipnotizado por la sonrisa de la barista que le sirve café los sábados. Entre el aroma del espresso, la timidez compartida y las ilusiones que lo mantienen respirando, descubre que a veces el amor —o la idea de amor— puede ser tan intenso como una taza recién servida.",
+      coverGradient: "from-stone-700 via-amber-900 to-stone-950",
+      coverAccent: "#A16207",
+      firstChapterId: "will-chica-cafe-cap-1",
+      freeChaptersCount: 1,
+      membershipPriceUsd: 5,
+    },
+    upcomingWorks: [],
+  },
 ];
 
 export function getAuthorProfileBySlug(slug: string): AuthorPublicProfile | undefined {

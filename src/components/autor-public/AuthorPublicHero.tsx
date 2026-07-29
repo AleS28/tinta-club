@@ -40,14 +40,20 @@ export function AuthorPublicHero({ profile }: AuthorPublicHeroProps) {
       <div className="relative flex flex-col items-center gap-8 px-6 py-10 sm:flex-row sm:items-start sm:px-10 sm:py-12">
         <div className="relative shrink-0">
           <div className="rounded-full p-1.5 ring-2 ring-[#D27C5A] ring-offset-4 ring-offset-[#3B2519]">
-            <Image
-              src={profile.photoUrl}
-              alt={profile.name}
-              width={140}
-              height={140}
-              className="h-32 w-32 rounded-full object-cover sm:h-36 sm:w-36"
-              priority
-            />
+            {profile.photoUrl ? (
+              <Image
+                src={profile.photoUrl}
+                alt={profile.name}
+                width={140}
+                height={140}
+                className="h-32 w-32 rounded-full object-cover sm:h-36 sm:w-36"
+                priority
+              />
+            ) : (
+              <div className="flex h-32 w-32 items-center justify-center rounded-full bg-[#D27C5A] text-2xl font-bold text-white sm:h-36 sm:w-36">
+                {profile.name.slice(0, 2).toUpperCase()}
+              </div>
+            )}
           </div>
         </div>
 

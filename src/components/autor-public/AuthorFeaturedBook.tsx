@@ -7,18 +7,30 @@ interface AuthorFeaturedBookProps {
 }
 
 export function AuthorFeaturedBook({ work }: AuthorFeaturedBookProps) {
+  const accent = work.coverAccent ?? "#D27C5A";
+
   return (
     <section className="mt-12 overflow-hidden rounded-3xl bg-[#3B2519] shadow-editorial-lg">
       <div className="grid gap-0 lg:grid-cols-[minmax(280px,2fr)_minmax(0,3fr)]">
         <div className="relative min-h-[420px] bg-[#2a1a12] lg:min-h-full">
-          <Image
-            src={work.coverUrl}
-            alt={`Portada de ${work.title}`}
-            fill
-            className="object-cover object-right"
-            sizes="(max-width: 1024px) 100vw, 40vw"
-            priority
-          />
+          {work.coverUrl ? (
+            <Image
+              src={work.coverUrl}
+              alt={`Portada de ${work.title}`}
+              fill
+              className="object-cover object-right"
+              sizes="(max-width: 1024px) 100vw, 40vw"
+              priority
+            />
+          ) : (
+            <div
+              className={`absolute inset-0 bg-gradient-to-br ${work.coverGradient ?? "from-stone-700 via-amber-900 to-stone-950"}`}
+            >
+              <div className="flex h-full flex-col justify-end p-8">
+                <p className="font-serif text-3xl font-bold text-white/95">{work.title}</p>
+              </div>
+            </div>
+          )}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#3B2519]/80 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-[#3B2519]/30" />
         </div>
 
@@ -27,7 +39,7 @@ export function AuthorFeaturedBook({ work }: AuthorFeaturedBookProps) {
             Obra Destacada
           </p>
 
-          <h2 className="mt-3 font-serif text-3xl font-bold text-[#D27C5A] sm:text-4xl">
+          <h2 className="mt-3 font-serif text-3xl font-bold sm:text-4xl" style={{ color: accent }}>
             {work.title}
           </h2>
 
@@ -42,7 +54,7 @@ export function AuthorFeaturedBook({ work }: AuthorFeaturedBookProps) {
             ))}
           </div>
 
-          <p className="mt-3 text-sm text-[#FCF9F5]/60">ISBN {work.isbn}</p>
+          {work.isbn && <p className="mt-3 text-sm text-[#FCF9F5]/60">ISBN {work.isbn}</p>}
 
           <p className="mt-6 text-base leading-relaxed text-[#FCF9F5]/90">{work.synopsis}</p>
 

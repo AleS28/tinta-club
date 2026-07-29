@@ -9,9 +9,11 @@ export interface AuthorFeaturedWork {
   bookId: string;
   title: string;
   genres: string[];
-  isbn: string;
+  isbn?: string;
   synopsis: string;
-  coverUrl: string;
+  coverUrl?: string;
+  coverGradient?: string;
+  coverAccent?: string;
   firstChapterId: string;
   freeChaptersCount: number;
   membershipPriceUsd: number;

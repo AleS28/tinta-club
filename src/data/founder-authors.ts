@@ -12,6 +12,7 @@ export interface FounderAuthorConfig {
 }
 
 const pedroProfile = getAuthorProfileBySlug("pedro-garcia-martinez");
+const willProfile = getAuthorProfileBySlug("will-flechas");
 
 export const founderAuthors: FounderAuthorConfig[] = [
   {
@@ -22,6 +23,15 @@ export const founderAuthors: FounderAuthorConfig[] = [
     bio: pedroProfile?.bio ?? "",
     photoUrl: pedroProfile?.photoUrl ?? "",
     envEmailKey: "FOUNDER_AUTHOR_PEDRO_EMAIL",
+  },
+  {
+    slug: "will-flechas",
+    legacyAuthorId: "author-will-flechas",
+    bookIds: ["will-chica-cafe"],
+    name: willProfile?.name ?? "WillFlechas",
+    bio: willProfile?.bio ?? "",
+    photoUrl: willProfile?.photoUrl ?? "",
+    envEmailKey: "FOUNDER_AUTHOR_WILL_EMAIL",
   },
 ];
 

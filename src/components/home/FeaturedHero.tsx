@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BookOpen, Clock, Star } from "lucide-react";
-import { Book, getFirstChapter } from "@/data/mock";
+import { Book, getAuthorProfileHref, getFirstChapter } from "@/data/mock";
 import { StartReadingButton } from "@/components/auth/StartReadingButton";
 import { BookCover } from "@/components/ui/BookCover";
 import type { BookMeta } from "@/lib/book-meta";
@@ -44,7 +44,7 @@ export function FeaturedHero({ book, meta }: FeaturedHeroProps) {
           <p className="mt-2 text-sm text-gold-light/80">
             por{" "}
             <Link
-              href={book.authorId === "author-pedro-garcia" ? "/autor/pedro-garcia-martinez" : `/perfil/${book.authorId}`}
+              href={getAuthorProfileHref(book.authorId)}
               className="font-medium text-gold-cream underline-offset-2 hover:underline"
             >
               {book.author}

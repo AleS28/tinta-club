@@ -22,8 +22,17 @@ export interface UserProfile {
   subscribedAt?: string;
 }
 
+export function isAdminUser(profile: UserProfile | null | undefined): boolean {
+  return profile?.role === "admin";
+}
+
+export function hasAuthorPanelAccess(profile: UserProfile | null | undefined): boolean {
+  return profile?.role === "author" || profile?.role === "admin";
+}
+
 export function isPremiumUser(profile: UserProfile | null | undefined): boolean {
   if (!profile) return false;
+  if (isAdminUser(profile)) return true;
   return (
     profile.isPremium === true ||
     profile.isSubscriber === true ||

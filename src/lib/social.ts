@@ -1,3 +1,4 @@
+import { DISCORD_INVITE_URL, isDiscordConfigured } from "@/lib/discord";
 import { TELEGRAM_INVITE_URL, isTelegramConfigured } from "@/lib/telegram";
 
 export type CommunitySocialKey = "discord" | "instagram" | "telegram" | "tiktok" | "x";
@@ -11,6 +12,10 @@ const ENV_KEYS: Record<CommunitySocialKey, string> = {
 };
 
 export function getCommunitySocialUrl(key: CommunitySocialKey): string | null {
+  if (key === "discord" && isDiscordConfigured()) {
+    return DISCORD_INVITE_URL;
+  }
+
   if (key === "telegram" && isTelegramConfigured()) {
     return TELEGRAM_INVITE_URL;
   }

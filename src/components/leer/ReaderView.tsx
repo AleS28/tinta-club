@@ -89,10 +89,10 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
 
   useEffect(() => {
     if (loading) return;
-    if (chapter.isPremium && !user) {
+    if (!user) {
       openAuthModal(`/leer/${chapter.id}`);
     }
-  }, [chapter.id, chapter.isPremium, user, loading, openAuthModal]);
+  }, [chapter.id, user, loading, openAuthModal]);
 
   useEffect(() => {
     setPremiumContent(null);
@@ -118,6 +118,42 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
     }
     setShowSubscribeModal(true);
   };
+
+  const requiresLogin = !loading && !user;
+
+  if (requiresLogin) {
+    return (
+      <div className="min-h-screen bg-paper">
+        <ReaderTopbar
+          bookId={book.id}
+          chapterTitle={chapter.title}
+          chapterNumber={chapter.number}
+          fontSize={fontSize}
+          onFontSizeChange={setFontSize}
+        />
+
+        <div className="mx-auto max-w-lg px-4 py-20 text-center">
+          <h2 className="font-serif text-2xl font-bold text-ink">Inicia sesión para leer</h2>
+          <p className="mt-4 text-sm leading-relaxed text-muted">
+            Los capítulos 1 a 3 son gratuitos para cuentas registradas. Del capítulo 4 en adelante
+            necesitas ser Socia del Imperio.
+          </p>
+          <button
+            type="button"
+            onClick={() => openAuthModal(`/leer/${chapter.id}`)}
+            className="mt-8 inline-flex rounded-full bg-terracotta px-8 py-3 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-orange-700"
+          >
+            Iniciar sesión
+          </button>
+          <p className="mt-6 text-xs text-muted">
+            <Link href={`/libro/${book.id}`} className="text-terracotta hover:underline">
+              ← Volver al libro
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-paper">

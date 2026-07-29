@@ -18,7 +18,7 @@ export function ChapterList({ chapters }: ChapterListProps) {
 
     const href = `/leer/${chapter.id}`;
 
-    if (chapter.isPremium && !user) {
+    if (!user) {
       openAuthModal(href);
       return;
     }

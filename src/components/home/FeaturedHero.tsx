@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookOpen, Clock, Star } from "lucide-react";
 import { Book, getFirstChapter } from "@/data/mock";
+import { StartReadingButton } from "@/components/auth/StartReadingButton";
 import { BookCover } from "@/components/ui/BookCover";
 import type { BookMeta } from "@/lib/book-meta";
 
@@ -75,12 +76,11 @@ export function FeaturedHero({ book, meta }: FeaturedHeroProps) {
             </span>
           </div>
 
-          <Link
+          <StartReadingButton
             href={readHref}
+            label="Comenzar a Leer"
             className="mt-6 inline-flex items-center justify-center rounded-full bg-gold-cream px-8 py-3 text-sm font-bold uppercase tracking-wide text-imperial-dark shadow-md transition-all duration-300 hover:scale-105 hover:bg-white hover:shadow-lg active:scale-[0.98]"
-          >
-            Comenzar a Leer
-          </Link>
+          />
         </div>
       </div>
 

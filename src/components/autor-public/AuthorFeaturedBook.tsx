@@ -1,6 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { StartReadingButton } from "@/components/auth/StartReadingButton";
 import type { AuthorFeaturedWork } from "@/types/author-profile";
 
 interface AuthorFeaturedBookProps {
@@ -48,13 +47,11 @@ export function AuthorFeaturedBook({ work }: AuthorFeaturedBookProps) {
           <p className="mt-6 text-base leading-relaxed text-[#FCF9F5]/90">{work.synopsis}</p>
 
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
-            <Link
+            <StartReadingButton
               href={`/leer/${work.firstChapterId}`}
+              label="Leer Capítulo 1 Gratis"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-[#D27C5A] px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-[#FCF9F5] transition-all duration-300 hover:scale-105 hover:bg-[#c06a48] hover:shadow-lg hover:shadow-[#D27C5A]/25"
-            >
-              <BookOpen className="h-4 w-4" />
-              Leer Capítulo 1 Gratis
-            </Link>
+            />
           </div>
 
           <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-sm font-medium text-[#F5E6C8]">

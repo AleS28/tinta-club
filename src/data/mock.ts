@@ -34,18 +34,23 @@ export interface Chapter {
   content: string[];
 }
 
-export const featuredBook: Book = {
-  id: "featured-1",
-  title: "El Amanecer de la Rebeldía",
-  author: "M. García",
-  authorId: "author-1",
-  genre: "Fantasía",
-  rating: 4.9,
-  coverGradient: "from-amber-700 via-orange-600 to-red-800",
-  coverAccent: "#D97757",
+export const pedroAmorCafeBook: Book = {
+  id: "pedro-amor-cafe",
+  title: "Amor con aroma a café",
+  author: "Pedro García Martínez",
+  authorId: "author-pedro-garcia",
+  genre: "Romance",
+  rating: 4.8,
+  coverGradient: "from-amber-700 via-orange-500 to-amber-900",
+  coverAccent: "#D27C5A",
+  coverUrl: "/authors/pedro-garcia-martinez/amor-aroma-cafe-cover.png",
   synopsis:
-    "En un reino donde la magia fue prohibida hace tres generaciones, una joven bibliotecaria descubre un manuscrito prohibido que podría desatar la rebelión que el imperio lleva siglos intentando silenciar. Entre conspiraciones palaciegas, alianzas imposibles y secretos enterrados bajo las murallas de Valdris, Elara deberá decidir si permanecer invisible o convertirse en la chispa que encienda el amanecer de una nueva era.",
+    "Pedro y Kaori intentan sostener una relación construida sobre pequeños gestos y la ternura de lo cotidiano. Sin embargo, su refugio doméstico se ve amenazado por la realidad: mientras él lidia con la precariedad laboral, ella enfrenta en secreto el acoso de un jefe depredador.",
+  membershipPrice: 5,
 };
+
+/** Obra en primera plana del home */
+export const featuredBook = pedroAmorCafeBook;
 
 export const sideBooks: Book[] = [
   {
@@ -155,21 +160,6 @@ export const books: Book[] = [
       "Tras la caída del trono de obsidiana, los seis reinos sobrevivientes negocian paz sobre un mapa hecho de cenizas. Una princesa exiliada, un general sin ejército y una profecía incompleta son lo único que queda entre el equilibrio y la guerra total.",
   },
 ];
-
-export const pedroAmorCafeBook: Book = {
-  id: "pedro-amor-cafe",
-  title: "Amor con aroma a café",
-  author: "Pedro García Martínez",
-  authorId: "author-pedro-garcia",
-  genre: "Romance",
-  rating: 4.8,
-  coverGradient: "from-amber-700 via-orange-500 to-amber-900",
-  coverAccent: "#D27C5A",
-  coverUrl: "/authors/pedro-garcia-martinez/amor-aroma-cafe-cover.png",
-  synopsis:
-    "Pedro y Kaori intentan sostener una relación construida sobre pequeños gestos y la ternura de lo cotidiano. Sin embargo, su refugio doméstico se ve amenazado por la realidad: mientras él lidia con la precariedad laboral, ella enfrenta en secreto el acoso de un jefe depredador.",
-  membershipPrice: 5,
-};
 
 export const topAuthors: Author[] = [
   { id: "author-1", name: "M. García", initials: "MG", avatarColor: "bg-terracotta", bookCount: 12 },
@@ -288,7 +278,7 @@ export const chapters: Chapter[] = [
   ...pedroAmorCafeChapters,
 ];
 
-export const allBooks: Book[] = [featuredBook, pedroAmorCafeBook, ...sideBooks, ...books];
+export const allBooks: Book[] = [featuredBook, ...sideBooks, ...books];
 
 export function getBookById(id: string): Book | undefined {
   return allBooks.find((book) => book.id === id);

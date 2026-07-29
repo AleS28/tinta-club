@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BookOpen, Clock, Star } from "lucide-react";
-import { Book } from "@/data/mock";
+import { Book, getFirstChapter } from "@/data/mock";
 import { BookCover } from "@/components/ui/BookCover";
 import type { BookMeta } from "@/lib/book-meta";
 
@@ -10,6 +10,8 @@ interface FeaturedHeroProps {
 }
 
 export function FeaturedHero({ book, meta }: FeaturedHeroProps) {
+  const firstChapter = getFirstChapter(book.id);
+  const readHref = firstChapter ? `/leer/${firstChapter.id}` : `/libro/${book.id}`;
   return (
     <section className="relative overflow-hidden rounded-2xl bg-imperial-dark shadow-editorial-lg">
       <div
@@ -39,7 +41,13 @@ export function FeaturedHero({ book, meta }: FeaturedHeroProps) {
           </h1>
 
           <p className="mt-2 text-sm text-gold-light/80">
-            por <span className="font-medium text-gold-cream">{book.author}</span>
+            por{" "}
+            <Link
+              href={book.authorId === "author-pedro-garcia" ? "/autor/pedro-garcia-martinez" : `/perfil/${book.authorId}`}
+              className="font-medium text-gold-cream underline-offset-2 hover:underline"
+            >
+              {book.author}
+            </Link>
             <span className="mx-2 text-gold/40">·</span>
             <span className="rounded-full border border-gold/25 px-2 py-0.5 text-xs text-gold-light">
               {book.genre}
@@ -68,7 +76,7 @@ export function FeaturedHero({ book, meta }: FeaturedHeroProps) {
           </div>
 
           <Link
-            href={`/libro/${book.id}`}
+            href={readHref}
             className="mt-6 inline-flex items-center justify-center rounded-full bg-gold-cream px-8 py-3 text-sm font-bold uppercase tracking-wide text-imperial-dark shadow-md transition-all duration-300 hover:scale-105 hover:bg-white hover:shadow-lg active:scale-[0.98]"
           >
             Comenzar a Leer

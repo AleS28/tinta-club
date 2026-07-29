@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Bookmark, Users } from "lucide-react";
 import { Book } from "@/data/mock";
 import { useAuth } from "@/context/AuthContext";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { BookCard } from "@/components/home/BookCard";
+import { SubscriptionSection } from "@/components/biblioteca/SubscriptionSection";
 import { getFavoriteBooks, getFollowedAuthors } from "@/lib/library";
 import type { PublicAuthorProfile } from "@/types/author";
 
@@ -47,6 +48,10 @@ export function LibraryPanel() {
           <p className="text-center text-sm text-muted">Cargando tu biblioteca...</p>
         ) : (
           <div className="space-y-10">
+            <Suspense fallback={null}>
+              <SubscriptionSection />
+            </Suspense>
+
             <section>
               <div className="mb-5 flex items-center gap-2">
                 <Bookmark className="h-5 w-5 text-terracotta" />

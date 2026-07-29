@@ -1,7 +1,33 @@
-import { BookOpen, Sparkles } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { BookOpen, Loader2, Sparkles } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import { BRAND_NAME } from "@/lib/brand";
+import { DEFAULT_SUBSCRIPTION_PRICE } from "@/lib/subscription";
 
 export function SubscriptionCTA() {
+  const { user, loading, isSubscriber, openAuthModal, subscribe } = useAuth();
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const handleSubscribe = async () => {
+    if (loading) return;
+
+    if (!user) {
+      openAuthModal("/biblioteca");
+      return;
+    }
+
+    if (isSubscriber) return;
+
+    setCheckoutLoading(true);
+    try {
+      await subscribe({ redirectTo: "/biblioteca", priceUsd: DEFAULT_SUBSCRIPTION_PRICE });
+    } catch {
+      setCheckoutLoading(false);
+    }
+  };
+
   return (
     <section className="relative overflow-hidden rounded-2xl border border-amber-900/15 bg-gradient-to-br from-imperial-deep via-[#7A3328] to-imperial-dark p-6 text-white shadow-editorial-lg">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
@@ -34,12 +60,21 @@ export function SubscriptionCTA() {
           </li>
         </ul>
 
-        <button
-          type="button"
-          className="mt-5 w-full rounded-full bg-gold-cream py-2.5 text-sm font-bold uppercase tracking-wide text-imperial-dark shadow-md transition-all duration-300 hover:scale-105 hover:bg-white hover:shadow-lg active:scale-[0.98]"
-        >
-          Comenzar por $4.99/mes
-        </button>
+        {isSubscriber ? (
+          <p className="mt-5 rounded-full bg-gold-cream/20 py-2.5 text-center text-sm font-semibold text-gold-cream">
+            Ya eres Socia del Imperio ✦
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={handleSubscribe}
+            disabled={checkoutLoading}
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-gold-cream py-2.5 text-sm font-bold uppercase tracking-wide text-imperial-dark shadow-md transition-all duration-300 hover:scale-105 hover:bg-white hover:shadow-lg active:scale-[0.98] disabled:opacity-60"
+          >
+            {checkoutLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+            Comenzar por ${DEFAULT_SUBSCRIPTION_PRICE.toFixed(2)}/mes
+          </button>
+        )}
       </div>
     </section>
   );

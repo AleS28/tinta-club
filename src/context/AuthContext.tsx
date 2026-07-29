@@ -28,6 +28,7 @@ import {
   readAuthSessionHint,
 } from "@/lib/auth-session";
 import { activateSubscription } from "@/lib/subscription";
+import { startStripeCheckout } from "@/lib/stripe-checkout";
 import {
   isPremiumUser,
   normalizeUserProfile,
@@ -46,10 +47,15 @@ interface AuthContextValue {
   authRedirectPath: string | null;
   openAuthModal: (redirectPath?: string) => void;
   closeAuthModal: () => void;
+  refreshUserProfile: () => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
-  subscribe: () => Promise<void>;
+  subscribe: (options?: {
+    bookId?: string;
+    redirectTo?: string;
+    priceUsd?: number;
+  }) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -101,6 +107,33 @@ async function fetchOrCreateUserProfile(user: User): Promise<UserProfile> {
   return profile;
 }
 
+async function tryLinkFounderAuthor(user: User): Promise<UserProfile | null> {
+  if (!user.email) return null;
+
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch("/api/auth/link-founder", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) return null;
+
+    const payload = (await response.json()) as {
+      linked?: boolean;
+      profile?: UserProfile;
+    };
+
+    if (payload.profile) {
+      return normalizeUserProfile(payload.profile);
+    }
+  } catch {
+    // El enlace es opcional; no bloquea el login.
+  }
+
+  return null;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -149,8 +182,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (firebaseUser) {
             markAuthSessionHint(firebaseUser.uid);
             fetchOrCreateUserProfile(firebaseUser)
-              .then((profile) => {
-                const normalized = normalizeUserProfile(profile);
+              .then(async (profile) => {
+                let normalized = normalizeUserProfile(profile);
+                const linkedProfile = await tryLinkFounderAuthor(firebaseUser);
+                if (linkedProfile) {
+                  normalized = linkedProfile;
+                }
                 setUserProfile(normalized);
                 if (isPremiumUser(normalized)) {
                   void syncPremiumClaims(firebaseUser);
@@ -243,26 +280,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [authRedirectPath, handleAuthSuccess],
   );
 
-  const subscribe = useCallback(async () => {
-    if (!user) throw new Error("Debes iniciar sesión para suscribirte");
-    await activateSubscription(user.uid);
-    setUserProfile((prev) =>
-      prev
-        ? normalizeUserProfile({
-            ...prev,
-            isPremium: true,
-            isSubscriber: true,
-            subscriptionStatus: "premium",
-          })
-        : null,
-    );
+  const subscribe = useCallback(
+    async (options?: { bookId?: string; redirectTo?: string; priceUsd?: number }) => {
+      if (!user) throw new Error("Debes iniciar sesión para suscribirte");
 
-    try {
-      await syncPremiumClaims(user);
-    } catch {
-      // La suscripción en Firestore ya quedó activa; sync es un refuerzo.
+      if (process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+        await startStripeCheckout(user, options);
+        return;
+      }
+
+      await activateSubscription(user.uid);
+      setUserProfile((prev) =>
+        prev
+          ? normalizeUserProfile({
+              ...prev,
+              isPremium: true,
+              isSubscriber: true,
+              subscriptionStatus: "premium",
+            })
+          : null,
+      );
+
+      try {
+        await syncPremiumClaims(user);
+      } catch {
+        // Firestore ya quedó activa.
+      }
+    },
+    [user],
+  );
+
+  const refreshUserProfile = useCallback(async () => {
+    const auth = getClientAuth();
+    const firebaseUser = auth?.currentUser;
+    if (!firebaseUser || !db) return;
+
+    const profile = await fetchOrCreateUserProfile(firebaseUser);
+    const normalized = normalizeUserProfile(profile);
+    setUserProfile(normalized);
+
+    if (isPremiumUser(normalized)) {
+      try {
+        await syncPremiumClaims(firebaseUser);
+        await firebaseUser.getIdToken(true);
+      } catch {
+        // El perfil en Firestore ya refleja el estado.
+      }
     }
-  }, [user]);
+  }, []);
 
   const logout = useCallback(async () => {
     const auth = getClientAuth();
@@ -284,6 +349,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authRedirectPath,
       openAuthModal,
       closeAuthModal,
+      refreshUserProfile,
       loginWithGoogle,
       loginWithEmail,
       signUpWithEmail,
@@ -299,6 +365,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authRedirectPath,
       openAuthModal,
       closeAuthModal,
+      refreshUserProfile,
       loginWithGoogle,
       loginWithEmail,
       signUpWithEmail,

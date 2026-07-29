@@ -16,7 +16,7 @@ const navLinks = [
 
 export function Navbar() {
   const router = useRouter();
-  const { user, userProfile, loading, restoringSession, isSubscriber, openAuthModal, logout } = useAuth();
+  const { user, userProfile, loading, restoringSession, isSubscriber, role, openAuthModal, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -73,7 +73,7 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-          {showProfile && (
+          {showProfile && role === "author" && (
             <Link
               href="/autor"
               className="text-sm font-semibold text-[#D4A359] transition-colors duration-300 hover:text-[#D27C5A]"
@@ -154,15 +154,17 @@ export function Navbar() {
                       <p className="text-xs text-stone-500">Acceso ilimitado activo</p>
                     </div>
                   )}
-                  <Link
-                    href="/autor"
-                    role="menuitem"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#2A1810] transition-colors hover:bg-[#D27C5A]/10"
-                  >
-                    <PenLine className="h-4 w-4 text-[#D27C5A]" />
-                    Panel del Autor
-                  </Link>
+                  {role === "author" && (
+                    <Link
+                      href="/autor"
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#2A1810] transition-colors hover:bg-[#D27C5A]/10"
+                    >
+                      <PenLine className="h-4 w-4 text-[#D27C5A]" />
+                      Panel del Autor
+                    </Link>
+                  )}
                   <Link
                     href="/biblioteca"
                     role="menuitem"

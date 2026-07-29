@@ -11,6 +11,13 @@ export interface UserProfile {
   subscriptionStatus?: SubscriptionStatus;
   photoURL?: string;
   bio?: string;
+  /** Slug del perfil público curado (/autor/[slug]) */
+  authorSlug?: string;
+  /** ID legacy del mock antes de vincular la cuenta Firebase */
+  legacyAuthorId?: string;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  subscriptionExpiresAt?: string;
   createdAt?: string;
   subscribedAt?: string;
 }

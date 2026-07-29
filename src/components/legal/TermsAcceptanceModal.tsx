@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CheckCircle2, Loader2, Lock, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -41,10 +40,8 @@ export function TermsAcceptanceModal({
   priceUsd = 5,
   authorName,
   redirectTo,
-  onSuccess,
   onClose,
 }: TermsAcceptanceModalProps) {
-  const router = useRouter();
   const { user, subscribe } = useAuth();
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -76,25 +73,12 @@ export function TermsAcceptanceModal({
       await recordReaderTermsAcceptance(appId, user.uid, {
         termsVersion: READER_TERMS_VERSION,
         bookId,
-        subscriptionIntent: `premium-monthly-${priceUsd}-usd`,
+        subscriptionIntent: `stripe-premium-monthly-${priceUsd}-usd`,
         legalName: user.displayName ?? undefined,
       });
 
-      await subscribe();
-
-      setToast({
-        type: "success",
-        message: "¡Suscripción confirmada! Desbloqueando contenido premium…",
-      });
-
-      window.setTimeout(() => {
-        onSuccess();
-        onClose();
-        if (redirectTo) {
-          router.push(redirectTo);
-          router.refresh();
-        }
-      }, 1200);
+      await subscribe({ bookId, redirectTo, priceUsd });
+      onClose();
     } catch (err) {
       const message =
         err instanceof TermsServiceError
@@ -237,12 +221,12 @@ export function TermsAcceptanceModal({
                   Procesando…
                 </>
               ) : (
-                `Confirmar y Suscribirme (${priceLabel})`
+                "Ir a pagar con Stripe"
               )}
             </button>
 
             <p className="mt-3 text-center text-xs text-[#FCF9F5]/45">
-              Simulación de pago · Cancela cuando quieras desde tu perfil
+              Pago seguro con Stripe · Cancela cuando quieras desde Mi Biblioteca
             </p>
           </div>
         </div>

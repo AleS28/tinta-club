@@ -80,6 +80,8 @@ export async function getUserProfileFromFirestore(
       subscriptionStatus: raw.subscriptionStatus as SubscriptionStatus | undefined,
       photoURL: raw.photoURL as string | undefined,
       bio: raw.bio as string | undefined,
+      authorSlug: raw.authorSlug as string | undefined,
+      legacyAuthorId: raw.legacyAuthorId as string | undefined,
     });
   } catch (error) {
     console.error("[firestore-admin] user read:", error);

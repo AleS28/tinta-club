@@ -87,7 +87,7 @@ export function SubscribeModal({ price, authorName, onSuccess, onClose }: Subscr
           </button>
 
           <p className="mt-3 text-center text-xs text-muted">
-            Simulación de pago · Cancela cuando quieras
+            Pago seguro con Stripe · Cancela cuando quieras
           </p>
         </div>
       </div>

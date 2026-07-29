@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Feather, PenLine } from "lucide-react";
 import { BRAND_NAME } from "@/lib/brand";
@@ -17,7 +18,7 @@ import { PublishChapterForm } from "@/components/autor/PublishChapterForm";
 type Tab = "books" | "publish";
 
 export function AuthorPanel() {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, role } = useAuth();
   const [tab, setTab] = useState<Tab>("books");
   const [books, setBooks] = useState<Book[]>([]);
   const [chapterCounts, setChapterCounts] = useState<Record<string, number>>({});
@@ -29,7 +30,7 @@ export function AuthorPanel() {
 
     setLoadingData(true);
     try {
-      const authorBooks = await getBooksByAuthorId(user.uid);
+      const authorBooks = await getBooksByAuthorId(user.uid, userProfile?.legacyAuthorId);
       setBooks(authorBooks);
 
       const chapters = await getChaptersByAuthorBooks(authorBooks.map((b) => b.id));
@@ -43,7 +44,7 @@ export function AuthorPanel() {
     } finally {
       setLoadingData(false);
     }
-  }, [user]);
+  }, [user, userProfile?.legacyAuthorId]);
 
   useEffect(() => {
     loadAuthorData();
@@ -53,6 +54,21 @@ export function AuthorPanel() {
 
   return (
     <AuthGuard redirectTo="/" authModalRedirect="/autor">
+      {role !== "author" ? (
+        <main className="mx-auto max-w-lg px-4 py-20 text-center">
+          <h2 className="font-serif text-2xl font-bold text-ink">Panel solo para autores</h2>
+          <p className="mt-4 text-sm leading-relaxed text-muted">
+            Esta sección es para autores del Imperio. Si eres autor fundador y acabas de
+            registrarte, cierra sesión e inicia de nuevo con el email autorizado.
+          </p>
+          <Link
+            href="/"
+            className="mt-8 inline-flex rounded-full bg-terracotta px-8 py-3 text-sm font-bold text-white hover:bg-orange-700"
+          >
+            Volver al inicio
+          </Link>
+        </main>
+      ) : (
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
         <header className="mb-8">
           <div className="flex items-center gap-3">
@@ -66,6 +82,18 @@ export function AuthorPanel() {
               <p className="text-sm text-muted">
                 Bienvenida, {userProfile?.displayName ?? "Autor"} ·{" "}
                 <Feather className="inline h-3.5 w-3.5 text-terracotta" /> Autor del Imperio · {BRAND_NAME}
+                {userProfile?.authorSlug && (
+                  <>
+                    {" "}
+                    ·{" "}
+                    <Link
+                      href={`/autor/${userProfile.authorSlug}`}
+                      className="text-terracotta hover:underline"
+                    >
+                      Ver perfil público
+                    </Link>
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -114,6 +142,7 @@ export function AuthorPanel() {
           )}
         </div>
       </main>
+      )}
     </AuthGuard>
   );
 }

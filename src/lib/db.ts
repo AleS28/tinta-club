@@ -123,7 +123,10 @@ export async function getAllChapters(): Promise<Chapter[]> {
   return mockChapters;
 }
 
-export async function getBooksByAuthorId(authorId: string): Promise<Book[]> {
+export async function getBooksByAuthorId(
+  authorId: string,
+  legacyAuthorId?: string,
+): Promise<Book[]> {
   let firestoreBooks: Book[] = [];
 
   try {
@@ -139,7 +142,11 @@ export async function getBooksByAuthorId(authorId: string): Promise<Book[]> {
     // ignore
   }
 
-  const mockBooks = allBooks.filter((book) => book.authorId === authorId);
+  const matchesAuthor = (book: Book) =>
+    book.authorId === authorId ||
+    (!!legacyAuthorId && book.authorId === legacyAuthorId);
+
+  const mockBooks = allBooks.filter(matchesAuthor);
   if (firestoreBooks.length === 0) return mockBooks;
 
   const firestoreIds = new Set(firestoreBooks.map((book) => book.id));

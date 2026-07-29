@@ -61,12 +61,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Token inválido o expirado" }, { status: 401 });
     }
 
-    let hasPremiumAccess = hasPremiumClaims(decoded);
+    const profile = await getUserProfileFromFirestore(decoded.uid, decoded.email);
 
-    if (!hasPremiumAccess) {
-      const profile = await getUserProfileFromFirestore(decoded.uid, decoded.email);
-      hasPremiumAccess =
-        !!profile && canAccessFullChapter(chapter, profile) && isPremiumUser(profile);
+    // Firestore manda: si hay perfil y no es premium, denegar aunque el token tenga claims viejos.
+    let hasPremiumAccess =
+      !!profile && canAccessFullChapter(chapter, profile) && isPremiumUser(profile);
+
+    if (!profile) {
+      hasPremiumAccess = hasPremiumClaims(decoded);
     }
 
     if (!hasPremiumAccess) {

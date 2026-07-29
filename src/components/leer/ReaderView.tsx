@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Book, Chapter } from "@/data/mock";
-import { PREVIEW_PARAGRAPHS } from "@/lib/chapter-access";
+import { getPremiumPreviewContent } from "@/lib/chapter-access";
 import { DEFAULT_SUBSCRIPTION_PRICE } from "@/lib/subscription";
 import { useAuth } from "@/context/AuthContext";
+import { isPremiumUser } from "@/types/user";
 import { ReaderTopbar } from "@/components/leer/ReaderTopbar";
 import { ReaderWatermark } from "@/components/leer/ReaderWatermark";
 import { PaywallBanner } from "@/components/leer/PaywallBanner";
@@ -21,7 +22,7 @@ interface ReaderViewProps {
 }
 
 export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderViewProps) {
-  const { user, isSubscriber, loading, openAuthModal } = useAuth();
+  const { user, userProfile, isSubscriber, loading, openAuthModal, refreshUserProfile } = useAuth();
   const [fontSize, setFontSize] = useState(18);
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
   const [premiumContent, setPremiumContent] = useState<string[] | null>(null);
@@ -29,7 +30,8 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
   const [contentError, setContentError] = useState("");
 
   const subscriptionPrice = book.membershipPrice ?? DEFAULT_SUBSCRIPTION_PRICE;
-  const isPremiumLocked = chapter.isPremium && !isSubscriber;
+  const hasActiveSubscription = isSubscriber && isPremiumUser(userProfile);
+  const isPremiumLocked = chapter.isPremium && !hasActiveSubscription;
 
   const watermarkLabel = useMemo(() => {
     if (!user) return "";
@@ -37,7 +39,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
   }, [user]);
 
   const loadPremiumContent = useCallback(async () => {
-    if (!user || !chapter.isPremium || !isSubscriber) return;
+    if (!user || !chapter.isPremium || !hasActiveSubscription) return;
 
     setContentLoading(true);
     setContentError("");
@@ -85,7 +87,12 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
     } finally {
       setContentLoading(false);
     }
-  }, [chapter.id, chapter.isPremium, isSubscriber, user]);
+  }, [chapter.id, chapter.isPremium, hasActiveSubscription, user]);
+
+  useEffect(() => {
+    if (loading || !user || !chapter.isPremium) return;
+    void refreshUserProfile();
+  }, [chapter.id, chapter.isPremium, user, loading, refreshUserProfile]);
 
   useEffect(() => {
     if (loading) return;
@@ -97,19 +104,22 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
   useEffect(() => {
     setPremiumContent(null);
     setContentError("");
-    if (chapter.isPremium && isSubscriber && user) {
+    if (chapter.isPremium && hasActiveSubscription && user) {
       loadPremiumContent();
     }
-  }, [chapter.id, chapter.isPremium, isSubscriber, user, loadPremiumContent]);
+  }, [chapter.id, chapter.isPremium, hasActiveSubscription, user, loadPremiumContent]);
 
   const hasFullPremiumAccess =
-    chapter.isPremium && isSubscriber && premiumContent !== null && premiumContent.length > 0;
+    chapter.isPremium &&
+    hasActiveSubscription &&
+    premiumContent !== null &&
+    premiumContent.length > 0;
 
   const paragraphs = useMemo(() => {
     if (!chapter.isPremium) return chapter.content;
-    if (isSubscriber && premiumContent) return premiumContent;
-    return chapter.content.slice(0, PREVIEW_PARAGRAPHS);
-  }, [chapter.content, chapter.isPremium, isSubscriber, premiumContent]);
+    if (hasActiveSubscription && premiumContent) return premiumContent;
+    return getPremiumPreviewContent(chapter.content);
+  }, [chapter.content, chapter.isPremium, hasActiveSubscription, premiumContent]);
 
   const handleSubscribeClick = () => {
     if (!user) {
@@ -205,15 +215,23 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
           )}
 
           {!contentLoading && (
-            <div className="mt-8 space-y-6">
-              {paragraphs.map((paragraph, index) => (
-                <p
-                  key={index}
-                  className="leading-relaxed text-ink/90"
-                  style={{ fontSize: `${fontSize}px`, lineHeight: 1.8 }}
-                  dangerouslySetInnerHTML={{ __html: paragraph }}
+            <div className="relative mt-8">
+              <div className={`space-y-6 ${isPremiumLocked ? "max-h-[420px] overflow-hidden" : ""}`}>
+                {paragraphs.map((paragraph, index) => (
+                  <p
+                    key={index}
+                    className="leading-relaxed text-ink/90"
+                    style={{ fontSize: `${fontSize}px`, lineHeight: 1.8 }}
+                    dangerouslySetInnerHTML={{ __html: paragraph }}
+                  />
+                ))}
+              </div>
+              {isPremiumLocked && (
+                <div
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-paper via-paper/90 to-transparent"
+                  aria-hidden
                 />
-              ))}
+              )}
             </div>
           )}
 

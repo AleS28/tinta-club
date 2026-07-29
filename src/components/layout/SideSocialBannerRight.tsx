@@ -3,6 +3,7 @@ import { SideBannerSocialButton } from "@/components/layout/SocialIconLink";
 
 const BANNER_GRADIENTS: Record<SideBannerSocialKey, string> = {
   discord: "from-[#5865F2] to-[#2A1810]",
+  telegram: "from-[#229ED9] to-[#2A1810]",
   instagram: "from-[#D27C5A] to-[#C06240]",
   tiktok: "from-[#D4A359] to-[#2A1810]",
 };
@@ -29,7 +30,7 @@ export function SideSocialBannerRight() {
             className="text-[10px] font-bold uppercase tracking-widest text-[#2A1810] [writing-mode:vertical-lr]"
             aria-hidden
           >
-            Únete a nuestras Redes y Discord
+            Únete a nuestras Redes
           </p>
         </div>
       </div>

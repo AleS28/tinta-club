@@ -1,3 +1,5 @@
+import { TELEGRAM_INVITE_URL, isTelegramConfigured } from "@/lib/telegram";
+
 export type CommunitySocialKey = "discord" | "instagram" | "telegram" | "tiktok" | "x";
 
 const ENV_KEYS: Record<CommunitySocialKey, string> = {
@@ -9,6 +11,10 @@ const ENV_KEYS: Record<CommunitySocialKey, string> = {
 };
 
 export function getCommunitySocialUrl(key: CommunitySocialKey): string | null {
+  if (key === "telegram" && isTelegramConfigured()) {
+    return TELEGRAM_INVITE_URL;
+  }
+
   const raw = process.env[ENV_KEYS[key]]?.trim() ?? "";
   return raw.startsWith("http") ? raw : null;
 }
@@ -21,6 +27,6 @@ export const COMMUNITY_SOCIAL_ORDER: CommunitySocialKey[] = [
   "x",
 ];
 
-export const SIDE_BANNER_SOCIAL_ORDER = ["discord", "instagram", "tiktok"] as const;
+export const SIDE_BANNER_SOCIAL_ORDER = ["discord", "telegram", "instagram", "tiktok"] as const;
 
 export type SideBannerSocialKey = (typeof SIDE_BANNER_SOCIAL_ORDER)[number];

@@ -72,6 +72,8 @@ export function SideBannerSocialButton({
   const inner =
     platform === "discord" ? (
       <DiscordIcon className="h-6 w-6 fill-white" />
+    ) : platform === "telegram" ? (
+      <Send className="h-6 w-6 text-white" aria-hidden />
     ) : platform === "instagram" ? (
       <Instagram className="h-6 w-6 text-white" aria-hidden />
     ) : (

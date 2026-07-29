@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { BRAND_NAME, BRAND_TAGLINE } from "@/lib/brand";
 import { isDiscordConfigured } from "@/lib/discord";
+import { isTelegramConfigured } from "@/lib/telegram";
 import { DiscordInviteLink } from "@/components/discord/DiscordInviteLink";
+import { TelegramInviteLink } from "@/components/telegram/TelegramInviteLink";
 
 export function Footer() {
   return (
@@ -19,12 +21,23 @@ export function Footer() {
           </Link>
         </nav>
 
-        {isDiscordConfigured() && (
-          <DiscordInviteLink
-            className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#5865F2]/25 bg-[#5865F2]/5 px-5 py-2.5 text-sm font-medium text-[#4752C4] transition-all duration-300 hover:border-[#5865F2]/40 hover:bg-[#5865F2]/10 hover:text-[#5865F2]"
-          >
-            Únete a nuestra comunidad en Discord
-          </DiscordInviteLink>
+        {(isDiscordConfigured() || isTelegramConfigured()) && (
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            {isDiscordConfigured() && (
+              <DiscordInviteLink
+                className="inline-flex items-center gap-2 rounded-full border border-[#5865F2]/25 bg-[#5865F2]/5 px-5 py-2.5 text-sm font-medium text-[#4752C4] transition-all duration-300 hover:border-[#5865F2]/40 hover:bg-[#5865F2]/10 hover:text-[#5865F2]"
+              >
+                Únete a Discord
+              </DiscordInviteLink>
+            )}
+            {isTelegramConfigured() && (
+              <TelegramInviteLink
+                className="inline-flex items-center gap-2 rounded-full border border-[#229ED9]/25 bg-[#229ED9]/5 px-5 py-2.5 text-sm font-medium text-[#1d8bc4] transition-all duration-300 hover:border-[#229ED9]/40 hover:bg-[#229ED9]/10 hover:text-[#229ED9]"
+              >
+                Únete a Telegram
+              </TelegramInviteLink>
+            )}
+          </div>
         )}
 
         <p className="mt-4 text-xs text-muted/80">

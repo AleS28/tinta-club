@@ -27,7 +27,7 @@ export const founderAuthors: FounderAuthorConfig[] = [
   {
     slug: "will-flechas",
     legacyAuthorId: "author-will-flechas",
-    bookIds: ["will-chica-cafe"],
+    bookIds: ["will-chica-cafe", "will-whisky-por-favor"],
     name: willProfile?.name ?? "WillFlechas",
     bio: willProfile?.bio ?? "",
     photoUrl: willProfile?.photoUrl ?? "",

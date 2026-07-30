@@ -23,10 +23,13 @@ export interface AuthorUpcomingWork {
   id: string;
   title: string;
   genre: string;
-  status: "coming-soon" | "in-progress";
+  status: "coming-soon" | "in-progress" | "published";
   coverGradient: string;
   coverAccent: string;
   teaser?: string;
+  bookId?: string;
+  firstChapterId?: string;
+  freeChaptersCount?: number;
 }
 
 export interface AuthorPublicProfile {

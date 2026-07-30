@@ -1,5 +1,6 @@
 import { pedroAmorCafeChapters } from "./pedro-amor-cafe-chapters";
 import { willChicaCafeChapters } from "./will-chica-cafe-chapters";
+import { willWhiskyChapters } from "./will-whisky-chapters";
 
 export type Genre = "Romance" | "Fantasía" | "Terror" | "Ciencia Ficción";
 
@@ -64,10 +65,24 @@ export const willChicaCafeBook: Book = {
   membershipPrice: 5,
 };
 
+export const willWhiskyBook: Book = {
+  id: "will-whisky-por-favor",
+  title: "Un whisky, por favor",
+  author: "WillFlechas",
+  authorId: "author-will-flechas",
+  genre: "Romance",
+  rating: 4.6,
+  coverGradient: "from-slate-800 via-amber-950 to-stone-900",
+  coverAccent: "#92400E",
+  synopsis:
+    "Un muchacho escapa de las preguntas de su madre rumbo a un bar, arrastrando el recuerdo de su padre, una cerveza rota a los siete años y el retrato silencioso que lo escucha sin juzgar. Entre el tráfico, el whisky pedido con valentía y una mesera que no lo mira, descubrirá que la infancia tiene formas extrañas de volver cuando menos lo esperas.",
+  membershipPrice: 5,
+};
+
 /** Obra en primera plana del home */
 export const featuredBook = pedroAmorCafeBook;
 
-export const sideBooks: Book[] = [willChicaCafeBook];
+export const sideBooks: Book[] = [willChicaCafeBook, willWhiskyBook];
 
 export const genres: { id: Genre; icon: string; color: string }[] = [
   { id: "Romance", icon: "heart", color: "bg-rose-100 text-rose-600 hover:bg-rose-200" },
@@ -76,7 +91,7 @@ export const genres: { id: Genre; icon: string; color: string }[] = [
   { id: "Ciencia Ficción", icon: "rocket", color: "bg-indigo-100 text-indigo-600 hover:bg-indigo-200" },
 ];
 
-export const books: Book[] = [willChicaCafeBook];
+export const books: Book[] = [willChicaCafeBook, willWhiskyBook];
 
 export const topAuthors: Author[] = [
   {
@@ -92,14 +107,18 @@ export const topAuthors: Author[] = [
     name: "WillFlechas",
     initials: "WF",
     avatarColor: "bg-stone-700",
-    bookCount: 1,
+    bookCount: 2,
     slug: "will-flechas",
   },
 ];
 
-export const chapters: Chapter[] = [...pedroAmorCafeChapters, ...willChicaCafeChapters];
+export const chapters: Chapter[] = [
+  ...pedroAmorCafeChapters,
+  ...willChicaCafeChapters,
+  ...willWhiskyChapters,
+];
 
-export const allBooks: Book[] = [pedroAmorCafeBook, willChicaCafeBook];
+export const allBooks: Book[] = [pedroAmorCafeBook, willChicaCafeBook, willWhiskyBook];
 
 export function getBookById(id: string): Book | undefined {
   return allBooks.find((book) => book.id === id);

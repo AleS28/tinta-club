@@ -55,7 +55,21 @@ export const authorProfiles: AuthorPublicProfile[] = [
       freeChaptersCount: 2,
       membershipPriceUsd: 5,
     },
-    upcomingWorks: [],
+    upcomingWorks: [
+      {
+        id: "will-whisky-por-favor",
+        title: "Un whisky, por favor",
+        genre: "Drama urbano",
+        status: "published",
+        coverGradient: "from-slate-800 via-amber-950 to-stone-900",
+        coverAccent: "#92400E",
+        bookId: "will-whisky-por-favor",
+        firstChapterId: "will-whisky-cap-1",
+        freeChaptersCount: 2,
+        teaser:
+          "Un muchacho escapa de las preguntas de su madre rumbo a un bar, arrastrando el recuerdo de su padre y una infancia que regresa en el último sorbo.",
+      },
+    ],
   },
 ];
 

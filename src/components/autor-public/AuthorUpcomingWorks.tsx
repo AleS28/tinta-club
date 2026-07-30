@@ -83,9 +83,20 @@ export function AuthorUpcomingWorks({ works }: AuthorUpcomingWorksProps) {
 function WorkCover({ work }: { work: AuthorUpcomingWork }) {
   return (
     <div
-      className={`relative flex aspect-[3/4] items-center justify-center bg-gradient-to-br ${work.coverGradient}`}
+      className={`relative aspect-[3/4] overflow-hidden bg-gradient-to-br ${work.coverGradient}`}
     >
-      <Sparkles className="h-10 w-10 text-white/40" />
+      {work.coverUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={work.coverUrl}
+          alt={`Portada de ${work.title}`}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="flex h-full items-center justify-center">
+          <Sparkles className="h-10 w-10 text-white/40" />
+        </div>
+      )}
       <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-black/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#FCF9F5] backdrop-blur-sm">
         {work.status === "published" ? (
           <BookOpen className="h-3 w-3" />
@@ -94,9 +105,11 @@ function WorkCover({ work }: { work: AuthorUpcomingWork }) {
         )}
         {statusLabels[work.status]}
       </span>
-      <p className="absolute bottom-6 left-6 right-6 font-serif text-2xl font-bold text-white/90">
-        {work.title}
-      </p>
+      {!work.coverUrl && (
+        <p className="absolute bottom-6 left-6 right-6 font-serif text-2xl font-bold text-white/90">
+          {work.title}
+        </p>
+      )}
     </div>
   );
 }

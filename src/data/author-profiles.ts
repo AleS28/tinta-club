@@ -49,6 +49,7 @@ export const authorProfiles: AuthorPublicProfile[] = [
       genres: ["Drama urbano", "Romance contemporáneo"],
       synopsis:
         "Un hombre solitario vive hipnotizado por la sonrisa de la barista que le sirve café los sábados. Entre el aroma del espresso, la timidez compartida y las ilusiones que lo mantienen respirando, descubre que a veces el amor —o la idea de amor— puede ser tan intenso como una taza recién servida.",
+      coverUrl: "/authors/will-flechas/la-chica-del-cafe-cover.png",
       coverGradient: "from-stone-700 via-amber-900 to-stone-950",
       coverAccent: "#A16207",
       firstChapterId: "will-chica-cafe-cap-1",
@@ -61,6 +62,7 @@ export const authorProfiles: AuthorPublicProfile[] = [
         title: "Un whisky, por favor",
         genre: "Drama urbano",
         status: "published",
+        coverUrl: "/authors/will-flechas/un-whisky-por-favor-cover.png",
         coverGradient: "from-slate-800 via-amber-950 to-stone-900",
         coverAccent: "#92400E",
         bookId: "will-whisky-por-favor",

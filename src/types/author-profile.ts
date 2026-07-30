@@ -27,6 +27,7 @@ export interface AuthorUpcomingWork {
   coverGradient: string;
   coverAccent: string;
   teaser?: string;
+  coverUrl?: string;
   bookId?: string;
   firstChapterId?: string;
   freeChaptersCount?: number;

@@ -60,6 +60,7 @@ export const willChicaCafeBook: Book = {
   rating: 4.7,
   coverGradient: "from-stone-700 via-amber-900 to-stone-950",
   coverAccent: "#A16207",
+  coverUrl: "/authors/will-flechas/la-chica-del-cafe-cover.png",
   synopsis:
     "Un hombre solitario vive hipnotizado por la sonrisa de la barista que le sirve café los sábados. Entre el aroma del espresso, la timidez compartida y las ilusiones que lo mantienen respirando, descubre que a veces el amor —o la idea de amor— puede ser tan intenso como una taza recién servida.",
   membershipPrice: 5,
@@ -74,6 +75,7 @@ export const willWhiskyBook: Book = {
   rating: 4.6,
   coverGradient: "from-slate-800 via-amber-950 to-stone-900",
   coverAccent: "#92400E",
+  coverUrl: "/authors/will-flechas/un-whisky-por-favor-cover.png",
   synopsis:
     "Un muchacho escapa de las preguntas de su madre rumbo a un bar, arrastrando el recuerdo de su padre, una cerveza rota a los siete años y el retrato silencioso que lo escucha sin juzgar. Entre el tráfico, el whisky pedido con valentía y una mesera que no lo mira, descubrirá que la infancia tiene formas extrañas de volver cuando menos lo esperas.",
   membershipPrice: 5,

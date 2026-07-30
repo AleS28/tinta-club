@@ -4,6 +4,9 @@ import { FormEvent, useState } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { Book } from "@/data/mock";
 import { createChapter } from "@/lib/db";
+import { useAuth } from "@/context/AuthContext";
+import { canAuthorPublish } from "@/types/user";
+import { AuthorPublishGate } from "@/components/autor/AuthorPublishGate";
 
 interface PublishChapterFormProps {
   books: Book[];
@@ -11,6 +14,9 @@ interface PublishChapterFormProps {
 }
 
 export function PublishChapterForm({ books, onSuccess }: PublishChapterFormProps) {
+  const { user, userProfile } = useAuth();
+  const canPublish = canAuthorPublish(userProfile);
+
   const [bookId, setBookId] = useState(books[0]?.id ?? "");
   const [number, setNumber] = useState("1");
   const [title, setTitle] = useState("");
@@ -22,8 +28,12 @@ export function PublishChapterForm({ books, onSuccess }: PublishChapterFormProps
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!bookId) {
-      setError("Primero publica un libro para agregar capítulos.");
+    if (!bookId || !canPublish) {
+      if (!canPublish) {
+        setError("Debes firmar el acuerdo de autor antes de publicar.");
+      } else {
+        setError("Primero publica un libro para agregar capítulos.");
+      }
       return;
     }
 
@@ -43,21 +53,27 @@ export function PublishChapterForm({ books, onSuccess }: PublishChapterFormProps
         return;
       }
 
-      await createChapter({
-        bookId,
-        number: parseInt(number, 10) || 1,
-        title: title.trim(),
-        content: paragraphs,
-        isPremium,
-      });
+      await createChapter(
+        {
+          bookId,
+          number: parseInt(number, 10) || 1,
+          title: title.trim(),
+          content: paragraphs,
+          isPremium,
+        },
+        user?.uid,
+      );
 
       setSuccess("¡Capítulo publicado exitosamente!");
       setTitle("");
       setContent("");
       setNumber(String(parseInt(number, 10) + 1));
+      setIsPremium(false);
       onSuccess();
-    } catch {
-      setError("No pudimos publicar el capítulo. Intenta de nuevo.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "No pudimos publicar el capítulo. Intenta de nuevo.",
+      );
     } finally {
       setLoading(false);
     }
@@ -73,6 +89,10 @@ export function PublishChapterForm({ books, onSuccess }: PublishChapterFormProps
         </p>
       </div>
     );
+  }
+
+  if (!canPublish) {
+    return <AuthorPublishGate />;
   }
 
   return (
@@ -163,7 +183,7 @@ export function PublishChapterForm({ books, onSuccess }: PublishChapterFormProps
           type="button"
           role="switch"
           aria-checked={isPremium}
-          onClick={() => setIsPremium((v) => !v)}
+          onClick={() => setIsPremium((value) => !value)}
           className={`relative h-7 w-12 rounded-full transition-colors ${
             isPremium ? "bg-terracotta" : "bg-sidebar"
           }`}

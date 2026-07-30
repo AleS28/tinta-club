@@ -82,6 +82,15 @@ export async function getUserProfileFromFirestore(
       bio: raw.bio as string | undefined,
       authorSlug: raw.authorSlug as string | undefined,
       legacyAuthorId: raw.legacyAuthorId as string | undefined,
+      legalFullName: raw.legalFullName as string | undefined,
+      legalIdNumber: raw.legalIdNumber as string | undefined,
+      contactPhone: raw.contactPhone as string | undefined,
+      paymentDetails: raw.paymentDetails as string | undefined,
+      agreementSigned: raw.agreementSigned === true,
+      agreementSignedAt: raw.agreementSignedAt as string | undefined,
+      agreementSignatureName: raw.agreementSignatureName as string | undefined,
+      agreementVersion: raw.agreementVersion as string | undefined,
+      agreementHash: raw.agreementHash as string | undefined,
     });
   } catch (error) {
     console.error("[firestore-admin] user read:", error);

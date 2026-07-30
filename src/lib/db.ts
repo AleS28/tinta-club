@@ -183,9 +183,20 @@ export interface CreateChapterInput {
   isPremium: boolean;
 }
 
-export async function createBook(input: CreateBookInput): Promise<string> {
+export async function createBook(input: CreateBookInput, authorUid?: string): Promise<string> {
   if (!db || !isFirebaseConfigured) {
     throw new Error("Firestore no está configurado");
+  }
+
+  if (authorUid) {
+    const userSnap = await getDoc(doc(db, "users", authorUid));
+    const userData = userSnap.data();
+    const isAdmin = userData?.role === "admin";
+    if (!isAdmin && userData?.agreementSigned !== true) {
+      throw new Error(
+        "Debes firmar el acuerdo de autor en /autor/acuerdo antes de publicar cualquier obra.",
+      );
+    }
   }
 
   const bookRef = doc(collection(db, "books"));
@@ -209,9 +220,20 @@ export async function createBook(input: CreateBookInput): Promise<string> {
   return bookRef.id;
 }
 
-export async function createChapter(input: CreateChapterInput): Promise<string> {
+export async function createChapter(input: CreateChapterInput, authorUid?: string): Promise<string> {
   if (!db || !isFirebaseConfigured) {
     throw new Error("Firestore no está configurado");
+  }
+
+  if (authorUid) {
+    const userSnap = await getDoc(doc(db, "users", authorUid));
+    const userData = userSnap.data();
+    const isAdmin = userData?.role === "admin";
+    if (!isAdmin && userData?.agreementSigned !== true) {
+      throw new Error(
+        "Debes firmar el acuerdo de autor en /autor/acuerdo antes de publicar cualquier capítulo.",
+      );
+    }
   }
 
   const chapterId = `${input.bookId}-cap-${input.number}`;

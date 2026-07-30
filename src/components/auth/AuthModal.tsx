@@ -1,12 +1,13 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { BookOpen, Loader2, PenLine, X } from "lucide-react";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { BRAND_NAME } from "@/lib/brand";
 import { useAuth } from "@/context/AuthContext";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { getAuthErrorMessage, isAuthCancellation } from "@/lib/auth-errors";
+import type { RegistrationAccountType } from "@/types/registration";
 
 type AuthMode = "login" | "register";
 
@@ -20,6 +21,7 @@ export function AuthModal() {
   } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>("login");
+  const [accountType, setAccountType] = useState<RegistrationAccountType | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,6 +33,7 @@ export function AuthModal() {
     setDisplayName("");
     setEmail("");
     setPassword("");
+    setAccountType(null);
   };
 
   const handleClose = () => {
@@ -80,18 +83,29 @@ export function AuthModal() {
       if (mode === "login") {
         await loginWithEmail(email, password);
       } else {
-        if (!displayName.trim()) {
-          setError("Ingresa tu nombre para continuar.");
+        if (!accountType) {
+          setError("Selecciona si te registras como lector o como autor.");
           return;
         }
-        await signUpWithEmail(email, password, displayName.trim());
+        if (accountType === "author" && !displayName.trim()) {
+          setError("Ingresa tu nombre de autor o seudónimo.");
+          return;
+        }
+        const name =
+          displayName.trim() ||
+          (accountType === "reader" ? email.split("@")[0] : "");
+        if (!name) {
+          setError("Ingresa un nombre para continuar.");
+          return;
+        }
+        await signUpWithEmail(email, password, name, accountType);
       }
       resetForm();
       setMode("login");
-    } catch (error) {
+    } catch (submitError) {
       setError(
         getAuthErrorMessage(
-          error,
+          submitError,
           mode === "login"
             ? "No pudimos iniciar sesión. Revisa tus credenciales."
             : "No pudimos crear tu cuenta. Intenta con otro correo.",
@@ -106,19 +120,30 @@ export function AuthModal() {
     setError("");
     setLoading(true);
     try {
-      await loginWithGoogle();
+      if (mode === "register") {
+        if (!accountType) {
+          setError("Primero elige si te registras como lector o como autor.");
+          return;
+        }
+        await loginWithGoogle({ registrationType: accountType });
+      } else {
+        await loginWithGoogle();
+      }
       resetForm();
       setMode("login");
-    } catch (error) {
-      if (isAuthCancellation(error)) {
-        setError(getAuthErrorMessage(error, ""));
+    } catch (googleError) {
+      if (isAuthCancellation(googleError)) {
+        setError(getAuthErrorMessage(googleError, ""));
         return;
       }
-      setError(getAuthErrorMessage(error, "No pudimos conectar con Google. Intenta de nuevo."));
+      setError(getAuthErrorMessage(googleError, "No pudimos conectar con Google. Intenta de nuevo."));
     } finally {
       setLoading(false);
     }
   };
+
+  const isRegister = mode === "register";
+  const showRegistrationFields = !isRegister || accountType !== null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -128,7 +153,7 @@ export function AuthModal() {
         aria-hidden="true"
       />
 
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-paper shadow-2xl">
+      <div className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-paper shadow-2xl">
         <button
           onClick={handleClose}
           aria-label="Cerrar"
@@ -138,16 +163,18 @@ export function AuthModal() {
         </button>
 
         <div className="bg-gradient-to-br from-terracotta to-orange-700 px-6 py-8 text-white">
-          <div className="flex items-center gap-2">
-            <BrandLogo size="sm" variant="light" />
-          </div>
+          <BrandLogo size="sm" variant="light" />
           <h2 className="mt-4 font-serif text-2xl font-bold">
             {mode === "login" ? "Bienvenido de vuelta" : `Únete a ${BRAND_NAME}`}
           </h2>
           <p className="mt-1 text-sm text-white/85">
             {mode === "login"
               ? "Inicia sesión para continuar leyendo."
-              : "Crea tu cuenta y descubre historias únicas."}
+              : accountType === "author"
+                ? "Registro de autor — publica tus historias en el Imperio."
+                : accountType === "reader"
+                  ? "Registro de lector — descubre y apoya a tus autores favoritos."
+                  : "Elige cómo quieres formar parte del Imperio."}
           </p>
         </div>
 
@@ -173,95 +200,166 @@ export function AuthModal() {
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-full border border-sidebar bg-white py-2.5 text-sm font-medium text-ink transition-colors hover:bg-sidebar disabled:opacity-60"
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <GoogleIcon />
-                Continuar con Google
-              </>
-            )}
-          </button>
-
-          <p className="mt-2 text-center text-xs text-muted">
-            ¿Se quedó en blanco? Cierra esa pestaña y vuelve aquí. Usa{" "}
-            <strong className="text-ink">Chrome o Edge</strong> en{" "}
-            <strong className="text-ink">localhost:3000</strong>.
-          </p>
-
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-sidebar" />
-            <span className="text-xs text-muted">o con correo</span>
-            <div className="h-px flex-1 bg-sidebar" />
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === "register" && (
-              <div>
-                <label htmlFor="displayName" className="mb-1.5 block text-xs font-medium text-muted">
-                  Nombre
-                </label>
-                <input
-                  id="displayName"
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Tu nombre"
-                  className="w-full rounded-xl border border-sidebar bg-white px-4 py-2.5 text-sm text-ink outline-none transition-colors focus:border-terracotta"
-                />
+          {isRegister && (
+            <div className="mb-5">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
+                1. ¿Cómo quieres registrarte?
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setAccountType("reader")}
+                  className={`rounded-2xl border p-4 text-left transition-all ${
+                    accountType === "reader"
+                      ? "border-terracotta bg-terracotta/5 shadow-sm"
+                      : "border-sidebar bg-white hover:border-terracotta/40"
+                  }`}
+                >
+                  <BookOpen
+                    className={`h-5 w-5 ${accountType === "reader" ? "text-terracotta" : "text-muted"}`}
+                  />
+                  <p className="mt-2 text-sm font-bold text-ink">Lector</p>
+                  <p className="mt-1 text-xs text-muted">Leer, guardar y suscribirte a obras.</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAccountType("author")}
+                  className={`rounded-2xl border p-4 text-left transition-all ${
+                    accountType === "author"
+                      ? "border-terracotta bg-terracotta/5 shadow-sm"
+                      : "border-sidebar bg-white hover:border-terracotta/40"
+                  }`}
+                >
+                  <PenLine
+                    className={`h-5 w-5 ${accountType === "author" ? "text-terracotta" : "text-muted"}`}
+                  />
+                  <p className="mt-2 text-sm font-bold text-ink">Autor</p>
+                  <p className="mt-1 text-xs text-muted">Publicar obras y capítulos en la plataforma.</p>
+                </button>
               </div>
-            )}
-
-            <div>
-              <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-muted">
-                Correo electrónico
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@correo.com"
-                className="w-full rounded-xl border border-sidebar bg-white px-4 py-2.5 text-sm text-ink outline-none transition-colors focus:border-terracotta"
-              />
+              {accountType === "author" && (
+                <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-950">
+                  Como autor deberás firmar el acuerdo de publicación antes de publicar cualquier obra.
+                </p>
+              )}
             </div>
+          )}
 
-            <div>
-              <label htmlFor="password" className="mb-1.5 block text-xs font-medium text-muted">
-                Contraseña
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
-                className="w-full rounded-xl border border-sidebar bg-white px-4 py-2.5 text-sm text-ink outline-none transition-colors focus:border-terracotta"
-              />
-            </div>
+          {showRegistrationFields && (
+            <>
+              {isRegister && (
+                <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted">
+                  2. Completa tus datos
+                </p>
+              )}
 
-            {error && (
-              <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
-            )}
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={loading || (isRegister && !accountType)}
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-sidebar bg-white py-2.5 text-sm font-medium text-ink transition-colors hover:bg-sidebar disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <GoogleIcon />
+                    Continuar con Google
+                  </>
+                )}
+              </button>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-terracotta py-3 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-orange-700 disabled:opacity-60"
-            >
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {mode === "login" ? "Iniciar Sesión" : "Crear Cuenta"}
-            </button>
-          </form>
+              <div className="my-5 flex items-center gap-3">
+                <div className="h-px flex-1 bg-sidebar" />
+                <span className="text-xs text-muted">o con correo</span>
+                <div className="h-px flex-1 bg-sidebar" />
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {isRegister && accountType === "author" && (
+                  <div>
+                    <label htmlFor="displayName" className="mb-1.5 block text-xs font-medium text-muted">
+                      Nombre de autor / seudónimo
+                    </label>
+                    <input
+                      id="displayName"
+                      type="text"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="Ej. Will Flechas"
+                      className="w-full rounded-xl border border-sidebar bg-white px-4 py-2.5 text-sm text-ink outline-none transition-colors focus:border-terracotta"
+                    />
+                  </div>
+                )}
+
+                {isRegister && accountType === "reader" && (
+                  <div>
+                    <label htmlFor="displayName" className="mb-1.5 block text-xs font-medium text-muted">
+                      Nombre (opcional)
+                    </label>
+                    <input
+                      id="displayName"
+                      type="text"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="Cómo te gustaría que te llamemos"
+                      className="w-full rounded-xl border border-sidebar bg-white px-4 py-2.5 text-sm text-ink outline-none transition-colors focus:border-terracotta"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-muted">
+                    Correo electrónico
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="tu@correo.com"
+                    className="w-full rounded-xl border border-sidebar bg-white px-4 py-2.5 text-sm text-ink outline-none transition-colors focus:border-terracotta"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="mb-1.5 block text-xs font-medium text-muted">
+                    Contraseña
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    required
+                    minLength={6}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
+                    className="w-full rounded-xl border border-sidebar bg-white px-4 py-2.5 text-sm text-ink outline-none transition-colors focus:border-terracotta"
+                  />
+                </div>
+
+                {error && (
+                  <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading || (isRegister && !accountType)}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-terracotta py-3 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {mode === "login" ? "Iniciar Sesión" : "Crear Cuenta"}
+                </button>
+              </form>
+            </>
+          )}
+
+          {isRegister && !accountType && (
+            <p className="text-center text-sm text-muted">
+              Selecciona Lector o Autor para continuar con el registro.
+            </p>
+          )}
         </div>
       </div>
     </div>

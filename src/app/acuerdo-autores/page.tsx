@@ -36,7 +36,7 @@ export default function AcuerdoAutoresPage() {
             icon: Lock,
             title: "Exclusividad del contenido de pago",
             description:
-              "Los capítulos premium (4 en adelante) no deben publicarse gratuitamente en Wattpad, blogs personales ni otras plataformas mientras estén activos en el Imperio.",
+              "Los capítulos marcados como premium no deben publicarse gratuitamente en Wattpad, blogs personales ni otras plataformas mientras estén activos en el Imperio.",
             tone: "terracotta",
           },
           {
@@ -53,7 +53,9 @@ export default function AcuerdoAutoresPage() {
       <p>
         El presente Acuerdo de Publicación regula la relación entre el autor («Autor») y {BRAND_NAME}
         («Plataforma») para la difusión digital de obras literarias originales mediante el modelo de
-        lectura por capítulos y suscripción premium.
+        lectura por capítulos y suscripción premium. La firma se realiza{" "}
+        <strong>a nivel de cuenta de autor</strong> y aplica a todas las obras presentes y futuras
+        publicadas bajo esa cuenta.
       </p>
 
       <h2>2. Titularidad y derechos de autor</h2>
@@ -87,19 +89,20 @@ export default function AcuerdoAutoresPage() {
         </li>
       </ul>
       <p>
-        Los capítulos 1 al 3 podrán ofrecerse gratuitamente como muestra. A partir del capítulo 4, el
-        contenido se considera premium y queda sujeto a suscripción activa del lector.
+        Los capítulos de muestra podrán ofrecerse gratuitamente según la configuración de cada obra.
+        Los capítulos marcados como <strong>premium / de pago</strong> requieren suscripción activa
+        del lector y están sujetos a exclusividad mientras la obra permanezca activa en la plataforma.
       </p>
 
       <h2>5. Exclusividad del contenido de pago</h2>
       <p>
         Mientras una obra permanezca activa en {BRAND_NAME}, el Autor se compromete a no publicar de
-        forma gratuita los <strong>capítulos premium (4 en adelante)</strong> en Wattpad, blogs
+        forma gratuita los <strong>capítulos configurados como premium</strong> en Wattpad, blogs
         personales, redes sociales ni otras plataformas digitales que compitan directamente con el modelo
         de suscripción del Imperio.
       </p>
       <p>
-        Los capítulos de muestra (1 al 3) pueden utilizarse con fines promocionales limitados, siempre
+        Los capítulos de muestra gratuitos pueden utilizarse con fines promocionales limitados, siempre
         que no sustituyan la experiencia completa de lectura en la plataforma.
       </p>
 

@@ -3,8 +3,10 @@
 import { FormEvent, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { genres, type Genre } from "@/data/mock";
-import { createBook, promoteUserToAuthor } from "@/lib/db";
+import { createBook } from "@/lib/db";
 import { useAuth } from "@/context/AuthContext";
+import { canAuthorPublish } from "@/types/user";
+import { AuthorPublishGate } from "@/components/autor/AuthorPublishGate";
 
 interface PublishBookFormProps {
   onSuccess: () => void;
@@ -12,6 +14,8 @@ interface PublishBookFormProps {
 
 export function PublishBookForm({ onSuccess }: PublishBookFormProps) {
   const { user, userProfile } = useAuth();
+  const canPublish = canAuthorPublish(userProfile);
+
   const [title, setTitle] = useState("");
   const [synopsis, setSynopsis] = useState("");
   const [genre, setGenre] = useState<Genre>("Fantasía");
@@ -23,26 +27,25 @@ export function PublishBookForm({ onSuccess }: PublishBookFormProps) {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!user) return;
+    if (!user || !canPublish) return;
 
     setError("");
     setSuccess("");
     setLoading(true);
 
     try {
-      await createBook({
-        title: title.trim(),
-        synopsis: synopsis.trim(),
-        genre,
-        coverUrl: coverUrl.trim() || undefined,
-        membershipPrice: parseFloat(membershipPrice) || 4.99,
-        authorId: user.uid,
-        authorName: userProfile?.displayName ?? user.displayName ?? "Autor",
-      });
-
-      if (userProfile?.role === "reader") {
-        await promoteUserToAuthor(user.uid);
-      }
+      await createBook(
+        {
+          title: title.trim(),
+          synopsis: synopsis.trim(),
+          genre,
+          coverUrl: coverUrl.trim() || undefined,
+          membershipPrice: parseFloat(membershipPrice) || 4.99,
+          authorId: user.uid,
+          authorName: userProfile?.displayName ?? user.displayName ?? "Autor",
+        },
+        user.uid,
+      );
 
       setSuccess("¡Libro publicado exitosamente!");
       setTitle("");
@@ -50,12 +53,18 @@ export function PublishBookForm({ onSuccess }: PublishBookFormProps) {
       setCoverUrl("");
       setMembershipPrice("4.99");
       onSuccess();
-    } catch {
-      setError("No pudimos publicar el libro. Intenta de nuevo.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "No pudimos publicar el libro. Intenta de nuevo.",
+      );
     } finally {
       setLoading(false);
     }
   };
+
+  if (!canPublish) {
+    return <AuthorPublishGate />;
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-sidebar bg-white/70 p-6 shadow-sm">

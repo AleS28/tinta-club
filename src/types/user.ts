@@ -1,3 +1,5 @@
+import { AUTHOR_TERMS_VERSION } from "@/types/terms";
+
 export type UserRole = "reader" | "author" | "admin";
 export type SubscriptionStatus = "free" | "premium";
 
@@ -20,6 +22,16 @@ export interface UserProfile {
   subscriptionExpiresAt?: string;
   createdAt?: string;
   subscribedAt?: string;
+  /** Acuerdo de autor firmado a nivel de cuenta */
+  legalFullName?: string;
+  legalIdNumber?: string;
+  contactPhone?: string;
+  paymentDetails?: string;
+  agreementSigned?: boolean;
+  agreementSignedAt?: string;
+  agreementSignatureName?: string;
+  agreementVersion?: string;
+  agreementHash?: string;
 }
 
 export function isAdminUser(profile: UserProfile | null | undefined): boolean {
@@ -28,6 +40,20 @@ export function isAdminUser(profile: UserProfile | null | undefined): boolean {
 
 export function hasAuthorPanelAccess(profile: UserProfile | null | undefined): boolean {
   return profile?.role === "author" || profile?.role === "admin";
+}
+
+/** Acuerdo de autor vigente firmado una sola vez por cuenta. */
+export function hasAuthorAgreementSigned(profile: UserProfile | null | undefined): boolean {
+  if (!profile?.agreementSigned) return false;
+  if (!profile.agreementVersion) return true;
+  return profile.agreementVersion === AUTHOR_TERMS_VERSION;
+}
+
+/** Autor puede publicar obras y capítulos (acuerdo firmado o admin). */
+export function canAuthorPublish(profile: UserProfile | null | undefined): boolean {
+  if (!profile) return false;
+  if (isAdminUser(profile)) return true;
+  return hasAuthorAgreementSigned(profile);
 }
 
 export function isPremiumUser(profile: UserProfile | null | undefined): boolean {

@@ -35,6 +35,14 @@ import {
   type UserProfile,
   type UserRole,
 } from "@/types/user";
+import {
+  clearPendingRegistrationType,
+  consumeNewAuthorRegistration,
+  markNewAuthorRegistration,
+  readPendingRegistrationType,
+  setPendingRegistrationType,
+  type RegistrationAccountType,
+} from "@/types/registration";
 
 interface AuthContextValue {
   user: User | null;
@@ -48,9 +56,14 @@ interface AuthContextValue {
   openAuthModal: (redirectPath?: string) => void;
   closeAuthModal: () => void;
   refreshUserProfile: () => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: (options?: { registrationType?: RegistrationAccountType }) => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
-  signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
+  signUpWithEmail: (
+    email: string,
+    password: string,
+    displayName: string,
+    accountType: RegistrationAccountType,
+  ) => Promise<void>;
   subscribe: (options?: {
     bookId?: string;
     redirectTo?: string;
@@ -61,11 +74,11 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-const defaultProfile = (user: User): UserProfile => ({
+const defaultProfile = (user: User, role: UserRole = "reader"): UserProfile => ({
   uid: user.uid,
   email: user.email ?? "",
-  displayName: user.displayName ?? "Lector",
-  role: "reader",
+  displayName: user.displayName ?? (role === "author" ? "Autor" : "Lector"),
+  role,
   isSubscriber: false,
   photoURL: user.photoURL ?? undefined,
 });
@@ -98,11 +111,20 @@ async function fetchOrCreateUserProfile(user: User): Promise<UserProfile> {
     return normalizeUserProfile(userSnap.data() as UserProfile);
   }
 
-  const profile = normalizeUserProfile(defaultProfile(user));
+  const pendingType = readPendingRegistrationType();
+  const role: UserRole = pendingType === "author" ? "author" : "reader";
+  clearPendingRegistrationType();
+
+  const profile = normalizeUserProfile(defaultProfile(user, role));
   await setDoc(userRef, {
     ...profile,
+    accountType: role,
     createdAt: serverTimestamp(),
   });
+
+  if (role === "author") {
+    markNewAuthorRegistration();
+  }
 
   return profile;
 }
@@ -183,6 +205,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const handleAuthSuccess = useCallback(
     (redirectPath: string | null) => {
       closeAuthModal();
+
+      if (consumeNewAuthorRegistration()) {
+        router.push("/autor/acuerdo");
+        return;
+      }
+
       if (redirectPath) router.push(redirectPath);
     },
     [closeAuthModal, router],
@@ -232,7 +260,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const storedRedirect = sessionStorage.getItem(AUTH_REDIRECT_KEY);
               sessionStorage.removeItem(AUTH_REDIRECT_KEY);
               closeAuthModal();
-              if (storedRedirect) router.push(storedRedirect);
+              if (consumeNewAuthorRegistration()) {
+                router.push("/autor/acuerdo");
+              } else if (storedRedirect) {
+                router.push(storedRedirect);
+              }
             }
           } else {
             clearAuthSessionHint();
@@ -248,30 +280,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe?.();
   }, [closeAuthModal, router]);
 
-  const loginWithGoogle = useCallback(async () => {
-    const auth = getClientAuth();
-    if (!auth) throw new Error("Firebase no está configurado");
+  const loginWithGoogle = useCallback(
+    async (options?: { registrationType?: RegistrationAccountType }) => {
+      const auth = getClientAuth();
+      if (!auth) throw new Error("Firebase no está configurado");
 
-    const provider = new GoogleAuthProvider();
-    provider.addScope("email");
-    provider.addScope("profile");
+      if (options?.registrationType) {
+        setPendingRegistrationType(options.registrationType);
+      }
 
-    const redirect = authRedirectPath;
-    sessionStorage.setItem(AUTH_PENDING_KEY, "1");
-    if (redirect) {
-      sessionStorage.setItem(AUTH_REDIRECT_KEY, redirect);
-    }
+      const provider = new GoogleAuthProvider();
+      provider.addScope("email");
+      provider.addScope("profile");
 
-    try {
-      await signInWithPopup(auth, provider);
-      sessionStorage.removeItem(AUTH_PENDING_KEY);
-      if (redirect) sessionStorage.removeItem(AUTH_REDIRECT_KEY);
-      handleAuthSuccess(redirect);
-    } catch (error) {
-      sessionStorage.removeItem(AUTH_PENDING_KEY);
-      throw error;
-    }
-  }, [authRedirectPath, handleAuthSuccess]);
+      const redirect = authRedirectPath;
+      sessionStorage.setItem(AUTH_PENDING_KEY, "1");
+      if (redirect) {
+        sessionStorage.setItem(AUTH_REDIRECT_KEY, redirect);
+      }
+
+      try {
+        await signInWithPopup(auth, provider);
+        sessionStorage.removeItem(AUTH_PENDING_KEY);
+        if (redirect) sessionStorage.removeItem(AUTH_REDIRECT_KEY);
+        handleAuthSuccess(redirect);
+      } catch (error) {
+        clearPendingRegistrationType();
+        sessionStorage.removeItem(AUTH_PENDING_KEY);
+        throw error;
+      }
+    },
+    [authRedirectPath, handleAuthSuccess],
+  );
 
   const loginWithEmail = useCallback(
     async (email: string, password: string) => {
@@ -285,10 +325,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signUpWithEmail = useCallback(
-    async (email: string, password: string, displayName: string) => {
+    async (
+      email: string,
+      password: string,
+      displayName: string,
+      accountType: RegistrationAccountType,
+    ) => {
       const auth = getClientAuth();
       if (!auth || !db) throw new Error("Firebase no está configurado");
       const redirect = authRedirectPath;
+      const role: UserRole = accountType === "author" ? "author" : "reader";
 
       const credential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(credential.user, { displayName });
@@ -297,16 +343,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         uid: credential.user.uid,
         email,
         displayName,
-        role: "reader",
+        role,
         isSubscriber: false,
       };
 
       await setDoc(doc(db, "users", credential.user.uid), {
         ...profile,
+        accountType,
         createdAt: serverTimestamp(),
       });
 
       setUserProfile(normalizeUserProfile(profile));
+
+      if (accountType === "author") {
+        markNewAuthorRegistration();
+      }
+
       handleAuthSuccess(redirect);
     },
     [authRedirectPath, handleAuthSuccess],

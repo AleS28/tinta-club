@@ -10,40 +10,65 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { allBooks } from "@/data/mock";
-import {
-  formatUtcTimestamp,
-  generateCertificateToken,
-  generateSha256Hex,
-} from "@/lib/certificate";
-import {
-  AUTHOR_TERMS_VERSION,
-  getDefaultTermsAppId,
-  recordAuthorSignature,
-  TermsServiceError,
-} from "@/lib/termsService";
+import { AUTHOR_TERMS_VERSION } from "@/types/terms";
+import { hasAuthorAgreementSigned } from "@/types/user";
 
 interface CertificateData {
-  token: string;
   hash: string;
   signedAtUtc: string;
   legalName: string;
-  workTitle: string;
+  signatureName: string;
 }
 
-function resolveBookId(workTitle: string): string | undefined {
-  const normalized = workTitle.trim().toLowerCase();
-  return allBooks.find((book) => book.title.toLowerCase() === normalized)?.id;
+function AgreementSummary() {
+  return (
+    <div className="rounded-xl border border-[#D27C5A]/20 bg-[#FCF9F5] p-5 text-sm leading-relaxed text-[#2A1810]/90">
+      <p className="font-semibold text-[#2A1810]">
+        Acuerdo General de Distribución y Monetización para Autores
+      </p>
+      <ul className="mt-3 list-disc space-y-2 pl-5">
+        <li>
+          <strong>Licencia no exclusiva mundial</strong> a la plataforma para alojar, formatear,
+          promocionar y monetizar tus obras dentro del Imperio de la Tinta.
+        </li>
+        <li>
+          <strong>Titularidad:</strong> conservas el 100% de los derechos de autor sobre todo el
+          contenido que publiques en tu cuenta.
+        </li>
+        <li>
+          <strong>Muestra gratuita:</strong> puedes ofrecer capítulos de muestra sin suscripción.
+        </li>
+        <li>
+          <strong>Monetización 70/30:</strong> sobre ganancias netas atribuibles a tu contenido de
+          pago, recibes el 70% como autor y la plataforma retiene el 30%.
+        </li>
+        <li>
+          <strong>Exclusividad premium:</strong> los capítulos marcados como premium no deben
+          publicarse gratis en otras plataformas mientras estén activos aquí.
+        </li>
+        <li>
+          Este acuerdo aplica a <strong>todas tus obras presentes y futuras</strong> en esta cuenta
+          de autor.
+        </li>
+      </ul>
+      <p className="mt-4 text-xs text-muted">
+        Versión {AUTHOR_TERMS_VERSION}.{" "}
+        <Link href="/acuerdo-autores" className="font-medium text-[#D27C5A] hover:underline">
+          Leer acuerdo completo
+        </Link>
+      </p>
+    </div>
+  );
 }
 
 export function AuthorAgreementSignForm() {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, refreshUserProfile } = useAuth();
 
-  const [legalName, setLegalName] = useState("");
-  const [taxId, setTaxId] = useState("");
-  const [email, setEmail] = useState("");
-  const [workTitle, setWorkTitle] = useState("Amor con aroma a café");
-  const [signatureText, setSignatureText] = useState("");
+  const [legalFullName, setLegalFullName] = useState("");
+  const [legalIdNumber, setLegalIdNumber] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [paymentDetails, setPaymentDetails] = useState("");
+  const [signatureName, setSignatureName] = useState("");
 
   const [ownsRights, setOwnsRights] = useState(false);
   const [acceptsSplit, setAcceptsSplit] = useState(false);
@@ -53,27 +78,54 @@ export function AuthorAgreementSignForm() {
   const [error, setError] = useState("");
   const [certificate, setCertificate] = useState<CertificateData | null>(null);
 
+  const alreadySigned = hasAuthorAgreementSigned(userProfile);
+
   useEffect(() => {
-    if (user?.email) setEmail(user.email);
-    if (userProfile?.displayName && !legalName) {
-      setLegalName(userProfile.displayName);
+    if (!userProfile) return;
+    if (userProfile.legalFullName) setLegalFullName(userProfile.legalFullName);
+    if (userProfile.displayName && !legalFullName) setLegalFullName(userProfile.displayName);
+    if (userProfile.legalIdNumber) setLegalIdNumber(userProfile.legalIdNumber);
+    if (userProfile.contactPhone) setContactPhone(userProfile.contactPhone);
+    if (userProfile.paymentDetails) setPaymentDetails(userProfile.paymentDetails);
+    if (userProfile.agreementSignatureName) setSignatureName(userProfile.agreementSignatureName);
+  }, [userProfile, legalFullName]);
+
+  useEffect(() => {
+    if (alreadySigned && userProfile?.agreementHash && userProfile.agreementSignedAt) {
+      setCertificate({
+        hash: userProfile.agreementHash,
+        signedAtUtc: userProfile.agreementSignedAt,
+        legalName: userProfile.legalFullName ?? userProfile.displayName,
+        signatureName: userProfile.agreementSignatureName ?? userProfile.legalFullName ?? "",
+      });
     }
-  }, [user, userProfile, legalName]);
+  }, [alreadySigned, userProfile]);
 
   const allClausesAccepted = ownsRights && acceptsSplit && acceptsExclusivity;
 
   const canSubmit = useMemo(() => {
     return (
-      legalName.trim().length > 2 &&
-      taxId.trim().length > 3 &&
-      email.trim().includes("@") &&
-      workTitle.trim().length > 1 &&
-      signatureText.trim().length > 2 &&
+      legalFullName.trim().length > 2 &&
+      legalIdNumber.trim().length > 3 &&
+      contactPhone.trim().length > 0 &&
+      paymentDetails.trim().length > 0 &&
+      signatureName.trim().length > 2 &&
       allClausesAccepted &&
       !loading &&
-      !!user
+      !!user &&
+      !alreadySigned
     );
-  }, [legalName, taxId, email, workTitle, signatureText, allClausesAccepted, loading, user]);
+  }, [
+    legalFullName,
+    legalIdNumber,
+    contactPhone,
+    paymentDetails,
+    signatureName,
+    allClausesAccepted,
+    loading,
+    user,
+    alreadySigned,
+  ]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -83,52 +135,53 @@ export function AuthorAgreementSignForm() {
     setLoading(true);
 
     try {
-      const token = generateCertificateToken();
-      const signedAtUtc = formatUtcTimestamp();
-      const bookId = resolveBookId(workTitle);
-
-      const hashPayload = JSON.stringify({
-        certificateToken: token,
-        legalName: legalName.trim(),
-        taxId: taxId.trim(),
-        email: email.trim(),
-        workTitle: workTitle.trim(),
-        signatureText: signatureText.trim(),
-        termsVersion: AUTHOR_TERMS_VERSION,
-        signedAtUtc,
-        userId: user.uid,
+      const token = await user.getIdToken();
+      const response = await fetch("/api/author/agreement/sign", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          legalFullName: legalFullName.trim(),
+          legalIdNumber: legalIdNumber.trim(),
+          contactPhone: contactPhone.trim(),
+          paymentDetails: paymentDetails.trim(),
+          signatureName: signatureName.trim(),
+          ownsRights,
+          acceptsSplit,
+          acceptsExclusivity,
+        }),
       });
 
-      const hash = await generateSha256Hex(hashPayload);
-      const appId = getDefaultTermsAppId();
+      const payload = (await response.json()) as {
+        error?: string;
+        agreementHash?: string;
+        agreementSignedAt?: string;
+        signed?: boolean;
+        alreadySigned?: boolean;
+      };
 
-      await recordAuthorSignature(appId, user.uid, {
-        termsVersion: AUTHOR_TERMS_VERSION,
-        legalName: legalName.trim(),
-        bookId,
-        signatureHash: hash,
-        subscriptionIntent: token,
-      });
+      if (!response.ok) {
+        throw new Error(payload.error ?? "No se pudo firmar el acuerdo.");
+      }
+
+      await refreshUserProfile();
 
       setCertificate({
-        token,
-        hash,
-        signedAtUtc,
-        legalName: legalName.trim(),
-        workTitle: workTitle.trim(),
+        hash: payload.agreementHash ?? "",
+        signedAtUtc: payload.agreementSignedAt ?? "",
+        legalName: legalFullName.trim(),
+        signatureName: signatureName.trim(),
       });
     } catch (err) {
-      setError(
-        err instanceof TermsServiceError
-          ? err.message
-          : "No se pudo emitir el certificado. Intenta de nuevo.",
-      );
+      setError(err instanceof Error ? err.message : "No se pudo emitir el certificado. Intenta de nuevo.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (certificate) {
+  if (certificate || alreadySigned) {
     return (
       <section className="overflow-hidden rounded-3xl border border-[#D4A359]/40 bg-gradient-to-br from-[#2A1810] via-[#3B2519] to-[#2A1810] p-8 shadow-editorial-lg sm:p-10">
         <div className="flex items-start gap-4">
@@ -138,52 +191,57 @@ export function AuthorAgreementSignForm() {
           <div>
             <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-200">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              Firma validada
+              Acuerdo de cuenta activo
             </span>
             <h2 className="mt-3 font-serif text-2xl font-bold text-[#F5E6C8] sm:text-3xl">
-              Certificado Digital Emitido
+              Firma digital registrada
             </h2>
             <p className="mt-2 text-sm text-[#FCF9F5]/75">
-              Acuerdo de Publicación firmado por{" "}
-              <span className="font-medium text-[#FCF9F5]">{certificate.legalName}</span>
+              Tu acuerdo cubre todas las obras de esta cuenta. Ya puedes publicar capítulos premium.
             </p>
           </div>
         </div>
 
-        <dl className="mt-8 space-y-4 rounded-2xl border border-[#D27C5A]/20 bg-black/20 p-6 text-sm">
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-[#FCF9F5]/50">
-              Token de certificado
-            </dt>
-            <dd className="mt-1 font-mono text-base font-bold text-[#D4A359]">{certificate.token}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-[#FCF9F5]/50">
-              Obra registrada
-            </dt>
-            <dd className="mt-1 font-serif text-lg text-[#FCF9F5]">{certificate.workTitle}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-[#FCF9F5]/50">
-              Hash SHA-256
-            </dt>
-            <dd className="mt-1 break-all font-mono text-xs leading-relaxed text-[#FCF9F5]/85">
-              {certificate.hash}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-[#FCF9F5]/50">
-              Marca de tiempo (UTC)
-            </dt>
-            <dd className="mt-1 font-mono text-[#FCF9F5]/90">{certificate.signedAtUtc}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-[#FCF9F5]/50">
-              Versión del acuerdo
-            </dt>
-            <dd className="mt-1 text-[#FCF9F5]/90">{AUTHOR_TERMS_VERSION}</dd>
-          </div>
-        </dl>
+        {certificate && (
+          <dl className="mt-8 space-y-4 rounded-2xl border border-[#D27C5A]/20 bg-black/20 p-6 text-sm">
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#FCF9F5]/50">
+                Autor
+              </dt>
+              <dd className="mt-1 font-serif text-lg text-[#FCF9F5]">{certificate.legalName}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#FCF9F5]/50">
+                Firma tipográfica
+              </dt>
+              <dd className="mt-1 font-serif italic text-[#FCF9F5]">{certificate.signatureName}</dd>
+            </div>
+            {certificate.hash && (
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#FCF9F5]/50">
+                  Hash SHA-256
+                </dt>
+                <dd className="mt-1 break-all font-mono text-xs leading-relaxed text-[#FCF9F5]/85">
+                  {certificate.hash}
+                </dd>
+              </div>
+            )}
+            {certificate.signedAtUtc && (
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#FCF9F5]/50">
+                  Fecha (UTC)
+                </dt>
+                <dd className="mt-1 font-mono text-[#FCF9F5]/90">{certificate.signedAtUtc}</dd>
+              </div>
+            )}
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#FCF9F5]/50">
+                Versión
+              </dt>
+              <dd className="mt-1 text-[#FCF9F5]/90">{AUTHOR_TERMS_VERSION}</dd>
+            </div>
+          </dl>
+        )}
 
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
@@ -213,8 +271,14 @@ export function AuthorAgreementSignForm() {
           <div>
             <h2 className="font-serif text-xl font-bold text-[#2A1810]">Datos legales del autor</h2>
             <p className="mt-1 text-sm text-muted">
-              Completa tu información antes de publicar en el modelo 70/30 del Imperio.
+              Firma una sola vez. Este acuerdo aplica a todas tus obras presentes y futuras en esta
+              cuenta.
             </p>
+            {user?.email && (
+              <p className="mt-2 text-xs text-muted">
+                Cuenta: <span className="font-medium text-[#2A1810]">{user.email}</span>
+              </p>
+            )}
           </div>
         </div>
 
@@ -223,9 +287,9 @@ export function AuthorAgreementSignForm() {
             <span className="text-sm font-medium text-[#2A1810]">Nombre completo legal</span>
             <input
               type="text"
-              value={legalName}
-              onChange={(e) => setLegalName(e.target.value)}
-              placeholder="Pedro García Martínez"
+              value={legalFullName}
+              onChange={(e) => setLegalFullName(e.target.value)}
+              placeholder="Nombre como aparece en tu identificación"
               className="mt-1.5 w-full rounded-xl border border-stone-200 bg-[#FCF9F5] px-4 py-3 text-sm outline-none transition-colors focus:border-[#D27C5A]"
               required
             />
@@ -233,12 +297,12 @@ export function AuthorAgreementSignForm() {
 
           <label className="block">
             <span className="text-sm font-medium text-[#2A1810]">
-              Documento de identidad / Tax ID / RFC
+              Documento de identificación / Tax ID / RFC
             </span>
             <input
               type="text"
-              value={taxId}
-              onChange={(e) => setTaxId(e.target.value)}
+              value={legalIdNumber}
+              onChange={(e) => setLegalIdNumber(e.target.value)}
               placeholder="RFC, DNI o Tax ID"
               className="mt-1.5 w-full rounded-xl border border-stone-200 bg-[#FCF9F5] px-4 py-3 text-sm outline-none transition-colors focus:border-[#D27C5A]"
               required
@@ -246,24 +310,27 @@ export function AuthorAgreementSignForm() {
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-[#2A1810]">Correo electrónico registrado</span>
+            <span className="text-sm font-medium text-[#2A1810]">Teléfono de contacto</span>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="tel"
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+              placeholder="+52 55 1234 5678"
               className="mt-1.5 w-full rounded-xl border border-stone-200 bg-[#FCF9F5] px-4 py-3 text-sm outline-none transition-colors focus:border-[#D27C5A]"
               required
             />
           </label>
 
           <label className="block sm:col-span-2">
-            <span className="text-sm font-medium text-[#2A1810]">Nombre de la obra</span>
-            <input
-              type="text"
-              value={workTitle}
-              onChange={(e) => setWorkTitle(e.target.value)}
-              placeholder="Amor con aroma a café"
-              className="mt-1.5 w-full rounded-xl border border-stone-200 bg-[#FCF9F5] px-4 py-3 text-sm outline-none transition-colors focus:border-[#D27C5A]"
+            <span className="text-sm font-medium text-[#2A1810]">
+              Datos de pago / cuenta para recibir regalías
+            </span>
+            <textarea
+              value={paymentDetails}
+              onChange={(e) => setPaymentDetails(e.target.value)}
+              rows={3}
+              placeholder="Banco, CLABE, PayPal, titular de cuenta, etc."
+              className="mt-1.5 w-full resize-y rounded-xl border border-stone-200 bg-[#FCF9F5] px-4 py-3 text-sm outline-none transition-colors focus:border-[#D27C5A]"
               required
             />
           </label>
@@ -271,14 +338,14 @@ export function AuthorAgreementSignForm() {
       </section>
 
       <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
-        <h2 className="font-serif text-xl font-bold text-[#2A1810]">Cláusulas del acuerdo</h2>
-        <p className="mt-1 text-sm text-muted">
-          Debes aceptar todas las cláusulas para firmar digitalmente.{" "}
-          <Link href="/acuerdo-autores" className="font-medium text-[#D27C5A] hover:underline">
-            Leer acuerdo completo
-          </Link>
-        </p>
+        <h2 className="font-serif text-xl font-bold text-[#2A1810]">Resumen del acuerdo</h2>
+        <div className="mt-4">
+          <AgreementSummary />
+        </div>
+      </section>
 
+      <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
+        <h2 className="font-serif text-xl font-bold text-[#2A1810]">Cláusulas obligatorias</h2>
         <div className="mt-5 space-y-3">
           <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-stone-200 bg-[#FCF9F5] p-4">
             <input
@@ -288,7 +355,8 @@ export function AuthorAgreementSignForm() {
               className="mt-1 h-4 w-4 rounded border-stone-300 text-[#D27C5A]"
             />
             <span className="text-sm leading-relaxed text-[#2A1810]/90">
-              Confirmo que poseo el 100% de la titularidad de los derechos de mi obra.
+              <strong>Titularidad general:</strong> Confirmo que poseo el 100% de los derechos de
+              autor de todas las obras y capítulos que publique en mi cuenta.
             </span>
           </label>
 
@@ -300,7 +368,8 @@ export function AuthorAgreementSignForm() {
               className="mt-1 h-4 w-4 rounded border-stone-300 text-[#D27C5A]"
             />
             <span className="text-sm leading-relaxed text-[#2A1810]/90">
-              Acepto el reparto del 70% de ganancias netas para el autor y 30% para la plataforma.
+              <strong>Reparto 70/30:</strong> Acepto la distribución de ganancias (70% Autor / 30%
+              Plataforma) sobre el contenido de pago.
             </span>
           </label>
 
@@ -312,7 +381,8 @@ export function AuthorAgreementSignForm() {
               className="mt-1 h-4 w-4 rounded border-stone-300 text-[#D27C5A]"
             />
             <span className="text-sm leading-relaxed text-[#2A1810]/90">
-              Me comprometo a mantener los capítulos de pago libres de distribución gratuita pública.
+              <strong>Exclusividad premium:</strong> Me comprometo a no publicar de forma gratuita
+              en otros sitios los capítulos que configure como premium.
             </span>
           </label>
         </div>
@@ -320,17 +390,13 @@ export function AuthorAgreementSignForm() {
 
       <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
         <h2 className="font-serif text-xl font-bold text-[#2A1810]">Firma tipográfica digital</h2>
-        <p className="mt-1 text-sm text-muted">
-          Escribe tu nombre tal como deseas que aparezca en el certificado de firma.
-        </p>
-
         <label className="mt-5 block">
           <span className="text-sm font-medium text-[#2A1810]">Nombre como firma</span>
           <input
             type="text"
-            value={signatureText}
-            onChange={(e) => setSignatureText(e.target.value)}
-            placeholder={legalName || "Tu nombre completo"}
+            value={signatureName}
+            onChange={(e) => setSignatureName(e.target.value)}
+            placeholder={legalFullName || "Tu nombre completo"}
             className="mt-1.5 w-full rounded-xl border border-stone-200 bg-[#FCF9F5] px-4 py-3 text-sm outline-none transition-colors focus:border-[#D27C5A]"
             required
           />
@@ -340,11 +406,8 @@ export function AuthorAgreementSignForm() {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
             Previsualización de firma
           </p>
-          <p
-            className="mt-4 font-serif text-3xl italic text-[#2A1810] sm:text-4xl"
-            style={{ fontFamily: "var(--font-merriweather), Georgia, serif" }}
-          >
-            {signatureText.trim() || "Tu firma aparecerá aquí"}
+          <p className="mt-4 font-serif text-3xl italic text-[#2A1810] sm:text-4xl">
+            {signatureName.trim() || "Tu firma aparecerá aquí"}
           </p>
         </div>
       </section>
@@ -363,12 +426,12 @@ export function AuthorAgreementSignForm() {
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Emitiendo certificado…
+            Registrando firma…
           </>
         ) : (
           <>
             <BadgeCheck className="h-4 w-4" />
-            Firmar acuerdo y emitir certificado
+            Firmar y confirmar acuerdo
           </>
         )}
       </button>

@@ -22,6 +22,7 @@ import {
   filterCatalogChapters,
   isCatalogBookId,
 } from "@/data/catalog";
+import { enrichBookFromCatalog } from "@/lib/book-catalog-enrich";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 
 const GENRE_GRADIENTS: Record<Genre, { gradient: string; accent: string }> = {
@@ -58,10 +59,11 @@ async function fetchChaptersFromFirestore(bookId?: string): Promise<Chapter[]> {
 }
 
 function withBookDefaults(book: Book): Book {
+  const enriched = isCatalogBookId(book.id) ? enrichBookFromCatalog(book) : book;
   return {
-    ...book,
-    rating: typeof book.rating === "number" ? book.rating : 4.5,
-    membershipPrice: book.membershipPrice ?? 4.99,
+    ...enriched,
+    rating: typeof enriched.rating === "number" ? enriched.rating : 4.5,
+    membershipPrice: enriched.membershipPrice ?? 4.99,
   };
 }
 

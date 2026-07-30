@@ -14,20 +14,20 @@ export function FeaturedTopBookCard({ book, meta, rank }: FeaturedTopBookCardPro
   return (
     <Link
       href={`/libro/${book.id}`}
-      className="group relative flex h-[320px] w-[200px] shrink-0 flex-col overflow-hidden rounded-xl border border-home-gold/30 shadow-lg transition-transform duration-300 hover:-translate-y-1 hover:border-home-gold/60 sm:h-[360px] sm:w-[220px] lg:h-[380px] lg:w-full lg:max-w-none lg:shrink"
+      className="group relative flex aspect-[2/3] w-[200px] shrink-0 flex-col overflow-hidden rounded-xl border border-home-gold/30 bg-[#1F1510] shadow-lg transition-transform duration-300 hover:-translate-y-1 hover:border-home-gold/60 sm:w-[220px] lg:w-full lg:max-w-none lg:shrink"
     >
       {book.coverUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={book.coverUrl}
           alt={book.title}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="absolute inset-0 h-full w-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.02]"
         />
       ) : (
         <BookCoverPlaceholder book={book} className="absolute inset-0 h-full w-full rounded-none" />
       )}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/10" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
 
       <div className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs font-semibold text-gold-cream backdrop-blur-sm">
         <Star className="h-3 w-3 fill-amber-400 text-amber-400" />

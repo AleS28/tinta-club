@@ -12,14 +12,15 @@ export function AuthorFeaturedBook({ work }: AuthorFeaturedBookProps) {
   return (
     <section className="mt-12 overflow-hidden rounded-3xl bg-[#3B2519] shadow-editorial-lg">
       <div className="grid gap-0 lg:grid-cols-[minmax(280px,2fr)_minmax(0,3fr)]">
-        <div className="relative min-h-[420px] bg-[#2a1a12] lg:min-h-full">
+        <div className="relative flex min-h-[420px] items-center justify-center bg-[#2a1a12] p-4 lg:min-h-full">
           {work.coverUrl ? (
             <Image
               src={work.coverUrl}
               alt={`Portada de ${work.title}`}
-              fill
-              className="object-cover object-right"
-              sizes="(max-width: 1024px) 100vw, 40vw"
+              width={400}
+              height={600}
+              className="h-auto max-h-[520px] w-auto max-w-full object-contain object-center shadow-2xl"
+              sizes="(max-width: 1024px) 90vw, 400px"
               priority
             />
           ) : (

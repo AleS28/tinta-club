@@ -6,6 +6,8 @@ interface BookCoverProps {
   className?: string;
   showOverlay?: boolean;
   imageClassName?: string;
+  /** cover = recorta para llenar; contain = muestra la portada completa */
+  fit?: "cover" | "contain";
 }
 
 export function BookCover({
@@ -13,18 +15,23 @@ export function BookCover({
   className = "",
   showOverlay = false,
   imageClassName = "",
+  fit = "contain",
 }: BookCoverProps) {
   if (!book.coverUrl) {
     return <BookCoverPlaceholder book={book} className={className} />;
   }
 
+  const objectFit = fit === "contain" ? "object-contain object-center" : "object-cover";
+
   return (
-    <div className={`relative overflow-hidden rounded-lg ${className}`}>
+    <div
+      className={`relative overflow-hidden rounded-lg bg-[#1F1510] ${className}`}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={book.coverUrl}
         alt={book.title}
-        className={`h-full w-full object-cover transition-transform duration-300 ${imageClassName}`}
+        className={`h-full w-full ${objectFit} transition-transform duration-300 ${imageClassName}`}
       />
       {showOverlay && (
         <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/70 to-transparent p-4">

@@ -95,7 +95,7 @@ function WorkCover({ work }: { work: AuthorUpcomingWork }) {
         <img
           src={work.coverUrl}
           alt={`Portada de ${work.title}`}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain object-center bg-[#2a1a12] p-2"
         />
       ) : (
         <div className="flex h-full items-center justify-center">

@@ -15,7 +15,7 @@ export function StartReadingButton({
   href,
   label = "Empezar a Leer",
   className = "mt-6 inline-flex rounded-full bg-terracotta px-8 py-3 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-orange-700",
-  requireAuth = true,
+  requireAuth = false,
 }: StartReadingButtonProps) {
   const router = useRouter();
   const { user, loading, openAuthModal } = useAuth();

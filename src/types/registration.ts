@@ -1,5 +1,11 @@
 export type RegistrationAccountType = "reader" | "author";
 
+export type AuthModalIntent = "default" | "author" | "subscribe";
+
+export interface OpenAuthModalOptions {
+  intent?: AuthModalIntent;
+}
+
 export const REGISTRATION_TYPE_KEY = "tinta-club-registration-type";
 export const NEW_AUTHOR_REDIRECT_KEY = "tinta-club-new-author";
 

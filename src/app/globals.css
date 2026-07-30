@@ -65,6 +65,24 @@
     );
     height: 1px;
   }
+
+  .side-community-nav,
+  .side-social-banner {
+    display: none;
+  }
+
+  @media (min-width: 1280px) {
+    .side-community-nav,
+    .side-social-banner {
+      display: flex;
+    }
+  }
+
+  .side-community-nav svg,
+  .side-social-banner svg {
+    max-width: 1.5rem;
+    max-height: 1.5rem;
+  }
 }
 
 @media print {

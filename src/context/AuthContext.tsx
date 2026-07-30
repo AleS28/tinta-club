@@ -42,6 +42,8 @@ import {
   readPendingRegistrationType,
   setPendingRegistrationType,
   type RegistrationAccountType,
+  type AuthModalIntent,
+  type OpenAuthModalOptions,
 } from "@/types/registration";
 
 interface AuthContextValue {
@@ -53,7 +55,8 @@ interface AuthContextValue {
   role: UserRole;
   authModalOpen: boolean;
   authRedirectPath: string | null;
-  openAuthModal: (redirectPath?: string) => void;
+  authModalIntent: AuthModalIntent;
+  openAuthModal: (redirectPath?: string, options?: OpenAuthModalOptions) => void;
   closeAuthModal: () => void;
   refreshUserProfile: () => Promise<void>;
   loginWithGoogle: (options?: { registrationType?: RegistrationAccountType }) => Promise<void>;
@@ -191,14 +194,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [restoringSession, setRestoringSession] = useState(() => Boolean(readAuthSessionHint()));
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authRedirectPath, setAuthRedirectPath] = useState<string | null>(null);
+  const [authModalIntent, setAuthModalIntent] = useState<AuthModalIntent>("default");
 
   const closeAuthModal = useCallback(() => {
     setAuthModalOpen(false);
     setAuthRedirectPath(null);
+    setAuthModalIntent("default");
   }, []);
 
-  const openAuthModal = useCallback((redirectPath?: string) => {
+  const openAuthModal = useCallback((redirectPath?: string, options?: OpenAuthModalOptions) => {
     setAuthRedirectPath(redirectPath ?? null);
+    setAuthModalIntent(options?.intent ?? "default");
     setAuthModalOpen(true);
   }, []);
 
@@ -434,6 +440,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: userProfile?.role ?? "reader",
       authModalOpen,
       authRedirectPath,
+      authModalIntent,
       openAuthModal,
       closeAuthModal,
       refreshUserProfile,
@@ -450,6 +457,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       restoringSession,
       authModalOpen,
       authRedirectPath,
+      authModalIntent,
       openAuthModal,
       closeAuthModal,
       refreshUserProfile,

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ChevronDown, LogOut, PenLine, User } from "lucide-react";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useEffect, useRef, useState } from "react";
@@ -15,7 +14,6 @@ const navLinks = [
 ];
 
 export function Navbar() {
-  const router = useRouter();
   const { user, userProfile, loading, restoringSession, isSubscriber, role, openAuthModal, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -32,17 +30,6 @@ export function Navbar() {
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, [menuOpen]);
-
-  const handleStartReading = () => {
-    if (loading) return;
-
-    if (!user) {
-      openAuthModal("/libro/pedro-amor-cafe");
-      return;
-    }
-
-    router.push("/libro/pedro-amor-cafe");
-  };
 
   const displayName = userProfile?.displayName ?? user?.displayName ?? "Lector";
   const initials = displayName
@@ -100,22 +87,14 @@ export function Navbar() {
               aria-label="Restaurando sesión"
             />
           ) : showLogin ? (
-            <>
-              <button
-                type="button"
-                onClick={() => openAuthModal()}
-                className="hidden text-sm font-medium text-stone-300 transition-colors duration-300 hover:text-[#D27C5A] sm:block"
-              >
-                Iniciar Sesión
-              </button>
-              <button
-                type="button"
-                onClick={handleStartReading}
-                className="rounded-full bg-gradient-to-r from-[#D27C5A] to-[#D4A359] px-4 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg sm:px-5 sm:text-sm"
-              >
-                Comenzar Lectura
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={() => openAuthModal("/autor/acuerdo", { intent: "author" })}
+              className="inline-flex items-center gap-2 rounded-full border border-[#D4A359]/50 bg-[#D4A359]/10 px-4 py-2 text-xs font-bold uppercase tracking-wide text-[#D4A359] transition-all duration-300 hover:border-[#D4A359] hover:bg-[#D4A359]/20 sm:px-5 sm:text-sm"
+            >
+              <PenLine className="h-4 w-4" aria-hidden />
+              Soy Escritor
+            </button>
           ) : showProfile ? (
             <div className="relative" ref={menuRef}>
               <button

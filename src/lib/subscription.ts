@@ -2,7 +2,7 @@ import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import type { SubscriptionStatus } from "@/types/user";
 
-export const DEFAULT_SUBSCRIPTION_PRICE = 4.99;
+export const DEFAULT_SUBSCRIPTION_PRICE = 6.49;
 
 export async function activateSubscription(uid: string): Promise<void> {
   if (!db || !isFirebaseConfigured) {

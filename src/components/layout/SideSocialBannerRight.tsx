@@ -11,7 +11,7 @@ const BANNER_GRADIENTS: Record<SideBannerSocialKey, string> = {
 export function SideSocialBannerRight() {
   return (
     <aside
-      className="fixed right-0 top-1/2 z-40 hidden -translate-y-1/2 items-stretch shadow-2xl xl:flex print:hidden"
+      className="side-social-banner fixed right-0 top-1/2 z-40 hidden -translate-y-1/2 items-stretch shadow-2xl xl:flex print:hidden"
       aria-label="Únete a nuestras redes"
     >
       <div className="flex items-stretch">

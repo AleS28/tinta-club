@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { BookOpen, Loader2, PenLine, X } from "lucide-react";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { BRAND_NAME } from "@/lib/brand";
@@ -14,6 +14,7 @@ type AuthMode = "login" | "register";
 export function AuthModal() {
   const {
     authModalOpen,
+    authModalIntent,
     closeAuthModal,
     loginWithGoogle,
     loginWithEmail,
@@ -27,6 +28,25 @@ export function AuthModal() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const isAuthorIntent = authModalIntent === "author";
+  const isSubscribeIntent = authModalIntent === "subscribe";
+
+  useEffect(() => {
+    if (!authModalOpen) return;
+    if (authModalIntent === "author") {
+      setMode("register");
+      setAccountType("author");
+      return;
+    }
+    if (authModalIntent === "subscribe") {
+      setMode("register");
+      setAccountType("reader");
+      return;
+    }
+    setMode("login");
+    setAccountType(null);
+  }, [authModalOpen, authModalIntent]);
 
   const resetForm = () => {
     setError("");
@@ -72,6 +92,12 @@ export function AuthModal() {
   const switchMode = (nextMode: AuthMode) => {
     setMode(nextMode);
     resetForm();
+    if (nextMode === "register" && isAuthorIntent) {
+      setAccountType("author");
+    }
+    if (nextMode === "register" && isSubscribeIntent) {
+      setAccountType("reader");
+    }
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -165,12 +191,16 @@ export function AuthModal() {
         <div className="bg-gradient-to-br from-terracotta to-orange-700 px-6 py-8 text-white">
           <BrandLogo size="sm" variant="light" />
           <h2 className="mt-4 font-serif text-2xl font-bold">
-            {mode === "login" ? "Bienvenido de vuelta" : `Únete a ${BRAND_NAME}`}
+            {isAuthorIntent && isRegister
+              ? "Soy Escritor"
+              : mode === "login"
+                ? "Bienvenido de vuelta"
+                : `Únete a ${BRAND_NAME}`}
           </h2>
           <p className="mt-1 text-sm text-white/85">
             {mode === "login"
-              ? "Inicia sesión para continuar leyendo."
-              : accountType === "author"
+              ? "Inicia sesión para continuar."
+              : isAuthorIntent || accountType === "author"
                 ? "Registro de autor — publica tus historias en el Imperio."
                 : accountType === "reader"
                   ? "Registro de lector — descubre y apoya a tus autores favoritos."
@@ -200,7 +230,7 @@ export function AuthModal() {
             </button>
           </div>
 
-          {isRegister && (
+          {isRegister && !isAuthorIntent && !isSubscribeIntent && (
             <div className="mb-5">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
                 1. ¿Cómo quieres registrarte?
@@ -243,6 +273,19 @@ export function AuthModal() {
                 </p>
               )}
             </div>
+          )}
+
+          {isRegister && isSubscribeIntent && (
+            <p className="mb-5 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+              Crea tu cuenta de lector para suscribirte y desbloquear todos los capítulos premium.
+            </p>
+          )}
+
+          {isRegister && isAuthorIntent && (
+            <p className="mb-5 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-950">
+              Como autor deberás firmar el acuerdo de publicación en /autor/acuerdo antes de
+              publicar cualquier obra.
+            </p>
           )}
 
           {showRegistrationFields && (

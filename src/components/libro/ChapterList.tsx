@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { Lock, BookOpen } from "lucide-react";
 import { Chapter } from "@/data/mock";
-import { useAuth } from "@/context/AuthContext";
 
 interface ChapterListProps {
   chapters: Chapter[];
@@ -11,19 +10,9 @@ interface ChapterListProps {
 
 export function ChapterList({ chapters }: ChapterListProps) {
   const router = useRouter();
-  const { user, loading, openAuthModal } = useAuth();
 
   const handleRead = (chapter: Chapter) => {
-    if (loading) return;
-
-    const href = `/leer/${chapter.id}`;
-
-    if (!user) {
-      openAuthModal(href);
-      return;
-    }
-
-    router.push(href);
+    router.push(`/leer/${chapter.id}`);
   };
 
   return (

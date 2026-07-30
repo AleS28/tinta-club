@@ -52,7 +52,7 @@ export const authorProfiles: AuthorPublicProfile[] = [
       coverGradient: "from-stone-700 via-amber-900 to-stone-950",
       coverAccent: "#A16207",
       firstChapterId: "will-chica-cafe-cap-1",
-      freeChaptersCount: 1,
+      freeChaptersCount: 2,
       membershipPriceUsd: 5,
     },
     upcomingWorks: [],

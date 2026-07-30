@@ -13,6 +13,7 @@ import { ReaderWatermark } from "@/components/leer/ReaderWatermark";
 import { PaywallBanner } from "@/components/leer/PaywallBanner";
 import { TermsAcceptanceModal } from "@/components/legal/TermsAcceptanceModal";
 import { ProtectedContent } from "@/components/ui/ProtectedContent";
+import { useReadingTimeTracker } from "@/hooks/useReadingTimeTracker";
 
 interface ReaderViewProps {
   chapter: Chapter;
@@ -107,6 +108,14 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
     hasActiveSubscription &&
     premiumContent !== null &&
     premiumContent.length > 0;
+
+  useReadingTimeTracker({
+    user,
+    bookId: book.id,
+    chapterId: chapter.id,
+    isActive: hasFullPremiumAccess && !contentLoading,
+    isSubscriptionRead: true,
+  });
 
   const paragraphs = useMemo(() => {
     if (!chapter.isPremium) return chapter.content;

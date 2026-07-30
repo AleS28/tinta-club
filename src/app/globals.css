@@ -83,6 +83,108 @@
     max-width: 1.5rem;
     max-height: 1.5rem;
   }
+
+  .butterfly-fly-ltr {
+    left: 0;
+    animation: butterfly-fly-ltr linear forwards;
+    will-change: transform, opacity;
+  }
+
+  .butterfly-fly-rtl {
+    right: 0;
+    animation: butterfly-fly-rtl linear forwards;
+    will-change: transform, opacity;
+  }
+
+  .butterfly-wing-flap .butterfly-wing-left {
+    transform-origin: 32px 24px;
+    animation: butterfly-wing-left 0.35s ease-in-out infinite;
+  }
+
+  .butterfly-wing-flap .butterfly-wing-right {
+    transform-origin: 32px 24px;
+    animation: butterfly-wing-right 0.35s ease-in-out infinite;
+  }
+}
+
+@keyframes butterfly-fly-ltr {
+  0% {
+    transform: translate(-12vw, 0) rotate(8deg);
+    opacity: 0;
+  }
+  6% {
+    opacity: 0.95;
+  }
+  20% {
+    transform: translate(18vw, -28px) rotate(-10deg);
+  }
+  45% {
+    transform: translate(42vw, 22px) rotate(7deg);
+  }
+  70% {
+    transform: translate(68vw, -18px) rotate(-6deg);
+  }
+  94% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate(112vw, 8px) rotate(4deg);
+    opacity: 0;
+  }
+}
+
+@keyframes butterfly-fly-rtl {
+  0% {
+    transform: translate(12vw, 0) rotate(-8deg) scaleX(-1);
+    opacity: 0;
+  }
+  6% {
+    opacity: 0.95;
+  }
+  20% {
+    transform: translate(-18vw, -24px) rotate(10deg) scaleX(-1);
+  }
+  45% {
+    transform: translate(-42vw, 18px) rotate(-7deg) scaleX(-1);
+  }
+  70% {
+    transform: translate(-68vw, -16px) rotate(6deg) scaleX(-1);
+  }
+  94% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate(-112vw, 6px) rotate(-4deg) scaleX(-1);
+    opacity: 0;
+  }
+}
+
+@keyframes butterfly-wing-left {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-22deg);
+  }
+}
+
+@keyframes butterfly-wing-right {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(22deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .butterfly-fly-ltr,
+  .butterfly-fly-rtl {
+    animation: none !important;
+    display: none !important;
+  }
 }
 
 @media print {

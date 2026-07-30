@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
@@ -14,7 +15,9 @@ export default function AutorPage() {
     <>
       <AnnouncementBar />
       <Navbar />
-      <AuthorPanel />
+      <Suspense fallback={<main className="mx-auto max-w-4xl px-4 py-12 text-center text-muted">Cargando panel…</main>}>
+        <AuthorPanel />
+      </Suspense>
       <Footer />
     </>
   );

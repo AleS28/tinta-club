@@ -37,5 +37,22 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId;
       allow update, delete: if false;
     }
+
+    // Monetización — solo servidor (Admin SDK)
+    match /reading_sessions/{docId} {
+      allow read, write: if false;
+    }
+
+    match /direct_chapter_sales/{docId} {
+      allow read, write: if false;
+    }
+
+    match /monthly_pools/{docId} {
+      allow read, write: if false;
+    }
+
+    match /author_earnings_summary/{docId} {
+      allow read, write: if false;
+    }
   }
 }

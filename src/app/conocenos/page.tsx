@@ -2,6 +2,7 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { AboutContent } from "@/components/conocenos/AboutContent";
+import { ButterflyFlight } from "@/components/conocenos/ButterflyFlight";
 import { DiscordCommunityCard } from "@/components/conocenos/DiscordCommunityCard";
 import { TelegramCommunityCard } from "@/components/conocenos/TelegramCommunityCard";
 import { FeedbackForm } from "@/components/conocenos/FeedbackForm";
@@ -16,6 +17,7 @@ export const metadata = {
 export default function ConocenosPage() {
   return (
     <>
+      <ButterflyFlight />
       <AnnouncementBar />
       <Navbar />
 

@@ -11,7 +11,9 @@
     "link:founder": "tsx scripts/link-founder-author.ts",
     "link:admin": "tsx scripts/link-site-admin.ts",
     "extract:will": "python scripts/extract-will-chica-cafe.py",
-    "revoke:member": "tsx scripts/revoke-member.ts"
+    "revoke:member": "tsx scripts/revoke-member.ts",
+    "init:monetization": "tsx scripts/init-monetization.ts",
+    "close:month": "tsx scripts/close-month.ts"
   },
   "dependencies": {
     "firebase": "^12.16.0",

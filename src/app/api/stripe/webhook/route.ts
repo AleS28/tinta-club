@@ -5,6 +5,7 @@ import {
   activateSubscriptionAdmin,
   deactivateSubscriptionAdmin,
 } from "@/lib/subscription-admin";
+import { addSubscriptionRevenueToPool } from "@/lib/monetization/monthly-pool-admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,6 +31,20 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     stripeSubscriptionId: subscriptionId,
     subscriptionStatus: "premium",
   });
+
+  const amountUsd =
+    typeof session.amount_total === "number" ? session.amount_total / 100 : 0;
+  if (amountUsd > 0) {
+    await addSubscriptionRevenueToPool(amountUsd);
+  }
+}
+
+async function handleInvoicePaid(invoice: Stripe.Invoice) {
+  const amountUsd =
+    typeof invoice.amount_paid === "number" ? invoice.amount_paid / 100 : 0;
+  if (amountUsd <= 0) return;
+
+  await addSubscriptionRevenueToPool(amountUsd);
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
@@ -104,6 +119,9 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed":
         await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+      case "invoice.payment_succeeded":
+        await handleInvoicePaid(event.data.object as Stripe.Invoice);
         break;
       case "customer.subscription.updated":
         await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);

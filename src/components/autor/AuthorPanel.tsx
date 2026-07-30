@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Feather, PenLine } from "lucide-react";
 import { BRAND_NAME } from "@/lib/brand";
@@ -9,21 +10,24 @@ import { getBooksByAuthorId, getChaptersByAuthorBooks } from "@/lib/db";
 import { useAuth } from "@/context/AuthContext";
 import { hasAuthorPanelAccess, isAdminUser } from "@/types/user";
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import { AuthorStats } from "@/components/autor/AuthorStats";
+import { AuthorFinancialDashboard } from "@/components/autor/AuthorFinancialDashboard";
 import { AuthorDiscordBanner } from "@/components/autor/AuthorDiscordBanner";
 import { AuthorAgreementBanner } from "@/components/autor/AuthorAgreementBanner";
 import { MyBooksList } from "@/components/autor/MyBooksList";
 import { PublishBookForm } from "@/components/autor/PublishBookForm";
 import { PublishChapterForm } from "@/components/autor/PublishChapterForm";
 
-type Tab = "books" | "publish";
+type Tab = "dashboard" | "books" | "publish";
 
 export function AuthorPanel() {
+  const searchParams = useSearchParams();
   const { user, userProfile } = useAuth();
-  const [tab, setTab] = useState<Tab>("books");
+  const tabParam = searchParams.get("tab");
+  const initialTab: Tab =
+    tabParam === "libros" ? "books" : tabParam === "publicar" ? "publish" : "dashboard";
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [books, setBooks] = useState<Book[]>([]);
   const [chapterCounts, setChapterCounts] = useState<Record<string, number>>({});
-  const [totalChapters, setTotalChapters] = useState(0);
   const [loadingData, setLoadingData] = useState(true);
 
   const loadAuthorData = useCallback(async () => {
@@ -35,7 +39,6 @@ export function AuthorPanel() {
       setBooks(authorBooks);
 
       const chapters = await getChaptersByAuthorBooks(authorBooks.map((b) => b.id));
-      setTotalChapters(chapters.length);
 
       const counts: Record<string, number> = {};
       for (const chapter of chapters) {
@@ -50,8 +53,6 @@ export function AuthorPanel() {
   useEffect(() => {
     loadAuthorData();
   }, [loadAuthorData]);
-
-  const simulatedEarnings = totalChapters * 12.5 + books.length * 45;
 
   return (
     <AuthGuard redirectTo="/" authModalRedirect="/autor">
@@ -104,13 +105,16 @@ export function AuthorPanel() {
         <AuthorDiscordBanner />
         <AuthorAgreementBanner />
 
-        <AuthorStats
-          bookCount={books.length}
-          chapterCount={totalChapters}
-          totalEarnings={simulatedEarnings}
-        />
-
         <div className="mt-8 flex rounded-full bg-sidebar p-1">
+          <button
+            type="button"
+            onClick={() => setTab("dashboard")}
+            className={`flex-1 rounded-full py-2.5 text-sm font-medium transition-colors ${
+              tab === "dashboard" ? "bg-white text-ink shadow-sm" : "text-muted"
+            }`}
+          >
+            Finanzas
+          </button>
           <button
             type="button"
             onClick={() => setTab("books")}
@@ -127,12 +131,14 @@ export function AuthorPanel() {
               tab === "publish" ? "bg-white text-ink shadow-sm" : "text-muted"
             }`}
           >
-            Publicar Nuevo Libro / Capítulo
+            Publicar
           </button>
         </div>
 
         <div className="mt-6">
-          {loadingData ? (
+          {tab === "dashboard" ? (
+            <AuthorFinancialDashboard />
+          ) : loadingData ? (
             <p className="text-center text-sm text-muted">Cargando tus obras...</p>
           ) : tab === "books" ? (
             <MyBooksList books={books} chapterCounts={chapterCounts} />

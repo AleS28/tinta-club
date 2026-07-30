@@ -23,6 +23,14 @@ const config: Config = {
           light: "#E8D5A3",
           cream: "#F5E6C8",
         },
+        home: {
+          dark: "#2A1D17",
+          cream: "#FDFBF7",
+          parchment: "#F5EDD8",
+          border: "#8B6914",
+          gold: "#D4A359",
+          terracotta: "#C06240",
+        },
       },
       boxShadow: {
         editorial: "0 4px 24px -4px rgba(44, 24, 16, 0.12), 0 2px 8px -2px rgba(44, 24, 16, 0.06)",
@@ -32,6 +40,11 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
         serif: ["var(--font-merriweather)", "Georgia", "serif"],
+        display: ["var(--font-playfair)", "var(--font-merriweather)", "Georgia", "serif"],
+      },
+      backgroundImage: {
+        "parchment-texture":
+          "linear-gradient(135deg, rgba(245,237,216,0.95) 0%, rgba(253,251,247,0.98) 50%, rgba(235,220,190,0.92) 100%)",
       },
     },
   },

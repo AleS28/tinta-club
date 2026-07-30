@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Merriweather } from "next/font/google";
+import { Inter, Merriweather, Playfair_Display } from "next/font/google";
 import { Providers } from "@/components/providers/Providers";
 import { SiteShell } from "@/components/layout/SiteShell";
 import "./globals.css";
@@ -15,6 +15,12 @@ const merriweather = Merriweather({
   variable: "--font-merriweather",
 });
 
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-playfair",
+});
+
 export const metadata: Metadata = {
   title: "El Imperio de la Tinta — Plataforma de Narrativa Independiente",
   description:
@@ -28,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${inter.variable} ${merriweather.variable} font-sans`}>
+      <body className={`${inter.variable} ${merriweather.variable} ${playfair.variable} font-sans`}>
         <Providers>
           <SiteShell>{children}</SiteShell>
         </Providers>

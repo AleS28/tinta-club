@@ -86,7 +86,7 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           {showProfile && role === "admin" && (
             <span className="hidden items-center gap-1 rounded-full border border-[#D27C5A]/50 bg-[#D27C5A]/20 px-3 py-1 text-xs font-semibold text-[#D27C5A] sm:inline-flex">
-              Administradora ✦
+              Administradora +
             </span>
           )}
           {isSubscriber && showProfile && role !== "admin" && (
@@ -155,7 +155,7 @@ export function Navbar() {
                 >
                   {role === "admin" && (
                     <div className="border-b border-[#D27C5A]/15 px-4 py-2.5">
-                      <span className="text-xs font-semibold text-[#D27C5A]">Administradora ✦</span>
+                      <span className="text-xs font-semibold text-[#D27C5A]">Administradora +</span>
                       <p className="text-xs text-stone-500">Acceso total al Imperio</p>
                     </div>
                   )}

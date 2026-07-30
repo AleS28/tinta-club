@@ -7,10 +7,47 @@ import { getBookMeta, type BookMeta } from "@/lib/book-meta";
 interface BookCardProps {
   book: Book;
   meta?: BookMeta;
+  variant?: "default" | "compact";
 }
 
-export function BookCard({ book, meta }: BookCardProps) {
+export function BookCard({ book, meta, variant = "default" }: BookCardProps) {
   const bookMeta = meta ?? getBookMeta(book.id, book.synopsis);
+
+  if (variant === "compact") {
+    return (
+      <Link
+        href={`/libro/${book.id}`}
+        className="group flex w-[280px] shrink-0 gap-3 rounded-xl border border-amber-900/10 bg-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-editorial-lg lg:w-full"
+      >
+        <div className="shrink-0 overflow-hidden rounded-lg">
+          <BookCover book={book} className="h-[100px] w-[68px]" imageClassName="group-hover:scale-105" />
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col justify-center">
+          <h3 className="font-display text-sm font-bold leading-snug text-ink line-clamp-2 transition-colors group-hover:text-imperial-deep">
+            {book.title}
+          </h3>
+          <p className="mt-0.5 text-xs text-muted">{book.author}</p>
+
+          <div className="mt-2 flex items-center gap-2">
+            <span className="flex items-center gap-0.5 text-xs font-medium text-amber-700">
+              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+              {book.rating.toFixed(1)}
+            </span>
+            <span className="flex items-center gap-1 text-[11px] text-muted">
+              <Clock className="h-3 w-3 text-terracotta/70" />
+              {bookMeta.readingTimeMinutes} min
+            </span>
+          </div>
+
+          <span className="mt-2 inline-flex w-fit rounded-full border border-amber-900/10 bg-sidebar px-2 py-0.5 text-[10px] font-medium text-imperial-deep">
+            {book.genre}
+          </span>
+        </div>
+      </Link>
+    );
+  }
+
   return (
     <Link
       href={`/libro/${book.id}`}

@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { getBookById } from "@/lib/db";
+import { filterCatalogBooks } from "@/data/catalog";
 import { getPublicAuthorProfile } from "@/lib/users";
 import type { Book } from "@/data/mock";
 import type { PublicAuthorProfile } from "@/types/author";
@@ -62,7 +63,9 @@ export async function getFavoriteBooks(userId: string): Promise<Book[]> {
   const books = await Promise.all(
     snapshot.docs.map((docSnap) => getBookById(docSnap.id)),
   );
-  return books.filter((book): book is Book => !!book);
+  return filterCatalogBooks(
+    books.filter((book): book is Book => !!book),
+  );
 }
 
 export function subscribeToFollow(

@@ -11,7 +11,7 @@ interface TopObrasGridProps {
 export function TopObrasGrid({ books, metaByBookId }: TopObrasGridProps) {
   const topBooks = [...books]
     .sort((a, b) => b.rating - a.rating)
-    .slice(0, 5);
+    .slice(0, 3);
 
   if (topBooks.length === 0) return null;
 
@@ -26,7 +26,7 @@ export function TopObrasGrid({ books, metaByBookId }: TopObrasGridProps) {
             </h2>
           </div>
 
-          <div className="home-scroll-snap-x -mx-1 flex gap-4 overflow-x-auto pb-2 pt-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-home-gold/30 lg:grid lg:grid-cols-5 lg:gap-5 lg:overflow-visible">
+          <div className="home-scroll-snap-x -mx-1 flex gap-4 overflow-x-auto pb-2 pt-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-home-gold/30 lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-visible">
             {topBooks.map((book, index) => (
               <FeaturedTopBookCard
                 key={book.id}

@@ -17,6 +17,11 @@ import {
   type Chapter,
   type Genre,
 } from "@/data/mock";
+import {
+  filterCatalogBooks,
+  filterCatalogChapters,
+  isCatalogBookId,
+} from "@/data/catalog";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 
 const GENRE_GRADIENTS: Record<Genre, { gradient: string; accent: string }> = {
@@ -61,11 +66,12 @@ function withBookDefaults(book: Book): Book {
 }
 
 function mergeBooks(firestoreBooks: Book[]): Book[] {
-  if (firestoreBooks.length === 0) return allBooks;
+  const catalogFirestore = filterCatalogBooks(firestoreBooks);
+  if (catalogFirestore.length === 0) return allBooks;
 
-  const firestoreIds = new Set(firestoreBooks.map((book) => book.id));
+  const firestoreIds = new Set(catalogFirestore.map((book) => book.id));
   const mockOnly = allBooks.filter((book) => !firestoreIds.has(book.id));
-  return [...firestoreBooks.map(withBookDefaults), ...mockOnly];
+  return [...catalogFirestore.map(withBookDefaults), ...mockOnly];
 }
 
 export async function getBooks(): Promise<Book[]> {
@@ -78,6 +84,8 @@ export async function getBooks(): Promise<Book[]> {
 }
 
 export async function getBookById(id: string): Promise<Book | undefined> {
+  if (!isCatalogBookId(id)) return undefined;
+
   try {
     if (db && isFirebaseConfigured) {
       const docSnap = await getDoc(doc(db, "books", id));
@@ -93,6 +101,8 @@ export async function getBookById(id: string): Promise<Book | undefined> {
 }
 
 export async function getChaptersByBookId(bookId: string): Promise<Chapter[]> {
+  if (!isCatalogBookId(bookId)) return [];
+
   try {
     const firestoreChapters = await fetchChaptersFromFirestore(bookId);
     if (firestoreChapters.length > 0) return firestoreChapters;
@@ -104,18 +114,25 @@ export async function getChaptersByBookId(bookId: string): Promise<Chapter[]> {
 }
 
 export async function getChapterById(chapterId: string): Promise<Chapter | undefined> {
+  let chapter: Chapter | undefined;
+
   try {
     if (db && isFirebaseConfigured) {
       const docSnap = await getDoc(doc(db, "chapters", chapterId));
       if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as Chapter;
+        chapter = { id: docSnap.id, ...docSnap.data() } as Chapter;
       }
     }
   } catch {
     // fallback to mock
   }
 
-  return getMockChapterById(chapterId);
+  if (!chapter) {
+    chapter = getMockChapterById(chapterId);
+  }
+
+  if (!chapter || !isCatalogBookId(chapter.bookId)) return undefined;
+  return chapter;
 }
 
 export async function getAllChapters(): Promise<Chapter[]> {
@@ -124,13 +141,13 @@ export async function getAllChapters(): Promise<Chapter[]> {
     if (firestoreChapters.length > 0) {
       const firestoreIds = new Set(firestoreChapters.map((c) => c.id));
       const mockOnly = mockChapters.filter((c) => !firestoreIds.has(c.id));
-      return [...firestoreChapters, ...mockOnly];
+      return filterCatalogChapters([...firestoreChapters, ...mockOnly]);
     }
   } catch {
     // fallback to mock
   }
 
-  return mockChapters;
+  return filterCatalogChapters(mockChapters);
 }
 
 export async function getBooksByAuthorId(
@@ -159,9 +176,10 @@ export async function getBooksByAuthorId(
   const mockBooks = allBooks.filter(matchesAuthor);
   if (firestoreBooks.length === 0) return mockBooks;
 
-  const firestoreIds = new Set(firestoreBooks.map((book) => book.id));
+  const catalogFirestore = filterCatalogBooks(firestoreBooks);
+  const firestoreIds = new Set(catalogFirestore.map((book) => book.id));
   const mockOnly = mockBooks.filter((book) => !firestoreIds.has(book.id));
-  return [...firestoreBooks, ...mockOnly];
+  return [...catalogFirestore, ...mockOnly];
 }
 
 export async function getChaptersByAuthorBooks(bookIds: string[]): Promise<Chapter[]> {

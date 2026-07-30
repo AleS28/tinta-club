@@ -9,8 +9,7 @@ interface LatestNewsSectionProps {
 
 export function LatestNewsSection({ books, metaByBookId }: LatestNewsSectionProps) {
   const latestBooks = [...books]
-    .sort((a, b) => b.rating - a.rating)
-    .slice(0, 6);
+    .sort((a, b) => b.rating - a.rating);
 
   if (latestBooks.length === 0) return null;
 

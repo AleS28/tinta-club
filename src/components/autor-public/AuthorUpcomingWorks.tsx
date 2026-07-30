@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BookOpen, Clock, Sparkles } from "lucide-react";
+import { isCatalogBookId } from "@/data/catalog";
 import type { AuthorUpcomingWork } from "@/types/author-profile";
 
 interface AuthorUpcomingWorksProps {
@@ -13,19 +14,23 @@ const statusLabels: Record<AuthorUpcomingWork["status"], string> = {
 };
 
 export function AuthorUpcomingWorks({ works }: AuthorUpcomingWorksProps) {
-  if (works.length === 0) return null;
+  const publishedWorks = works.filter(
+    (work) => work.status === "published" && work.bookId && isCatalogBookId(work.bookId),
+  );
+
+  if (publishedWorks.length === 0) return null;
 
   return (
     <section className="mt-12">
       <h2 className="font-serif text-2xl font-bold text-[#3B2519] sm:text-3xl">
-        Otras Obras y Próximos Lanzamientos
+        Otras Obras
       </h2>
       <p className="mt-2 text-sm text-muted">
-        Nuevas historias en camino desde el Imperio de la Tinta.
+        Más historias disponibles en el Imperio de la Tinta.
       </p>
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {works.map((work) => {
+        {publishedWorks.map((work) => {
           const isPublished = work.status === "published" && work.bookId;
 
           return (

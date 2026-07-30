@@ -23,17 +23,7 @@ export const authorProfiles: AuthorPublicProfile[] = [
       freeChaptersCount: 3,
       membershipPriceUsd: 5,
     },
-    upcomingWorks: [
-      {
-        id: "pedro-otros-mundos",
-        title: "Los otros mundos",
-        genre: "Fantasía cósmica",
-        status: "in-progress",
-        coverGradient: "from-indigo-900 via-violet-800 to-purple-950",
-        coverAccent: "#6366F1",
-        teaser: "Una odisea entre dimensiones donde la memoria es el último mapa del universo.",
-      },
-    ],
+    upcomingWorks: [],
   },
   {
     id: "author-will-flechas",

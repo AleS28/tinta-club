@@ -6,11 +6,14 @@ import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 
-const navLinks = [
+const publicNavLinks = [
   { label: "Explorar", href: "/" },
+  { label: "Conócenos", href: "/conocenos" },
+];
+
+const memberNavLinks = [
   { label: "Mis Lecturas", href: "/biblioteca" },
   { label: "Mi Cuenta", href: "/biblioteca" },
-  { label: "Conócenos", href: "/conocenos" },
 ];
 
 export function Navbar() {
@@ -51,7 +54,7 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
-          {navLinks.map((link) => (
+          {publicNavLinks.map((link) => (
             <Link
               key={link.label}
               href={link.href}
@@ -60,6 +63,16 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
+          {showProfile &&
+            memberNavLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="text-sm font-medium text-stone-300 transition-colors duration-300 hover:text-[#D27C5A]"
+              >
+                {link.label}
+              </Link>
+            ))}
           {showProfile && (role === "author" || role === "admin") && (
             <Link
               href="/autor"

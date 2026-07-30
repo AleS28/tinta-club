@@ -32,7 +32,9 @@ async function fetchBooksFromFirestore(): Promise<Book[]> {
   const snapshot = await getDocs(collection(db, "books"));
   if (snapshot.empty) return [];
 
-  return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() } as Book));
+  return snapshot.docs.map((docSnap) =>
+    withBookDefaults({ id: docSnap.id, ...docSnap.data() } as Book),
+  );
 }
 
 async function fetchChaptersFromFirestore(bookId?: string): Promise<Chapter[]> {
@@ -50,12 +52,20 @@ async function fetchChaptersFromFirestore(bookId?: string): Promise<Chapter[]> {
     .sort((a, b) => a.number - b.number);
 }
 
+function withBookDefaults(book: Book): Book {
+  return {
+    ...book,
+    rating: typeof book.rating === "number" ? book.rating : 4.5,
+    membershipPrice: book.membershipPrice ?? 4.99,
+  };
+}
+
 function mergeBooks(firestoreBooks: Book[]): Book[] {
   if (firestoreBooks.length === 0) return allBooks;
 
   const firestoreIds = new Set(firestoreBooks.map((book) => book.id));
   const mockOnly = allBooks.filter((book) => !firestoreIds.has(book.id));
-  return [...firestoreBooks, ...mockOnly];
+  return [...firestoreBooks.map(withBookDefaults), ...mockOnly];
 }
 
 export async function getBooks(): Promise<Book[]> {
@@ -72,7 +82,7 @@ export async function getBookById(id: string): Promise<Book | undefined> {
     if (db && isFirebaseConfigured) {
       const docSnap = await getDoc(doc(db, "books", id));
       if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as Book;
+        return withBookDefaults({ id: docSnap.id, ...docSnap.data() } as Book);
       }
     }
   } catch {
@@ -135,7 +145,7 @@ export async function getBooksByAuthorId(
         query(collection(db, "books"), where("authorId", "==", authorId)),
       );
       firestoreBooks = snapshot.docs
-        .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() } as Book))
+        .map((docSnap) => withBookDefaults({ id: docSnap.id, ...docSnap.data() } as Book))
         .sort((a, b) => a.title.localeCompare(b.title));
     }
   } catch {

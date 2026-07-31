@@ -54,7 +54,7 @@ export const pedroAmorCafeBook: Book = {
 export const willChicaCafeBook: Book = {
   id: "will-chica-cafe",
   title: "La chica del café",
-  author: "WillFlechas",
+  author: "Will Flechas",
   authorId: "author-will-flechas",
   genre: "Romance",
   rating: 4.7,
@@ -69,7 +69,7 @@ export const willChicaCafeBook: Book = {
 export const willWhiskyBook: Book = {
   id: "will-whisky-por-favor",
   title: "Un whisky, por favor",
-  author: "WillFlechas",
+  author: "Will Flechas",
   authorId: "author-will-flechas",
   genre: "Romance",
   rating: 4.6,
@@ -106,7 +106,7 @@ export const topAuthors: Author[] = [
   },
   {
     id: "author-will-flechas",
-    name: "WillFlechas",
+    name: "Will Flechas",
     initials: "WF",
     avatarColor: "bg-stone-700",
     bookCount: 2,

@@ -28,10 +28,10 @@ export const authorProfiles: AuthorPublicProfile[] = [
   {
     id: "author-will-flechas",
     slug: "will-flechas",
-    name: "WillFlechas",
+    name: "Will Flechas",
     badge: "✨ Autor Fundador",
-    bio: "Escritor mexicano apasionado por narrar lo íntimo con crudeza y ternura. Su prosa explora la soledad urbana, la timidez compartida y esos pequeños instantes —como una sonrisa tras el mostrador— que pueden sostener o quebrar una vida.",
-    photoUrl: "",
+    bio: "Autor colombiano de 46 años apasionado por el arte de contar historias. Creyente fiel de que los mejores libros se leen sin prisa, encuentra su inspiración en la serenidad de la naturaleza, una mesa compartida con buena comida y la calma que regala una copa de buen vino. Para Will, escribir es la forma perfecta de maridar la vida con la imaginación.",
+    photoUrl: "/authors/will-flechas/profile.png",
     social: {},
     featuredWork: {
       bookId: "will-chica-cafe",

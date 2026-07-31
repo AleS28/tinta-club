@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getChapterById as getMockChapterById } from "@/data/mock";
 import { canAccessFullChapter } from "@/lib/chapter-access";
+import { resolveDirectReadingAccess } from "@/lib/monetization/reading-access-admin";
 import {
   getChapterForApi,
   getUserProfileFromFirestore,
@@ -62,12 +63,24 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     const profile = await getUserProfileFromFirestore(decoded.uid, decoded.email);
+    const directAccess = await resolveDirectReadingAccess(
+      decoded.uid,
+      chapter.bookId,
+      chapterId,
+    );
 
-    // Firestore manda: si hay perfil y no es premium, denegar aunque el token tenga claims viejos.
-    let hasPremiumAccess =
-      !!profile && canAccessFullChapter(chapter, profile) && isPremiumUser(profile);
+    let hasPremiumAccess = directAccess.granted;
+    let accessType: "public" | "premium" | "purchase" | "book_purchase" = "premium";
 
-    if (!profile) {
+    if (directAccess.access === "chapter") accessType = "purchase";
+    if (directAccess.access === "book") accessType = "book_purchase";
+
+    if (!hasPremiumAccess) {
+      hasPremiumAccess =
+        !!profile && canAccessFullChapter(chapter, profile) && isPremiumUser(profile);
+    }
+
+    if (!profile && !directAccess.granted) {
       hasPremiumAccess = hasPremiumClaims(decoded);
     }
 
@@ -75,9 +88,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Suscripción premium requerida" }, { status: 403 });
     }
 
+    if (accessType === "premium" && !directAccess.granted) {
+      accessType = "premium";
+    }
+
     return NextResponse.json({
       content,
-      access: "premium",
+      access: accessType,
     });
   } catch (error) {
     console.error("[chapter-content] API error:", error);

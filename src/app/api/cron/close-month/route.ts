@@ -31,8 +31,13 @@ export async function POST(request: NextRequest) {
       ok: true,
       monthYear,
       authorsProcessed: result.authorsProcessed,
+      alreadyClosed: result.alreadyClosed,
+      consolidationId: result.consolidationId ?? result.pool.consolidationId,
       poolStatus: result.pool.status,
       valuePerSecond: result.pool.valuePerSecond,
+      totalPlatformReadingSeconds: result.pool.totalPlatformReadingSeconds,
+      totalPoolDistributed: result.pool.totalPoolDistributed,
+      roundingAdjustmentCents: result.pool.roundingAdjustmentCents,
     });
   } catch (error) {
     console.error("[cron/close-month]", error);

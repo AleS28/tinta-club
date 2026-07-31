@@ -78,6 +78,8 @@ async function main() {
       platformPool30: 0,
       totalPlatformReadingSeconds: 0,
       valuePerSecond: 0,
+      totalPlatformPremiumViews: 0,
+      valuePerView: 0,
       status: "open",
       updatedAt: now,
     },
@@ -89,7 +91,10 @@ async function main() {
   console.log(`  - ${COLLECTIONS.readingSessions}`);
   console.log(`  - ${COLLECTIONS.directChapterSales}`);
   console.log(`  - ${COLLECTIONS.monthlyPools}`);
-  console.log(`  - ${COLLECTIONS.authorEarningsSummary}`);
+  console.log(`  - ${COLLECTIONS.stripeProcessedEvents}`);
+  console.log(`  - ${COLLECTIONS.chapterPurchases}`);
+  console.log(`  - ${COLLECTIONS.bookPurchases}`);
+  console.log(`  - ${COLLECTIONS.directBookSales}`);
   console.log("\nPublica firestore.rules en Firebase Console.");
   console.log("Cron de cierre: POST /api/cron/close-month (header x-admin-secret)");
 }

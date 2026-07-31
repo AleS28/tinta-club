@@ -1,34 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyFirebaseIdToken } from "@/lib/firebase-admin";
-import { getChapterForApi, getUserProfileFromFirestore } from "@/lib/firestore-admin";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { getUserProfileFromFirestore } from "@/lib/firestore-admin";
 import { getStripe, getAppBaseUrl, isStripeConfigured } from "@/lib/stripe";
 import { getStripeCustomerId, saveStripeCustomerId } from "@/lib/subscription-admin";
-import { hasChapterPurchaseAccess } from "@/lib/monetization/chapter-access-admin";
 import { hasBookPurchaseAccess } from "@/lib/monetization/book-access-admin";
-import { resolveChapterPriceUsd } from "@/lib/monetization/store-catalog-admin";
+import { getChaptersByBookId, getBookById } from "@/lib/db";
+import { buildStoreListing, resolveBookPriceUsd } from "@/lib/monetization/store-catalog-admin";
 import { isPremiumUser } from "@/types/user";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 interface RouteContext {
-  params: Promise<{ chapterId: string }>;
-}
-
-async function resolveAuthorId(bookId: string): Promise<string | null> {
-  const adminDb = await getAdminDb();
-  if (!adminDb) return null;
-
-  const snap = await adminDb.collection("books").doc(bookId).get();
-  if (!snap.exists) return null;
-
-  const authorId = snap.data()?.authorId;
-  return typeof authorId === "string" && authorId.length > 0 ? authorId : null;
-}
-
-async function resolveChapterPriceUsdForPurchase(chapterId: string, bookId: string): Promise<number> {
-  return resolveChapterPriceUsd(chapterId, bookId);
+  params: Promise<{ bookId: string }>;
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
@@ -37,7 +21,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Stripe no está configurado" }, { status: 503 });
     }
 
-    const { chapterId } = await context.params;
+    const { bookId } = await context.params;
 
     const authHeader = request.headers.get("authorization");
     const idToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
@@ -51,13 +35,19 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }
 
-    const chapter = await getChapterForApi(chapterId);
-    if (!chapter) {
-      return NextResponse.json({ error: "Capítulo no encontrado" }, { status: 404 });
+    const book = await getBookById(bookId);
+    if (!book) {
+      return NextResponse.json({ error: "Libro no encontrado" }, { status: 404 });
     }
 
-    if (!chapter.isPremium) {
-      return NextResponse.json({ error: "Este capítulo no es premium" }, { status: 400 });
+    const chapters = await getChaptersByBookId(bookId);
+    const listing = await buildStoreListing(bookId, chapters);
+
+    if (!listing || listing.saleMode !== "book") {
+      return NextResponse.json(
+        { error: "Este libro no está disponible para compra completa" },
+        { status: 400 },
+      );
     }
 
     const profile = await getUserProfileFromFirestore(decoded.uid, decoded.email);
@@ -68,20 +58,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    if (await hasBookPurchaseAccess(decoded.uid, chapter.bookId)) {
-      return NextResponse.json({ error: "Ya tienes acceso a este libro" }, { status: 400 });
+    if (await hasBookPurchaseAccess(decoded.uid, bookId)) {
+      return NextResponse.json({ error: "Ya compraste este libro" }, { status: 400 });
     }
 
-    if (await hasChapterPurchaseAccess(decoded.uid, chapterId)) {
-      return NextResponse.json({ error: "Ya compraste este capítulo" }, { status: 400 });
-    }
-
-    const authorId = await resolveAuthorId(chapter.bookId);
-    if (!authorId) {
-      return NextResponse.json({ error: "Autor no encontrado para esta obra" }, { status: 404 });
-    }
-
-    const priceUsd = await resolveChapterPriceUsdForPurchase(chapterId, chapter.bookId);
+    const priceUsd = await resolveBookPriceUsd(bookId);
     const baseUrl = getAppBaseUrl();
     const stripe = getStripe();
 
@@ -95,6 +76,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
       await saveStripeCustomerId(decoded.uid, customerId);
     }
 
+    const firstChapterId = listing.firstChapterId ?? chapters[0]?.id;
+    const successPath = firstChapterId
+      ? `/leer/${firstChapterId}?purchased=true`
+      : `/mi-biblioteca?purchased=true`;
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer: customerId,
@@ -104,32 +90,31 @@ export async function POST(request: NextRequest, context: RouteContext) {
             currency: "usd",
             unit_amount: Math.round(priceUsd * 100),
             product_data: {
-              name: chapter.title,
-              description: "Compra directa de capítulo — El Imperio de la Tinta",
+              name: book.title,
+              description:
+                "Compra única — lectura de por vida en el visor de El Imperio de la Tinta (sin descarga).",
             },
           },
           quantity: 1,
         },
       ],
       metadata: {
-        type: "chapter_purchase",
+        type: "book_purchase",
         firebaseUid: decoded.uid,
         userId: decoded.uid,
-        chapterId,
-        bookId: chapter.bookId,
-        authorId,
+        bookId,
+        authorId: book.authorId,
       },
       payment_intent_data: {
         metadata: {
-          type: "chapter_purchase",
+          type: "book_purchase",
           firebaseUid: decoded.uid,
-          chapterId,
-          bookId: chapter.bookId,
-          authorId,
+          bookId,
+          authorId: book.authorId,
         },
       },
-      success_url: `${baseUrl}/leer/${chapterId}?purchased=true`,
-      cancel_url: `${baseUrl}/leer/${chapterId}?purchase=canceled`,
+      success_url: `${baseUrl}${successPath}`,
+      cancel_url: `${baseUrl}/tienda?purchase=canceled&bookId=${bookId}`,
     });
 
     if (!session.url) {
@@ -138,7 +123,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ url: session.url, sessionId: session.id, priceUsd });
   } catch (error) {
-    console.error("[chapters/purchase]", error);
+    console.error("[books/purchase]", error);
     return NextResponse.json({ error: "Error al iniciar la compra" }, { status: 500 });
   }
 }

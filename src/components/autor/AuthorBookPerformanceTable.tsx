@@ -32,7 +32,8 @@ export function AuthorBookPerformanceTable({ books }: AuthorBookPerformanceTable
               <th className="px-4 py-3 font-semibold">Cap. Premium</th>
               <th className="px-4 py-3 font-semibold">Tiempo leído</th>
               <th className="px-4 py-3 font-semibold">Vistas</th>
-              <th className="px-6 py-3 font-semibold text-right">Ganancia est.</th>
+              <th className="px-4 py-3 font-semibold text-right">Pool est.</th>
+              <th className="px-6 py-3 font-semibold text-right">Ventas directas (70%)</th>
             </tr>
           </thead>
           <tbody>
@@ -44,8 +45,11 @@ export function AuthorBookPerformanceTable({ books }: AuthorBookPerformanceTable
                   {formatReadingDuration(book.readingSeconds)}
                 </td>
                 <td className="px-4 py-4 text-muted">{book.totalViews}</td>
-                <td className="px-6 py-4 text-right font-semibold text-emerald-700">
+                <td className="px-4 py-4 text-right font-semibold text-emerald-700">
                   ${book.estimatedEarnings.toFixed(2)}
+                </td>
+                <td className="px-6 py-4 text-right font-semibold text-gold">
+                  ${(book.directSalesEarnings ?? 0).toFixed(2)}
                 </td>
               </tr>
             ))}

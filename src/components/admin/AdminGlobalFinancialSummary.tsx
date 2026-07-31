@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Clock, Handshake, TrendingUp } from "lucide-react";
+import { Building2, Clock, Eye, Handshake, TrendingUp } from "lucide-react";
 import type { GlobalFinancialReport } from "@/types/admin-financial";
 import { formatReadingDuration } from "@/lib/monetization/format";
 
@@ -12,13 +12,18 @@ function formatUsd(value: number): string {
   return `$${value.toFixed(2)}`;
 }
 
+function formatValuePerSecond(value: number): string {
+  if (value <= 0) return "$0.00";
+  return `$${value.toFixed(6)}/s`;
+}
+
 export function AdminGlobalFinancialSummary({ report }: AdminGlobalFinancialSummaryProps) {
   const cards = [
     {
       emoji: "🏦",
-      label: "Ingresos brutos",
-      value: formatUsd(report.grossRevenue),
-      sub: `Neto repartible: ${formatUsd(report.netRevenue)}`,
+      label: "Ingresos brutos suscripciones",
+      value: formatUsd(report.subscriptionGross),
+      sub: `Neto: ${formatUsd(report.subscriptionNet)} · Comisiones: ${formatUsd(report.subscriptionGatewayFees)}`,
       icon: Building2,
       color: "bg-imperial-dark/10 text-imperial-deep",
     },
@@ -26,7 +31,7 @@ export function AdminGlobalFinancialSummary({ report }: AdminGlobalFinancialSumm
       emoji: "💳",
       label: "Comisiones pasarela (Stripe)",
       value: formatUsd(report.gatewayFees),
-      sub: "Descontadas antes del 70/30",
+      sub: "Suscripciones + ventas directas",
       icon: TrendingUp,
       color: "bg-stone-100 text-stone-700",
     },
@@ -34,24 +39,32 @@ export function AdminGlobalFinancialSummary({ report }: AdminGlobalFinancialSumm
       emoji: "📈",
       label: "Ganancia neta plataforma (30%)",
       value: formatUsd(report.platformNet30),
-      sub: "Sobre ingresos netos post-Stripe",
+      sub: `Subs 30%: ${formatUsd(report.subscriptionPlatformPool30)}`,
       icon: TrendingUp,
       color: "bg-emerald-100 text-emerald-800",
     },
     {
       emoji: "🤝",
-      label: "Fondo total para autores (70%)",
-      value: formatUsd(report.authorsPool70),
-      sub: "Pool suscripciones + ventas directas",
+      label: "Pool autores suscripciones (70%)",
+      value: formatUsd(report.subscriptionAuthorsPool70),
+      sub: `+ ventas directas autores: ${formatUsd(report.authorsPool70 - report.subscriptionAuthorsPool70)}`,
       icon: Handshake,
       color: "bg-gold-cream/80 text-imperial-deep",
     },
     {
       emoji: "⏱️",
-      label: "Horas totales leídas en la web",
+      label: "Tiempo de lectura premium (pool)",
       value: formatReadingDuration(report.totalPlatformReadingTime),
-      sub: `Pool ${report.poolStatus === "closed" ? "cerrado" : "abierto"}`,
+      sub: `${formatValuePerSecond(report.valuePerSecond)} · Pool ${report.poolStatus === "closed" ? "cerrado" : "abierto"}`,
       icon: Clock,
+      color: "bg-amber-100 text-amber-800",
+    },
+    {
+      emoji: "👁️",
+      label: "Vistas estadísticas",
+      value: report.totalPlatformPremiumViews.toLocaleString("es-ES"),
+      sub: "Contador social — no determina regalías",
+      icon: Eye,
       color: "bg-terracotta/10 text-terracotta",
     },
   ];

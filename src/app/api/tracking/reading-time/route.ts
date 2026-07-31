@@ -15,6 +15,8 @@ interface TrackingBody {
   chapterId: string;
   readingTimeSeconds: number;
   isSubscriptionRead?: boolean;
+  isTabVisible?: boolean;
+  hasRecentInteraction?: boolean;
 }
 
 async function resolveAuthorId(bookId: string): Promise<string | null> {
@@ -82,16 +84,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Autor no encontrado para esta obra" }, { status: 404 });
     }
 
-    const session = await recordReadingSession({
+    const isTabVisible = body.isTabVisible !== false;
+    const hasRecentInteraction = body.hasRecentInteraction === true;
+
+    const result = await recordReadingSession({
       userId: decoded.uid,
       bookId,
       chapterId,
       authorId,
       readingTimeSeconds: seconds,
       isSubscriptionRead,
+      isTabVisible,
+      hasRecentInteraction,
     });
 
-    return NextResponse.json({ ok: true, sessionId: session.id });
+    return NextResponse.json({
+      ok: true,
+      sessionId: result.session.id,
+      poolSecondsCredited: result.poolSecondsCredited,
+      countsAsStatisticalView: result.countsAsStatisticalView,
+    });
   } catch (error) {
     console.error("[tracking/reading-time]", error);
     return NextResponse.json({ error: "Error al registrar lectura" }, { status: 500 });

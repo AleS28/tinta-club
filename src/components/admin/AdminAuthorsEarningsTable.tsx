@@ -61,6 +61,7 @@ function AuthorDetailModal({
           <div>
             <h3 className="font-serif text-lg font-bold text-ink">{author.authorName}</h3>
             <p className="text-sm text-muted">{author.email}</p>
+            <p className="text-xs text-muted">UID: {author.authorId}</p>
           </div>
         </div>
         <dl className="mt-6 space-y-3 text-sm">
@@ -69,10 +70,18 @@ function AuthorDetailModal({
             <dd className="font-medium text-ink">{author.activeBooksCount}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-muted">Tiempo leído</dt>
+            <dt className="text-muted">Vistas estadísticas</dt>
+            <dd className="font-medium text-ink">{author.premiumViews.toLocaleString("es-ES")}</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-muted">Tiempo lectura pool</dt>
             <dd className="font-medium text-ink">
               {formatReadingDuration(author.readingTimeSeconds)}
             </dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-muted">% del pool por tiempo</dt>
+            <dd className="font-medium text-ink">{author.viewSharePercent.toFixed(2)}%</dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-muted">Ganancia pool</dt>
@@ -113,7 +122,7 @@ export function AdminAuthorsEarningsTable({
       <section className="rounded-2xl border border-dashed border-sidebar bg-white/50 p-10 text-center">
         <p className="text-sm text-muted">
           No hay actividad financiera registrada para{" "}
-          {report.monthYear}. Los datos aparecerán cuando haya suscripciones y lecturas premium.
+          {report.monthYear}. Los datos aparecerán cuando haya suscripciones y vistas premium.
         </p>
       </section>
     );
@@ -133,7 +142,9 @@ export function AdminAuthorsEarningsTable({
               <tr className="border-b border-sidebar bg-sidebar/40 text-xs uppercase tracking-wide text-muted">
                 <th className="px-6 py-3 font-semibold">Autor</th>
                 <th className="px-4 py-3 font-semibold">Obras</th>
-                <th className="px-4 py-3 font-semibold">Tiempo leído</th>
+                <th className="px-4 py-3 font-semibold">Vistas stats</th>
+                <th className="px-4 py-3 font-semibold">Tiempo pool</th>
+                <th className="px-4 py-3 font-semibold">% pool</th>
                 <th className="px-4 py-3 font-semibold">Pool</th>
                 <th className="px-4 py-3 font-semibold">Directas</th>
                 <th className="px-4 py-3 font-semibold">Total</th>
@@ -155,8 +166,12 @@ export function AdminAuthorsEarningsTable({
                   </td>
                   <td className="px-4 py-4 text-muted">{author.activeBooksCount}</td>
                   <td className="px-4 py-4 text-muted">
+                    {author.premiumViews.toLocaleString("es-ES")}
+                  </td>
+                  <td className="px-4 py-4 text-muted">
                     {formatReadingDuration(author.readingTimeSeconds)}
                   </td>
+                  <td className="px-4 py-4 text-muted">{author.viewSharePercent.toFixed(2)}%</td>
                   <td className="px-4 py-4 text-terracotta">
                     ${author.poolEarnings.toFixed(2)}
                   </td>

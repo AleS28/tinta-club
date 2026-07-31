@@ -50,7 +50,10 @@ async function main() {
 
   console.log(`✓ Mes ${monthYear} cerrado`);
   console.log(`  Autores procesados: ${result.authorsProcessed}`);
+  console.log(`  Ya cerrado: ${result.alreadyClosed ? "sí" : "no"}`);
+  console.log(`  Tiempo pool: ${result.pool.totalPlatformReadingSeconds}s`);
   console.log(`  Valor/segundo: ${result.pool.valuePerSecond}`);
+  console.log(`  Pool distribuido: ${result.pool.totalPoolDistributed ?? 0}`);
 }
 
 main().catch((error) => {

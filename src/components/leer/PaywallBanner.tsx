@@ -5,10 +5,23 @@ import { BRAND_NAME } from "@/lib/brand";
 
 interface PaywallBannerProps {
   price: number;
+  chapterPrice?: number;
+  bookPrice?: number;
   onSubscribe: () => void;
+  onChapterPurchase?: () => void;
+  onBookPurchase?: () => void;
+  purchaseLoading?: boolean;
 }
 
-export function PaywallBanner({ price, onSubscribe }: PaywallBannerProps) {
+export function PaywallBanner({
+  price,
+  chapterPrice,
+  bookPrice,
+  onSubscribe,
+  onChapterPurchase,
+  onBookPurchase,
+  purchaseLoading = false,
+}: PaywallBannerProps) {
   return (
     <div className="relative mt-8 overflow-hidden rounded-2xl border border-terracotta/20 bg-gradient-to-br from-sidebar via-paper to-amber-50/50 p-6 shadow-sm">
       <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-terracotta/5" />
@@ -30,17 +43,44 @@ export function PaywallBanner({ price, onSubscribe }: PaywallBannerProps) {
             Este capítulo forma parte del contenido exclusivo
           </p>
           <p className="mt-1 text-sm text-muted">
-            Suscríbete a {BRAND_NAME} para continuar leyendo y apoyar a autores independientes.
+            Suscríbete a {BRAND_NAME}, compra el libro completo o solo este capítulo. Solo lectura
+            en el visor — sin descarga.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onSubscribe}
-          className="mt-5 shrink-0 rounded-full bg-terracotta px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-orange-700 sm:mt-0 sm:ml-5"
-        >
-          Suscribirme por ${price.toFixed(2)}/mes
-        </button>
+        <div className="mt-5 flex shrink-0 flex-col gap-2 sm:mt-0 sm:ml-5">
+          {onBookPurchase && typeof bookPrice === "number" && (
+            <button
+              type="button"
+              onClick={onBookPurchase}
+              disabled={purchaseLoading}
+              className="rounded-full bg-terracotta px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {purchaseLoading
+                ? "Redirigiendo…"
+                : `Comprar libro · $${bookPrice.toFixed(2)} USD`}
+            </button>
+          )}
+          {onChapterPurchase && typeof chapterPrice === "number" && (
+            <button
+              type="button"
+              onClick={onChapterPurchase}
+              disabled={purchaseLoading}
+              className="rounded-full border border-terracotta/40 bg-white/80 px-6 py-3 text-sm font-semibold text-terracotta transition-colors hover:bg-terracotta/5 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {purchaseLoading
+                ? "Redirigiendo…"
+                : `Comprar capítulo · $${chapterPrice.toFixed(2)} USD`}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onSubscribe}
+            className="rounded-full border border-amber-300/60 bg-amber-50/80 px-6 py-3 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100"
+          >
+            Suscribirme por ${price.toFixed(2)}/mes
+          </button>
+        </div>
       </div>
     </div>
   );

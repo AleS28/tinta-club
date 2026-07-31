@@ -7,6 +7,8 @@ import type { GlobalFinancialReport } from "@/types/admin-financial";
 import { useAuth } from "@/context/AuthContext";
 import { AdminGlobalFinancialSummary } from "@/components/admin/AdminGlobalFinancialSummary";
 import { AdminAuthorsEarningsTable } from "@/components/admin/AdminAuthorsEarningsTable";
+import { AdminBooksEarningsTable } from "@/components/admin/AdminBooksEarningsTable";
+import { AdminMonthClosurePanel } from "@/components/admin/AdminMonthClosurePanel";
 import { formatMonthYearCapitalized } from "@/lib/monetization/month-label";
 
 export function AdminFinancialReportPanel() {
@@ -214,11 +216,13 @@ export function AdminFinancialReportPanel() {
       ) : report ? (
         <div className="space-y-8">
           <AdminGlobalFinancialSummary report={report} />
+          <AdminMonthClosurePanel report={report} />
           <AdminAuthorsEarningsTable
             report={report}
             onMarkPaid={handleMarkPaid}
             markingId={markingId}
           />
+          <AdminBooksEarningsTable report={report} />
         </div>
       ) : null}
     </main>

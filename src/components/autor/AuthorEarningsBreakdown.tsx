@@ -17,7 +17,8 @@ export function AuthorEarningsBreakdown({ data }: AuthorEarningsBreakdownProps) 
       </h3>
       <p className="mt-2 text-sm leading-relaxed text-muted">
         Tus ganancias se calculan sobre ingresos netos (después de comisiones de pasarela),
-        en función del tiempo de lectura de tus obras y las ventas directas de tus capítulos premium.
+        en función del tiempo de lectura de tus obras y las ventas directas individuales
+        (capítulos y libros completos al 70%).
       </p>
 
       <div className="mt-6 flex flex-col items-center gap-6 sm:flex-row sm:items-start">
@@ -59,7 +60,7 @@ export function AuthorEarningsBreakdown({ data }: AuthorEarningsBreakdownProps) 
 
           <div>
             <div className="mb-1 flex items-center justify-between text-sm">
-              <span className="font-medium text-ink">Compras Directas (70%)</span>
+              <span className="font-medium text-ink">Compras directas individuales (70%)</span>
               <span className="font-semibold text-gold">{directSalesPercent}%</span>
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-sidebar">

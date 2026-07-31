@@ -16,6 +16,12 @@ export interface Book {
   synopsis: string;
   coverUrl?: string;
   membershipPrice?: number;
+  /** Precio USD compra directa del libro completo */
+  directBookPriceUsd?: number;
+  /** Precio USD por capítulo premium (fallback libro) */
+  directChapterPriceUsd?: number;
+  /** Modo de venta en tienda: libro completo o capítulo a capítulo */
+  saleMode?: "book" | "chapter";
 }
 
 export interface Author {
@@ -49,6 +55,8 @@ export const pedroAmorCafeBook: Book = {
   synopsis:
     "Pedro y Kaori intentan sostener una relación construida sobre pequeños gestos y la ternura de lo cotidiano. Sin embargo, su refugio doméstico se ve amenazado por la realidad: mientras él lidia con la precariedad laboral, ella enfrenta en secreto el acoso de un jefe depredador. Entre silencios y «cenas tregua», la pareja lucha por mantener a flote su amor antes de que el agotamiento y las verdades no dichas terminen por romper su equilibrio.",
   membershipPrice: 6.49,
+  saleMode: "book",
+  directBookPriceUsd: 12.99,
 };
 
 export const willChicaCafeBook: Book = {
@@ -64,6 +72,8 @@ export const willChicaCafeBook: Book = {
   synopsis:
     "Un hombre solitario vive hipnotizado por la sonrisa de la barista que le sirve café los sábados. Entre el aroma del espresso, la timidez compartida y las ilusiones que lo mantienen respirando, descubre que a veces el amor —o la idea de amor— puede ser tan intenso como una taza recién servida.",
   membershipPrice: 6.49,
+  saleMode: "chapter",
+  directChapterPriceUsd: 1.49,
 };
 
 export const willWhiskyBook: Book = {
@@ -79,6 +89,8 @@ export const willWhiskyBook: Book = {
   synopsis:
     "Un muchacho escapa de las preguntas de su madre rumbo a un bar, arrastrando el recuerdo de su padre, una cerveza rota a los siete años y el retrato silencioso que lo escucha sin juzgar. Entre el tráfico, el whisky pedido con valentía y una mesera que no lo mira, descubrirá que la infancia tiene formas extrañas de volver cuando menos lo esperas.",
   membershipPrice: 6.49,
+  saleMode: "book",
+  directBookPriceUsd: 9.99,
 };
 
 /** Obra en primera plana del home */

@@ -1,4 +1,8 @@
-import type { GlobalFinancialReport, AuthorFinancialBreakdown } from "@/types/admin-financial";
+import type {
+  GlobalFinancialReport,
+  AuthorFinancialBreakdown,
+  BookFinancialBreakdown,
+} from "@/types/admin-financial";
 import type { MonthlyPool, PayoutStatus } from "@/types/monetization";
 import { COLLECTIONS, MIN_PAYOUT_USD } from "@/lib/monetization/constants";
 import { getCurrentMonthYear } from "@/lib/monetization/month-year";
@@ -8,8 +12,14 @@ import {
 } from "@/lib/monetization/monthly-pool-admin";
 import { getAuthorDirectSalesTotal } from "@/lib/monetization/direct-sales-admin";
 import {
-  getAuthorReadingSeconds,
+  getCombinedAuthorReadingSeconds,
+  getCombinedAuthorStatisticalViews,
+  getBookReadingStatsForAuthor,
 } from "@/lib/monetization/reading-tracking-admin";
+import {
+  computeEstimatedPoolEarningsBySeconds,
+  distributePoolByReadingSeconds,
+} from "@/lib/monetization/pool-distribution";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   buildAuthorIdentityIndex,
@@ -21,14 +31,6 @@ import { founderAuthors, isFounderAuthorIdentity } from "@/data/founder-authors"
 
 function earningsSummaryDocId(authorId: string, monthYear: string): string {
   return `${authorId}_${monthYear}`;
-}
-
-function computePoolEarnings(authorSeconds: number, pool: MonthlyPool): number {
-  if (authorSeconds <= 0 || pool.authorsPool70 <= 0) return 0;
-  const totalSeconds = pool.totalPlatformReadingSeconds;
-  if (totalSeconds <= 0) return 0;
-  const vps = pool.valuePerSecond > 0 ? pool.valuePerSecond : pool.authorsPool70 / totalSeconds;
-  return authorSeconds * vps;
 }
 
 function resolvePayoutStatus(
@@ -55,7 +57,10 @@ async function getDirectSalesTotalsForMonth(monthYear: string): Promise<{
   }
 
   const monthPrefix = `${monthYear}-`;
-  const snap = await adminDb.collection(COLLECTIONS.directChapterSales).get();
+  const [chapterSnap, bookSnap] = await Promise.all([
+    adminDb.collection(COLLECTIONS.directChapterSales).get(),
+    adminDb.collection(COLLECTIONS.directBookSales).get(),
+  ]);
 
   let gross = 0;
   let gatewayFees = 0;
@@ -63,8 +68,9 @@ async function getDirectSalesTotalsForMonth(monthYear: string): Promise<{
   let platformShare = 0;
   let authorShare = 0;
 
-  for (const doc of snap.docs) {
+  for (const doc of [...chapterSnap.docs, ...bookSnap.docs]) {
     const data = doc.data();
+    if (data.refundedAt) continue;
     const createdAt = String(data.createdAt ?? "");
     if (!createdAt.startsWith(monthPrefix)) continue;
 
@@ -93,23 +99,26 @@ async function collectAuthorIdsForMonth(
 
   const monthPrefix = `${monthYear}-`;
 
-  const [sessionsSnap, salesSnap, summariesSnap] = await Promise.all([
-    adminDb.collection(COLLECTIONS.readingSessions).get(),
-    adminDb.collection(COLLECTIONS.directChapterSales).get(),
+  const [summariesSnap, chapterSalesSnap, bookSalesSnap] = await Promise.all([
     adminDb.collection(COLLECTIONS.authorEarningsSummary).get(),
+    adminDb.collection(COLLECTIONS.directChapterSales).get(),
+    adminDb.collection(COLLECTIONS.directBookSales).get(),
   ]);
 
-  for (const doc of sessionsSnap.docs) {
+  for (const doc of summariesSnap.docs) {
+    if (!doc.id.endsWith(`_${monthYear}`)) continue;
+    const rawId = doc.id.replace(`_${monthYear}`, "");
     const data = doc.data();
-    if (!String(data.readAt ?? "").startsWith(monthPrefix)) continue;
-    const id = String(data.authorId ?? "");
-    if (!id) continue;
-    const resolved = resolveAuthorFromIndex(id, identityIndex);
+    const hasActivity =
+      Number(data.accumulatedReadingSeconds ?? data.totalReadingSeconds ?? 0) > 0 ||
+      Number(data.totalViews ?? data.totalPremiumViews ?? 0) > 0;
+    if (!hasActivity) continue;
+    const resolved = resolveAuthorFromIndex(rawId, identityIndex);
     if (!isFounderAuthorIdentity(resolved)) continue;
     canonicalIds.add(resolved.canonicalId);
   }
 
-  for (const doc of salesSnap.docs) {
+  for (const doc of chapterSalesSnap.docs) {
     const data = doc.data();
     if (!String(data.createdAt ?? "").startsWith(monthPrefix)) continue;
     const id = String(data.authorId ?? "");
@@ -119,13 +128,14 @@ async function collectAuthorIdsForMonth(
     canonicalIds.add(resolved.canonicalId);
   }
 
-  for (const doc of summariesSnap.docs) {
-    if (doc.id.endsWith(`_${monthYear}`)) {
-      const rawId = doc.id.replace(`_${monthYear}`, "");
-      const resolved = resolveAuthorFromIndex(rawId, identityIndex);
-      if (!isFounderAuthorIdentity(resolved)) continue;
-      canonicalIds.add(resolved.canonicalId);
-    }
+  for (const doc of bookSalesSnap.docs) {
+    const data = doc.data();
+    if (!String(data.createdAt ?? "").startsWith(monthPrefix)) continue;
+    const id = String(data.authorId ?? "");
+    if (!id) continue;
+    const resolved = resolveAuthorFromIndex(id, identityIndex);
+    if (!isFounderAuthorIdentity(resolved)) continue;
+    canonicalIds.add(resolved.canonicalId);
   }
 
   return canonicalIds;
@@ -171,17 +181,6 @@ async function countActiveBooksForIdentity(identity: ResolvedAuthorIdentity): Pr
     for (const doc of snap.docs) bookIds.add(doc.id);
   }
   return bookIds.size;
-}
-
-async function getCombinedReadingSeconds(
-  identity: ResolvedAuthorIdentity,
-  monthYear: string,
-): Promise<number> {
-  let total = 0;
-  for (const authorId of identity.aliasIds) {
-    total += await getAuthorReadingSeconds(authorId, monthYear);
-  }
-  return total;
 }
 
 async function getCombinedDirectSales(
@@ -258,25 +257,60 @@ export async function getGlobalFinancialReport(
   const subscriptionGross = pool.subscriptionGross;
   const subscriptionGatewayFees = pool.subscriptionGatewayFees;
   const subscriptionNet = pool.subscriptionNet;
+  const subscriptionAuthorsPool70 = pool.authorsPool70;
+  const subscriptionPlatformPool30 = pool.platformPool30;
 
   const grossRevenue = subscriptionGross + directTotals.gross;
   const gatewayFees = subscriptionGatewayFees + directTotals.gatewayFees;
   const netRevenue = subscriptionNet + directTotals.net;
-  const platformNet30 = pool.platformPool30 + directTotals.platformShare;
-  const authorsPool70 = pool.authorsPool70 + directTotals.authorShare;
+  const platformNet30 = subscriptionPlatformPool30 + directTotals.platformShare;
+  const authorsPool70 = subscriptionAuthorsPool70 + directTotals.authorShare;
+
+  const totalPlatformReadingSeconds = pool.totalPlatformReadingSeconds;
+  const valuePerSecond = pool.valuePerSecond;
+  const totalPlatformStatisticalViews = pool.totalPlatformPremiumViews;
+  const valuePerView = pool.valuePerView;
+
+  const authorReadingShares = await Promise.all(
+    Array.from(identityByCanonical.entries()).map(async ([authorId, identity]) => ({
+      authorId,
+      readingSeconds: await getCombinedAuthorReadingSeconds(identity.aliasIds, monthYear),
+    })),
+  );
+
+  const poolDistribution =
+    pool.status === "closed"
+      ? null
+      : distributePoolByReadingSeconds(subscriptionAuthorsPool70, authorReadingShares);
 
   const authorsBreakdown: AuthorFinancialBreakdown[] = await Promise.all(
     Array.from(identityByCanonical.entries()).map(async ([authorId, identity]) => {
-      const [profile, readingSeconds, directSalesEarnings, activeBooksCount, summaryRaw] =
+      const [profile, statisticalViews, readingSeconds, directSalesEarnings, activeBooksCount, summaryRaw] =
         await Promise.all([
           getAuthorProfileFromIdentity(identity),
-          getCombinedReadingSeconds(identity, monthYear),
+          getCombinedAuthorStatisticalViews(identity.aliasIds, monthYear),
+          getCombinedAuthorReadingSeconds(identity.aliasIds, monthYear),
           getCombinedDirectSales(identity, monthYear),
           countActiveBooksForIdentity(identity),
           getCombinedEarningsSummaryRaw(identity, monthYear),
         ]);
 
-      const poolEarnings = computePoolEarnings(readingSeconds, pool);
+      const readingSharePercent =
+        totalPlatformReadingSeconds > 0
+          ? Math.round((readingSeconds / totalPlatformReadingSeconds) * 10000) / 100
+          : 0;
+
+      const poolEarnings =
+        pool.status === "closed" && summaryRaw
+          ? Number(summaryRaw.estimatedSubscriptionEarnings ?? 0)
+          : poolDistribution?.byAuthor.get(authorId) ??
+            computeEstimatedPoolEarningsBySeconds(
+              readingSeconds,
+              subscriptionAuthorsPool70,
+              totalPlatformReadingSeconds,
+              pool.status === "closed" ? valuePerSecond : undefined,
+            ).earnings;
+
       const totalAuthorEarnings = poolEarnings + directSalesEarnings;
 
       return {
@@ -285,6 +319,8 @@ export async function getGlobalFinancialReport(
         email: profile.email,
         photoURL: profile.photoURL,
         activeBooksCount,
+        premiumViews: statisticalViews,
+        viewSharePercent: readingSharePercent,
         readingTimeSeconds: readingSeconds,
         poolEarnings,
         directSalesEarnings,
@@ -296,6 +332,56 @@ export async function getGlobalFinancialReport(
 
   authorsBreakdown.sort((a, b) => b.totalAuthorEarnings - a.totalAuthorEarnings);
 
+  const booksBreakdown: BookFinancialBreakdown[] = [];
+  const bookMeta = new Map<string, { title: string; authorId: string; authorName: string }>();
+
+  const adminDb = await getAdminDb();
+  if (adminDb) {
+    for (const [authorId, identity] of identityByCanonical) {
+      const profile = await getAuthorProfileFromIdentity(identity);
+      for (const aliasId of identity.aliasIds) {
+        const snap = await adminDb.collection("books").where("authorId", "==", aliasId).get();
+        for (const doc of snap.docs) {
+          bookMeta.set(doc.id, {
+            title: String(doc.data().title ?? "Sin título"),
+            authorId,
+            authorName: profile.displayName,
+          });
+        }
+      }
+    }
+  }
+
+  for (const [, identity] of identityByCanonical) {
+    const bookStats = await getBookReadingStatsForAuthor(identity.aliasIds, monthYear);
+    for (const [bookId, stats] of bookStats) {
+      const meta = bookMeta.get(bookId);
+      if (!meta) continue;
+      const viewSharePercent =
+        totalPlatformReadingSeconds > 0
+          ? Math.round((stats.accumulatedReadingSeconds / totalPlatformReadingSeconds) * 10000) / 100
+          : 0;
+      const { earnings: poolEarnings } = computeEstimatedPoolEarningsBySeconds(
+        stats.accumulatedReadingSeconds,
+        subscriptionAuthorsPool70,
+        totalPlatformReadingSeconds,
+        pool.status === "closed" ? valuePerSecond : undefined,
+      );
+
+      booksBreakdown.push({
+        bookId,
+        title: meta.title,
+        authorId: meta.authorId,
+        authorName: meta.authorName,
+        premiumViews: stats.totalViews,
+        viewSharePercent,
+        poolEarnings,
+      });
+    }
+  }
+
+  booksBreakdown.sort((a, b) => b.poolEarnings - a.poolEarnings);
+
   const availableMonths = await listAvailableMonthYears();
 
   return {
@@ -305,16 +391,26 @@ export async function getGlobalFinancialReport(
     netRevenue,
     platformNet30,
     authorsPool70,
-    totalPlatformReadingTime: pool.totalPlatformReadingSeconds,
+    totalPlatformPremiumViews: totalPlatformStatisticalViews,
+    valuePerView,
+    valuePerSecond,
+    totalPlatformReadingTime: totalPlatformReadingSeconds,
     subscriptionGross,
     subscriptionGatewayFees,
     subscriptionNet,
+    subscriptionAuthorsPool70,
+    subscriptionPlatformPool30,
     directSalesGross: directTotals.gross,
     directSalesGatewayFees: directTotals.gatewayFees,
     directSalesNet: directTotals.net,
     poolStatus: pool.status,
+    consolidationId: pool.consolidationId,
+    consolidatedAt: pool.consolidatedAt,
+    totalPoolDistributed: pool.totalPoolDistributed,
+    roundingAdjustmentCents: pool.roundingAdjustmentCents,
     availableMonths,
     authorsBreakdown,
+    booksBreakdown,
   };
 }
 

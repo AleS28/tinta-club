@@ -21,10 +21,14 @@ export function useReadingTimeTracker({
 }: UseReadingTimeTrackerOptions) {
   const lastTickRef = useRef<number | null>(null);
   const visibleRef = useRef(true);
+  const hasRecentInteractionRef = useRef(false);
 
   const sendPing = useCallback(
     async (seconds: number) => {
       if (!user || seconds <= 0) return;
+
+      const isTabVisible = document.visibilityState === "visible";
+      if (!isTabVisible) return;
 
       try {
         const token = await user.getIdToken();
@@ -39,17 +43,25 @@ export function useReadingTimeTracker({
             chapterId,
             readingTimeSeconds: seconds,
             isSubscriptionRead,
+            isTabVisible: true,
+            hasRecentInteraction: hasRecentInteractionRef.current,
           }),
           keepalive: true,
         });
       } catch {
         // Tracking no debe interrumpir la lectura.
+      } finally {
+        hasRecentInteractionRef.current = false;
       }
     },
     [user, bookId, chapterId, isSubscriptionRead],
   );
 
   useEffect(() => {
+    const markInteraction = () => {
+      hasRecentInteractionRef.current = true;
+    };
+
     const onVisibility = () => {
       visibleRef.current = document.visibilityState === "visible";
       if (visibleRef.current) {
@@ -57,8 +69,19 @@ export function useReadingTimeTracker({
       }
     };
 
+    window.addEventListener("scroll", markInteraction, { passive: true });
+    window.addEventListener("pointerdown", markInteraction, { passive: true });
+    window.addEventListener("keydown", markInteraction);
+    window.addEventListener("touchstart", markInteraction, { passive: true });
     document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      window.removeEventListener("scroll", markInteraction);
+      window.removeEventListener("pointerdown", markInteraction);
+      window.removeEventListener("keydown", markInteraction);
+      window.removeEventListener("touchstart", markInteraction);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   useEffect(() => {
@@ -85,7 +108,7 @@ export function useReadingTimeTracker({
 
     return () => {
       window.clearInterval(interval);
-      if (lastTickRef.current) {
+      if (lastTickRef.current && document.visibilityState === "visible") {
         const elapsed = Math.min(
           READING_PING_INTERVAL_SECONDS + 5,
           Math.max(1, Math.round((Date.now() - lastTickRef.current) / 1000)),

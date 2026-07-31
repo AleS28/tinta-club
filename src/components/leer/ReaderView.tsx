@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Book, Chapter } from "@/data/mock";
 import { getPremiumPreviewContent } from "@/lib/chapter-access";
 import { DEFAULT_SUBSCRIPTION_PRICE } from "@/lib/subscription";
+import { DEFAULT_DIRECT_CHAPTER_PRICE_USD } from "@/lib/monetization/constants";
+import type { StoreBookListing } from "@/types/monetization";
 import { useAuth } from "@/context/AuthContext";
 import { isPremiumUser } from "@/types/user";
 import { ReaderTopbar } from "@/components/leer/ReaderTopbar";
@@ -22,25 +25,51 @@ interface ReaderViewProps {
   nextChapter: Chapter | null;
 }
 
+type ContentAccess = "premium" | "purchase" | "book_purchase" | null;
+
 export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderViewProps) {
-  const { user, userProfile, isSubscriber, loading, openAuthModal, refreshUserProfile } = useAuth();
+  const searchParams = useSearchParams();
+  const { user, userProfile, isSubscriber, loading, openAuthModal, refreshUserProfile } =
+    useAuth();
   const [fontSize, setFontSize] = useState(18);
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
   const [premiumContent, setPremiumContent] = useState<string[] | null>(null);
   const [contentLoading, setContentLoading] = useState(false);
   const [contentError, setContentError] = useState("");
+  const [accessType, setAccessType] = useState<ContentAccess>(null);
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
+  const [purchaseError, setPurchaseError] = useState("");
+  const [chapterPrice, setChapterPrice] = useState(DEFAULT_DIRECT_CHAPTER_PRICE_USD);
+  const [storeListing, setStoreListing] = useState<StoreBookListing | null>(null);
 
   const subscriptionPrice = DEFAULT_SUBSCRIPTION_PRICE;
   const hasActiveSubscription = isSubscriber && isPremiumUser(userProfile);
-  const isPremiumLocked = chapter.isPremium && !hasActiveSubscription;
+  const hasDirectPurchase = accessType === "purchase" || accessType === "book_purchase";
 
   const watermarkLabel = useMemo(() => {
     if (!user) return "";
     return user.email ?? user.uid.slice(0, 12);
   }, [user]);
 
+  useEffect(() => {
+    if (!chapter.isPremium) return;
+
+    fetch("/api/store/catalog")
+      .then((res) => res.json())
+      .then((payload: { catalog?: StoreBookListing[] }) => {
+        const listing = payload.catalog?.find((item) => item.bookId === book.id) ?? null;
+        setStoreListing(listing);
+        if (listing?.saleMode === "chapter") {
+          setChapterPrice(listing.priceUsd);
+        }
+      })
+      .catch(() => {
+        // fallback default price
+      });
+  }, [book.id, chapter.isPremium]);
+
   const loadPremiumContent = useCallback(async () => {
-    if (!user || !chapter.isPremium || !hasActiveSubscription) return;
+    if (!user || !chapter.isPremium) return;
 
     setContentLoading(true);
     setContentError("");
@@ -51,18 +80,23 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        content?: string[];
+        access?: ContentAccess;
+      };
 
       if (!response.ok) {
         if (response.status === 403) {
           setContentError(
-            "Tu cuenta aún no tiene premium activo en el servidor. Vuelve a suscribirte o recarga en unos segundos.",
+            "Aún no tienes acceso. Suscríbete, compra este capítulo o el libro completo, o espera unos segundos si acabas de pagar.",
           );
+          setAccessType(null);
           return;
         }
         if (response.status === 503) {
           setContentError(
-            "El servidor no pudo verificar tu suscripción. Revisa que las variables FIREBASE_* estén configuradas en Vercel.",
+            "El servidor no pudo verificar tu acceso. Revisa que las variables FIREBASE_* estén configuradas.",
           );
           return;
         }
@@ -74,13 +108,13 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
         return;
       }
 
-      const data = payload as { content?: string[] };
-      if (!Array.isArray(data.content) || data.content.length === 0) {
+      if (!Array.isArray(payload.content) || payload.content.length === 0) {
         setContentError("El capítulo premium no tiene contenido disponible.");
         return;
       }
 
-      setPremiumContent(data.content);
+      setPremiumContent(payload.content);
+      setAccessType(payload.access ?? null);
       setContentError("");
     } catch {
       setContentError("No pudimos conectar con el servidor. Intenta recargar la página.");
@@ -88,7 +122,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
     } finally {
       setContentLoading(false);
     }
-  }, [chapter.id, chapter.isPremium, hasActiveSubscription, user]);
+  }, [chapter.id, chapter.isPremium, user]);
 
   useEffect(() => {
     if (loading || !user || !chapter.isPremium) return;
@@ -98,30 +132,42 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
   useEffect(() => {
     setPremiumContent(null);
     setContentError("");
-    if (chapter.isPremium && hasActiveSubscription && user) {
-      loadPremiumContent();
+    setAccessType(null);
+    if (chapter.isPremium && user) {
+      void loadPremiumContent();
     }
-  }, [chapter.id, chapter.isPremium, hasActiveSubscription, user, loadPremiumContent]);
+  }, [chapter.id, chapter.isPremium, user, loadPremiumContent]);
 
-  const hasFullPremiumAccess =
-    chapter.isPremium &&
-    hasActiveSubscription &&
-    premiumContent !== null &&
-    premiumContent.length > 0;
+  useEffect(() => {
+    const purchased =
+      searchParams.get("purchased") === "true" || searchParams.get("purchase") === "success";
+    if (!purchased || !user || !chapter.isPremium) return;
+
+    const timer = window.setTimeout(() => {
+      void loadPremiumContent();
+    }, 1500);
+
+    return () => window.clearTimeout(timer);
+  }, [searchParams, user, chapter.isPremium, loadPremiumContent]);
+
+  const hasFullAccess =
+    !chapter.isPremium || (premiumContent !== null && premiumContent.length > 0);
+
+  const isPremiumLocked = chapter.isPremium && !hasFullAccess;
 
   useReadingTimeTracker({
     user,
     bookId: book.id,
     chapterId: chapter.id,
-    isActive: hasFullPremiumAccess && !contentLoading,
-    isSubscriptionRead: true,
+    isActive: !!user && hasFullAccess && !contentLoading,
+    isSubscriptionRead: hasFullAccess && hasActiveSubscription && !hasDirectPurchase,
   });
 
   const paragraphs = useMemo(() => {
     if (!chapter.isPremium) return chapter.content;
-    if (hasActiveSubscription && premiumContent) return premiumContent;
+    if (hasFullAccess && premiumContent) return premiumContent;
     return getPremiumPreviewContent(chapter.content);
-  }, [chapter.content, chapter.isPremium, hasActiveSubscription, premiumContent]);
+  }, [chapter.content, chapter.isPremium, hasFullAccess, premiumContent]);
 
   const handleSubscribeClick = () => {
     if (!user) {
@@ -129,6 +175,68 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
       return;
     }
     setShowSubscribeModal(true);
+  };
+
+  const handleChapterPurchaseClick = async () => {
+    if (!user) {
+      openAuthModal(`/leer/${chapter.id}`, { intent: "subscribe" });
+      return;
+    }
+
+    setPurchaseLoading(true);
+    setPurchaseError("");
+
+    try {
+      const token = await user.getIdToken(true);
+      const response = await fetch(`/api/chapters/${chapter.id}/purchase`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const payload = (await response.json()) as { url?: string; error?: string };
+
+      if (!response.ok || !payload.url) {
+        setPurchaseError(payload.error ?? "No se pudo iniciar la compra.");
+        return;
+      }
+
+      window.location.href = payload.url;
+    } catch {
+      setPurchaseError("No pudimos conectar con Stripe.");
+    } finally {
+      setPurchaseLoading(false);
+    }
+  };
+
+  const handleBookPurchaseClick = async () => {
+    if (!user) {
+      openAuthModal(`/leer/${chapter.id}`, { intent: "subscribe" });
+      return;
+    }
+
+    setPurchaseLoading(true);
+    setPurchaseError("");
+
+    try {
+      const token = await user.getIdToken(true);
+      const response = await fetch(`/api/books/${book.id}/purchase`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const payload = (await response.json()) as { url?: string; error?: string };
+
+      if (!response.ok || !payload.url) {
+        setPurchaseError(payload.error ?? "No se pudo iniciar la compra del libro.");
+        return;
+      }
+
+      window.location.href = payload.url;
+    } catch {
+      setPurchaseError("No pudimos conectar con Stripe.");
+    } finally {
+      setPurchaseLoading(false);
+    }
   };
 
   return (
@@ -168,15 +276,33 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
             </div>
           )}
 
-          {contentError && !hasFullPremiumAccess && (
+          {contentError && isPremiumLocked && (
             <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               {contentError}
             </p>
           )}
 
-          {hasFullPremiumAccess && (
+          {purchaseError && (
+            <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              {purchaseError}
+            </p>
+          )}
+
+          {hasFullAccess && hasActiveSubscription && !hasDirectPurchase && (
             <p className="mt-4 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
               Socio del Imperio ✦ — Acceso premium verificado
+            </p>
+          )}
+
+          {hasFullAccess && accessType === "book_purchase" && (
+            <p className="mt-4 inline-flex items-center gap-1 rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
+              Libro comprado — Lectura de por vida en el visor
+            </p>
+          )}
+
+          {hasFullAccess && accessType === "purchase" && (
+            <p className="mt-4 inline-flex items-center gap-1 rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
+              Capítulo comprado — Lectura de por vida en el visor
             </p>
           )}
 
@@ -202,7 +328,19 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
           )}
 
           {isPremiumLocked && !contentLoading && (
-            <PaywallBanner price={subscriptionPrice} onSubscribe={handleSubscribeClick} />
+            <PaywallBanner
+              price={subscriptionPrice}
+              chapterPrice={storeListing?.saleMode === "chapter" ? chapterPrice : undefined}
+              bookPrice={storeListing?.saleMode === "book" ? storeListing.priceUsd : undefined}
+              onSubscribe={handleSubscribeClick}
+              onChapterPurchase={
+                storeListing?.saleMode === "chapter" ? handleChapterPurchaseClick : undefined
+              }
+              onBookPurchase={
+                storeListing?.saleMode === "book" ? handleBookPurchaseClick : undefined
+              }
+              purchaseLoading={purchaseLoading}
+            />
           )}
 
           <nav className="mt-12 flex items-center justify-between gap-4 border-t border-sidebar pt-8">
@@ -218,7 +356,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
               <div />
             )}
 
-            {nextChapter && !isPremiumLocked && !contentLoading ? (
+            {nextChapter && hasFullAccess && !contentLoading ? (
               <Link
                 href={`/leer/${nextChapter.id}`}
                 className="inline-flex items-center gap-1.5 rounded-full bg-terracotta px-4 py-2.5 text-sm font-medium text-white transition-all duration-300 hover:scale-105 hover:bg-orange-700"
@@ -252,7 +390,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
           redirectTo={`/leer/${chapter.id}`}
           onSuccess={() => {
             setShowSubscribeModal(false);
-            loadPremiumContent();
+            void loadPremiumContent();
           }}
           onClose={() => setShowSubscribeModal(false)}
         />

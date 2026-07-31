@@ -54,5 +54,33 @@ service cloud.firestore {
     match /author_earnings_summary/{docId} {
       allow read, write: if false;
     }
+
+    match /premium_view_windows/{docId} {
+      allow read, write: if false;
+    }
+
+    match /statistical_view_windows/{docId} {
+      allow read, write: if false;
+    }
+
+    match /reading_cap_sessions/{docId} {
+      allow read, write: if false;
+    }
+
+    match /stripe_processed_events/{docId} {
+      allow read, write: if false;
+    }
+
+    match /chapter_purchases/{docId} {
+      allow read, write: if false;
+    }
+
+    match /book_purchases/{docId} {
+      allow read, write: if false;
+    }
+
+    match /direct_book_sales/{docId} {
+      allow read, write: if false;
+    }
   }
 }

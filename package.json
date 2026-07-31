@@ -15,7 +15,12 @@
     "extract:will": "python scripts/extract-will-chica-cafe.py",
     "revoke:member": "tsx scripts/revoke-member.ts",
     "init:monetization": "tsx scripts/init-monetization.ts",
-    "close:month": "tsx scripts/close-month.ts"
+    "close:month": "tsx scripts/close-month.ts",
+    "stripe:listen": "tsx scripts/stripe-cli.ts listen --forward-to localhost:3000/api/stripe/webhook",
+    "stripe:trigger:invoice": "tsx scripts/stripe-cli.ts trigger invoice.payment_succeeded",
+    "stripe:trigger:checkout": "tsx scripts/stripe-cli.ts trigger checkout.session.completed --override checkout_session:mode=payment --override checkout_session:payment_status=paid --override checkout_session:metadata.type=chapter_purchase --override checkout_session:metadata.firebaseUid=test_uid --override checkout_session:metadata.userId=test_uid --override checkout_session:metadata.chapterId=test_chapter --override checkout_session:metadata.bookId=test_book --override checkout_session:metadata.authorId=test_author --override checkout_session:amount_total=100",
+    "stripe:trigger:refund": "tsx scripts/stripe-cli.ts trigger charge.refunded",
+    "test:stripe-webhooks": "tsx scripts/test-stripe-webhooks-local.ts"
   },
   "dependencies": {
     "firebase": "^12.16.0",

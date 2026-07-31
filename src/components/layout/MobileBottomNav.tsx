@@ -2,12 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Heart, Home, Search, User } from "lucide-react";
+import { BookOpen, Heart, Home, Search, ShoppingBag, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { resolveAccountAvatar } from "@/lib/account-avatar";
 
 const tabs = [
   { id: "home", label: "Inicio", href: "/", icon: Home, match: (path: string) => path === "/" },
+  {
+    id: "store",
+    label: "Tienda",
+    href: "/tienda",
+    icon: ShoppingBag,
+    match: (path: string) => path.startsWith("/tienda"),
+  },
   {
     id: "library",
     label: "Biblioteca",
@@ -41,6 +48,7 @@ export function MobileBottomNav() {
   const { user, userProfile, openAuthModal } = useAuth();
 
   if (pathname.startsWith("/leer/")) return null;
+  if (pathname.startsWith("/mi-biblioteca")) return null;
 
   const profileHref = user ? `/perfil/${user.uid}` : null;
   const profileActive = isProfileActive(pathname, user?.uid);

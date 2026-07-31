@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { PenLine } from "lucide-react";
+import { PenLine, ShoppingBag } from "lucide-react";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useAuth } from "@/context/AuthContext";
 
@@ -19,6 +19,21 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/tienda"
+            className="hidden items-center gap-1.5 rounded-full border border-[#D27C5A]/40 px-3 py-1.5 text-xs font-semibold text-[#F5E6D3] transition-colors hover:border-[#D27C5A] hover:bg-[#D27C5A]/10 sm:inline-flex"
+          >
+            <ShoppingBag className="h-3.5 w-3.5" />
+            Tienda
+          </Link>
+          {user && (
+            <Link
+              href="/mi-biblioteca"
+              className="hidden rounded-full border border-[#D27C5A]/30 px-3 py-1.5 text-xs font-semibold text-[#F5E6D3]/90 transition-colors hover:border-[#D27C5A] hover:text-[#F5E6D3] sm:inline-block"
+            >
+              Mis compras
+            </Link>
+          )}
           {isSubscriber && showProfile && role !== "admin" && (
             <span className="inline-flex items-center gap-1 rounded-full border border-[#D4A359]/50 bg-[#D4A359]/20 px-3 py-1 text-xs font-semibold text-[#D4A359]">
               Socio del Imperio ✦

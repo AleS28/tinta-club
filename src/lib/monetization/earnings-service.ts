@@ -11,32 +11,26 @@ import {
   closeMonthlyPool,
   getMonthlyPool,
   getOrCreateOpenPool,
+  markPoolConsolidated,
 } from "@/lib/monetization/monthly-pool-admin";
-import { getAuthorDirectSalesTotal } from "@/lib/monetization/direct-sales-admin";
+import { getAuthorDirectSalesBreakdown } from "@/lib/monetization/direct-sales-admin";
 import {
-  getAuthorReadingSeconds,
-  getBookReadingStats,
+  getCombinedAuthorReadingSeconds,
+  getCombinedAuthorStatisticalViews,
+  getBookReadingStatsForAuthor,
 } from "@/lib/monetization/reading-tracking-admin";
+import {
+  computeEstimatedPoolEarningsBySeconds,
+  distributePoolByReadingSeconds,
+} from "@/lib/monetization/pool-distribution";
+import {
+  buildAuthorIdentityIndex,
+  resolveAuthorFromIndex,
+} from "@/lib/author-identity-admin";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 function earningsSummaryDocId(authorId: string, monthYear: string): string {
   return `${authorId}_${monthYear}`;
-}
-
-function computeSubscriptionEarnings(
-  authorSeconds: number,
-  pool: MonthlyPool,
-): number {
-  if (authorSeconds <= 0 || pool.authorsPool70 <= 0) return 0;
-
-  const totalSeconds = pool.totalPlatformReadingSeconds;
-  if (totalSeconds <= 0) return 0;
-
-  const valuePerSecond = pool.valuePerSecond > 0
-    ? pool.valuePerSecond
-    : pool.authorsPool70 / totalSeconds;
-
-  return authorSeconds * valuePerSecond;
 }
 
 function computeIncomeBreakdown(
@@ -54,19 +48,34 @@ function computeIncomeBreakdown(
   };
 }
 
-async function getAuthorBooksFromFirestore(authorId: string) {
+async function resolveAuthorAliasIds(authorId: string): Promise<string[]> {
+  const identityIndex = await buildAuthorIdentityIndex();
+  const identity = resolveAuthorFromIndex(authorId, identityIndex);
+  return identity.aliasIds.length > 0 ? identity.aliasIds : [authorId];
+}
+
+async function getAuthorBooksFromFirestore(authorIds: string[]) {
   const adminDb = await getAdminDb();
   if (!adminDb) return [];
 
-  const snap = await adminDb
-    .collection("books")
-    .where("authorId", "==", authorId)
-    .get();
+  const books = new Map<string, { id: string; title: string }>();
+  for (const authorId of authorIds) {
+    const snap = await adminDb
+      .collection("books")
+      .where("authorId", "==", authorId)
+      .get();
 
-  return snap.docs.map((doc) => ({
-    id: doc.id,
-    title: String(doc.data().title ?? "Sin título"),
-  }));
+    for (const doc of snap.docs) {
+      if (!books.has(doc.id)) {
+        books.set(doc.id, {
+          id: doc.id,
+          title: String(doc.data().title ?? "Sin título"),
+        });
+      }
+    }
+  }
+
+  return Array.from(books.values());
 }
 
 async function countPremiumChapters(bookId: string): Promise<number> {
@@ -82,50 +91,120 @@ async function countPremiumChapters(bookId: string): Promise<number> {
   return snap.size;
 }
 
+async function getCombinedDirectSalesBreakdown(authorIds: string[], monthYear: string) {
+  const merged = {
+    chapterSalesAuthorShare: 0,
+    bookSalesAuthorShare: 0,
+    totalAuthorShare: 0,
+    byBook: new Map<
+      string,
+      { chapterSalesAuthorShare: number; bookSalesAuthorShare: number }
+    >(),
+  };
+
+  for (const authorId of authorIds) {
+    const breakdown = await getAuthorDirectSalesBreakdown(authorId, monthYear);
+    merged.chapterSalesAuthorShare += breakdown.chapterSalesAuthorShare;
+    merged.bookSalesAuthorShare += breakdown.bookSalesAuthorShare;
+    merged.totalAuthorShare += breakdown.totalAuthorShare;
+
+    for (const row of breakdown.byBook) {
+      const entry = merged.byBook.get(row.bookId) ?? {
+        chapterSalesAuthorShare: 0,
+        bookSalesAuthorShare: 0,
+      };
+      entry.chapterSalesAuthorShare += row.chapterSalesAuthorShare;
+      entry.bookSalesAuthorShare += row.bookSalesAuthorShare;
+      merged.byBook.set(row.bookId, entry);
+    }
+  }
+
+  return merged;
+}
+
 export async function getAuthorEstimatedEarnings(
   authorId: string,
   monthYear = getCurrentMonthYear(),
 ): Promise<AuthorEarningsDashboard> {
   const pool = (await getMonthlyPool(monthYear)) ?? (await getOrCreateOpenPool(monthYear));
+  const aliasIds = await resolveAuthorAliasIds(authorId);
 
-  const [authorSeconds, directSalesEarnings, bookStats, books] = await Promise.all([
-    getAuthorReadingSeconds(authorId, monthYear),
-    getAuthorDirectSalesTotal(authorId, monthYear),
-    getBookReadingStats(authorId, monthYear),
-    getAuthorBooksFromFirestore(authorId),
+  const [authorSeconds, authorViews, directSalesBreakdown, bookStats, books] = await Promise.all([
+    getCombinedAuthorReadingSeconds(aliasIds, monthYear),
+    getCombinedAuthorStatisticalViews(aliasIds, monthYear),
+    getCombinedDirectSalesBreakdown(aliasIds, monthYear),
+    getBookReadingStatsForAuthor(aliasIds, monthYear),
+    getAuthorBooksFromFirestore(aliasIds),
   ]);
 
-  const subscriptionEarnings = computeSubscriptionEarnings(authorSeconds, pool);
-  const estimatedBalance = subscriptionEarnings + directSalesEarnings;
-  const incomeBreakdown = computeIncomeBreakdown(subscriptionEarnings, directSalesEarnings);
+  const directSalesEarnings = directSalesBreakdown.totalAuthorShare;
+
+  const closedSummary = await getAuthorEarningsSummary(authorId, monthYear);
+  const frozenValuePerSecond =
+    pool.status === "closed"
+      ? (closedSummary?.frozenValuePerSecond ?? pool.valuePerSecond)
+      : undefined;
 
   const valuePerSecond =
     pool.totalPlatformReadingSeconds > 0 && pool.authorsPool70 > 0
       ? pool.authorsPool70 / pool.totalPlatformReadingSeconds
       : 0;
 
+  const { earnings: subscriptionEarnings, valuePerSecond: estimatedValuePerSecond } =
+    pool.status === "closed" && closedSummary
+      ? {
+          earnings: closedSummary.estimatedSubscriptionEarnings,
+          valuePerSecond: frozenValuePerSecond ?? pool.valuePerSecond,
+        }
+      : computeEstimatedPoolEarningsBySeconds(
+          authorSeconds,
+          pool.authorsPool70,
+          pool.totalPlatformReadingSeconds,
+          frozenValuePerSecond,
+        );
+
+  const estimatedBalance = subscriptionEarnings + directSalesEarnings;
+  const incomeBreakdown = computeIncomeBreakdown(subscriptionEarnings, directSalesEarnings);
+
+  const bookTitleMap = new Map(books.map((b) => [b.id, b.title]));
+
   const bookPerformance: AuthorBookPerformance[] = await Promise.all(
     books.map(async (book) => {
-      const stats = bookStats.get(book.id) ?? { readingSeconds: 0, views: 0 };
-      const bookSubscriptionShare = computeSubscriptionEarnings(stats.readingSeconds, pool);
+      const stats = bookStats.get(book.id) ?? {
+        totalViews: 0,
+        accumulatedReadingSeconds: 0,
+        chapters: new Map<string, number>(),
+      };
+      const { earnings: bookPoolEarnings } = computeEstimatedPoolEarningsBySeconds(
+        stats.accumulatedReadingSeconds,
+        pool.authorsPool70,
+        pool.totalPlatformReadingSeconds,
+        frozenValuePerSecond,
+      );
       const premiumChapterCount = await countPremiumChapters(book.id);
+      const bookDirect = directSalesBreakdown.byBook.get(book.id);
 
       return {
         bookId: book.id,
         title: book.title,
         premiumChapterCount,
-        totalViews: stats.views,
-        readingSeconds: stats.readingSeconds,
-        estimatedEarnings: bookSubscriptionShare,
+        totalViews: stats.totalViews,
+        accumulatedReadingSeconds: stats.accumulatedReadingSeconds,
+        readingSeconds: stats.accumulatedReadingSeconds,
+        estimatedEarnings: bookPoolEarnings,
+        directSalesEarnings: bookDirect
+          ? bookDirect.chapterSalesAuthorShare + bookDirect.bookSalesAuthorShare
+          : 0,
+        chapters: Array.from(stats.chapters.entries()).map(([chapterId, totalViews]) => ({
+          chapterId,
+          totalViews,
+        })),
       };
     }),
   );
 
   bookPerformance.sort((a, b) => b.estimatedEarnings - a.estimatedEarnings);
 
-  const totalViews = Array.from(bookStats.values()).reduce((sum, stats) => sum + stats.views, 0);
-
-  const closedSummary = await getAuthorEarningsSummary(authorId, monthYear);
   const availableForWithdrawal =
     pool.status === "closed" && closedSummary?.isPayoutReady
       ? closedSummary.totalEarnings
@@ -140,8 +219,11 @@ export async function getAuthorEstimatedEarnings(
     estimatedBalance,
     subscriptionEarnings,
     directSalesEarnings,
+    accumulatedReadingSeconds: authorSeconds,
     totalReadingSeconds: authorSeconds,
-    totalViews,
+    totalViews: authorViews,
+    estimatedValuePerSecond,
+    frozenValuePerSecond,
     availableForWithdrawal,
     isPayoutReady,
     minPayoutThreshold: MIN_PAYOUT_USD,
@@ -151,11 +233,30 @@ export async function getAuthorEstimatedEarnings(
       subscriptionNet: pool.subscriptionNet,
       authorsPool70: pool.authorsPool70,
       totalPlatformReadingSeconds: pool.totalPlatformReadingSeconds,
-      valuePerSecond,
+      valuePerSecond: pool.valuePerSecond || valuePerSecond || estimatedValuePerSecond,
+      totalPlatformPremiumViews: pool.totalPlatformPremiumViews,
+      valuePerView: pool.valuePerView,
       status: pool.status,
+      consolidationId: pool.consolidationId,
+      consolidatedAt: pool.consolidatedAt,
     },
     incomeBreakdown,
     bookPerformance,
+    directSales: {
+      chapterSalesAuthorShare: directSalesBreakdown.chapterSalesAuthorShare,
+      bookSalesAuthorShare: directSalesBreakdown.bookSalesAuthorShare,
+      totalAuthorShare: directSalesBreakdown.totalAuthorShare,
+      byBook: Array.from(directSalesBreakdown.byBook.entries())
+        .map(([bookId, shares]) => ({
+          bookId,
+          title: bookTitleMap.get(bookId) ?? bookId,
+          chapterSalesAuthorShare: shares.chapterSalesAuthorShare,
+          bookSalesAuthorShare: shares.bookSalesAuthorShare,
+          totalAuthorShare: shares.chapterSalesAuthorShare + shares.bookSalesAuthorShare,
+        }))
+        .filter((row) => row.totalAuthorShare > 0)
+        .sort((a, b) => b.totalAuthorShare - a.totalAuthorShare),
+    },
   };
 }
 
@@ -166,59 +267,91 @@ export async function getAuthorEarningsSummary(
   const adminDb = await getAdminDb();
   if (!adminDb) return null;
 
-  const snap = await adminDb
-    .collection(COLLECTIONS.authorEarningsSummary)
-    .doc(earningsSummaryDocId(authorId, monthYear))
-    .get();
+  const aliasIds = await resolveAuthorAliasIds(authorId);
 
-  if (!snap.exists) return null;
+  for (const id of aliasIds) {
+    const snap = await adminDb
+      .collection(COLLECTIONS.authorEarningsSummary)
+      .doc(earningsSummaryDocId(id, monthYear))
+      .get();
 
-  const raw = snap.data()!;
-  return {
-    authorId,
-    monthYear,
-    totalReadingSeconds: Number(raw.totalReadingSeconds ?? 0),
-    estimatedSubscriptionEarnings: Number(raw.estimatedSubscriptionEarnings ?? 0),
-    directSalesEarnings: Number(raw.directSalesEarnings ?? 0),
-    totalEarnings: Number(raw.totalEarnings ?? 0),
-    isPayoutReady: raw.isPayoutReady === true,
-    updatedAt: String(raw.updatedAt ?? ""),
-  };
+    if (snap.exists) {
+      const raw = snap.data()!;
+      const accumulatedReadingSeconds = Number(
+        raw.accumulatedReadingSeconds ?? raw.totalReadingSeconds ?? 0,
+      );
+      const totalViews = Number(raw.totalViews ?? raw.totalPremiumViews ?? 0);
+      const frozenValuePerSecond =
+        Number(raw.frozenValuePerSecond ?? raw.frozenValuePerView ?? 0) || undefined;
+
+      return {
+        authorId: id,
+        monthYear,
+        accumulatedReadingSeconds,
+        totalReadingSeconds: accumulatedReadingSeconds,
+        totalViews,
+        totalPremiumViews: totalViews,
+        estimatedSubscriptionEarnings: Number(raw.estimatedSubscriptionEarnings ?? 0),
+        directSalesEarnings: Number(raw.directSalesEarnings ?? 0),
+        totalEarnings: Number(raw.totalEarnings ?? 0),
+        isPayoutReady: raw.isPayoutReady === true,
+        payoutStatus: raw.payoutStatus as AuthorEarningsSummary["payoutStatus"],
+        paidAt: raw.paidAt as string | undefined,
+        updatedAt: String(raw.updatedAt ?? ""),
+        frozenValuePerSecond,
+        frozenValuePerView: frozenValuePerSecond,
+      };
+    }
+  }
+
+  return null;
 }
 
 export async function consolidateAuthorEarningsForMonth(
   authorId: string,
   monthYear: string,
-  pool: MonthlyPool,
+  poolShare: {
+    poolEarnings: number;
+    readingSeconds: number;
+    totalViews: number;
+    frozenValuePerSecond: number;
+  },
+  directSalesEarnings: number,
 ): Promise<AuthorEarningsSummary> {
   const adminDb = await getAdminDb();
   if (!adminDb) throw new Error("Firestore Admin no configurado");
 
-  const authorSeconds = await getAuthorReadingSeconds(authorId, monthYear);
-  const directSalesEarnings = await getAuthorDirectSalesTotal(authorId, monthYear);
-  const estimatedSubscriptionEarnings = computeSubscriptionEarnings(authorSeconds, pool);
-  const totalEarnings = estimatedSubscriptionEarnings + directSalesEarnings;
+  const docRef = adminDb
+    .collection(COLLECTIONS.authorEarningsSummary)
+    .doc(earningsSummaryDocId(authorId, monthYear));
+
+  const existingSnap = await docRef.get();
+  const alreadyConsolidated =
+    existingSnap.exists && existingSnap.data()?.walletCredited === true;
+
+  const totalEarnings = poolShare.poolEarnings + directSalesEarnings;
   const now = new Date().toISOString();
 
   const summary: AuthorEarningsSummary = {
     authorId,
     monthYear,
-    totalReadingSeconds: authorSeconds,
-    estimatedSubscriptionEarnings,
+    accumulatedReadingSeconds: poolShare.readingSeconds,
+    totalReadingSeconds: poolShare.readingSeconds,
+    totalViews: poolShare.totalViews,
+    totalPremiumViews: poolShare.totalViews,
+    estimatedSubscriptionEarnings: poolShare.poolEarnings,
     directSalesEarnings,
     totalEarnings,
     isPayoutReady: totalEarnings >= MIN_PAYOUT_USD,
-    payoutStatus:
-      totalEarnings >= MIN_PAYOUT_USD ? "ready_for_payout" : "pending",
+    payoutStatus: totalEarnings >= MIN_PAYOUT_USD ? "ready_for_payout" : "pending",
+    frozenValuePerSecond: poolShare.frozenValuePerSecond,
+    frozenValuePerView: poolShare.frozenValuePerSecond,
     updatedAt: now,
   };
 
-  await adminDb
-    .collection(COLLECTIONS.authorEarningsSummary)
-    .doc(earningsSummaryDocId(authorId, monthYear))
-    .set(summary, { merge: true });
+  await docRef.set({ ...summary, walletCredited: alreadyConsolidated ? true : undefined }, { merge: true });
 
-  if (summary.isPayoutReady) {
+  if (summary.isPayoutReady && !alreadyConsolidated) {
     await adminDb.collection("users").doc(authorId).set(
       {
         availableBalance: FieldValue.increment(totalEarnings),
@@ -226,50 +359,139 @@ export async function consolidateAuthorEarningsForMonth(
       },
       { merge: true },
     );
+    await docRef.set({ walletCredited: true }, { merge: true });
   }
 
   return summary;
 }
 
+async function collectCanonicalAuthorIdsForMonth(monthYear: string): Promise<string[]> {
+  const adminDb = await getAdminDb();
+  const identityIndex = await buildAuthorIdentityIndex();
+  const canonicalIds = new Set<string>();
+  const monthPrefix = `${monthYear}-`;
+
+  if (!adminDb) return [];
+
+  const [summariesSnap, chapterSalesSnap, bookSalesSnap] = await Promise.all([
+    adminDb.collection(COLLECTIONS.authorEarningsSummary).get(),
+    adminDb.collection(COLLECTIONS.directChapterSales).get(),
+    adminDb.collection(COLLECTIONS.directBookSales).get(),
+  ]);
+
+  for (const doc of summariesSnap.docs) {
+    if (!doc.id.endsWith(`_${monthYear}`)) continue;
+    const rawId = doc.id.replace(`_${monthYear}`, "");
+    const data = doc.data();
+    const hasActivity =
+      Number(data.accumulatedReadingSeconds ?? data.totalReadingSeconds ?? 0) > 0 ||
+      Number(data.totalViews ?? data.totalPremiumViews ?? 0) > 0;
+    if (!hasActivity) continue;
+    const resolved = resolveAuthorFromIndex(rawId, identityIndex);
+    canonicalIds.add(resolved.canonicalId);
+  }
+
+  for (const doc of chapterSalesSnap.docs) {
+    const data = doc.data();
+    if (!String(data.createdAt ?? "").startsWith(monthPrefix)) continue;
+    const authorId = String(data.authorId ?? "");
+    if (!authorId) continue;
+    const resolved = resolveAuthorFromIndex(authorId, identityIndex);
+    canonicalIds.add(resolved.canonicalId);
+  }
+
+  for (const doc of bookSalesSnap.docs) {
+    const data = doc.data();
+    if (!String(data.createdAt ?? "").startsWith(monthPrefix)) continue;
+    const authorId = String(data.authorId ?? "");
+    if (!authorId) continue;
+    const resolved = resolveAuthorFromIndex(authorId, identityIndex);
+    canonicalIds.add(resolved.canonicalId);
+  }
+
+  return Array.from(canonicalIds);
+}
+
 export async function closeMonthAndConsolidate(monthYear: string): Promise<{
   pool: MonthlyPool;
   authorsProcessed: number;
+  alreadyClosed: boolean;
+  consolidationId?: string;
 }> {
   const adminDb = await getAdminDb();
   if (!adminDb) throw new Error("Firestore Admin no configurado");
 
-  const pool = await closeMonthlyPool(monthYear);
+  let pool = (await getMonthlyPool(monthYear)) ?? (await getOrCreateOpenPool(monthYear));
 
-  const authorIds = new Set<string>();
-  const monthPrefix = `${monthYear}-`;
-
-  const sessionsSnap = await adminDb.collection(COLLECTIONS.readingSessions).get();
-
-  for (const doc of sessionsSnap.docs) {
-    const data = doc.data();
-    const readAt = String(data.readAt ?? "");
-    if (!readAt.startsWith(monthPrefix)) continue;
-    const authorId = String(data.authorId ?? "");
-    if (authorId) authorIds.add(authorId);
+  if (pool.status === "closed" && pool.consolidationId) {
+    return {
+      pool,
+      authorsProcessed: pool.authorsConsolidatedCount ?? 0,
+      alreadyClosed: true,
+      consolidationId: pool.consolidationId,
+    };
   }
 
-  const salesSnap = await adminDb.collection(COLLECTIONS.directChapterSales).get();
+  pool = await closeMonthlyPool(monthYear);
 
-  for (const doc of salesSnap.docs) {
-    const data = doc.data();
-    const createdAt = String(data.createdAt ?? "");
-    if (!createdAt.startsWith(monthPrefix)) continue;
-    const authorId = String(data.authorId ?? "");
-    if (authorId) authorIds.add(authorId);
-  }
+  const consolidationId = pool.consolidationId ?? `close_${monthYear}_${Date.now()}`;
+  const frozenValuePerSecond = pool.valuePerSecond;
+
+  const canonicalAuthorIds = await collectCanonicalAuthorIdsForMonth(monthYear);
+  const identityIndex = await buildAuthorIdentityIndex();
+
+  const authorReadingShares = await Promise.all(
+    canonicalAuthorIds.map(async (authorId) => {
+      const identity = resolveAuthorFromIndex(authorId, identityIndex);
+      const [readingSeconds, totalViews] = await Promise.all([
+        getCombinedAuthorReadingSeconds(identity.aliasIds, monthYear),
+        getCombinedAuthorStatisticalViews(identity.aliasIds, monthYear),
+      ]);
+      return { authorId: identity.canonicalId, readingSeconds, totalViews };
+    }),
+  );
+
+  const distribution = distributePoolByReadingSeconds(pool.authorsPool70, authorReadingShares);
 
   await Promise.all(
-    Array.from(authorIds).map((authorId) =>
-      consolidateAuthorEarningsForMonth(authorId, monthYear, pool),
-    ),
+    authorReadingShares.map(async ({ authorId, readingSeconds, totalViews }) => {
+      const directSalesEarnings = (
+        await getCombinedDirectSalesBreakdown(
+          resolveAuthorFromIndex(authorId, identityIndex).aliasIds,
+          monthYear,
+        )
+      ).totalAuthorShare;
+
+      return consolidateAuthorEarningsForMonth(
+        authorId,
+        monthYear,
+        {
+          poolEarnings: distribution.byAuthor.get(authorId) ?? 0,
+          readingSeconds,
+          totalViews,
+          frozenValuePerSecond,
+        },
+        directSalesEarnings,
+      );
+    }),
   );
+
+  await markPoolConsolidated(monthYear, {
+    consolidationId,
+    authorsConsolidatedCount: canonicalAuthorIds.length,
+    totalPoolDistributed: distribution.totalDistributed,
+    roundingAdjustmentCents: distribution.roundingAdjustmentCents,
+    valuePerSecond: frozenValuePerSecond,
+  });
+
+  pool = (await getMonthlyPool(monthYear))!;
 
   await getOrCreateOpenPool(getCurrentMonthYear());
 
-  return { pool, authorsProcessed: authorIds.size };
+  return {
+    pool,
+    authorsProcessed: canonicalAuthorIds.length,
+    alreadyClosed: false,
+    consolidationId,
+  };
 }

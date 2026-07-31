@@ -18,6 +18,21 @@ function normalizePool(id: string, raw: FirebaseFirestore.DocumentData): Monthly
       raw.totalSubscriptionRevenue ??
       Math.max(0, subscriptionGross - subscriptionGatewayFees),
   );
+  const authorsPool70 = Number(raw.authorsPool70 ?? 0);
+  const totalPlatformPremiumViews = Number(raw.totalPlatformPremiumViews ?? 0);
+  const totalPlatformReadingSeconds = Number(raw.totalPlatformReadingSeconds ?? 0);
+
+  const valuePerView =
+    Number(raw.valuePerView ?? 0) ||
+    (totalPlatformPremiumViews > 0 && authorsPool70 > 0
+      ? authorsPool70 / totalPlatformPremiumViews
+      : 0);
+
+  const valuePerSecond =
+    Number(raw.valuePerSecond ?? 0) ||
+    (totalPlatformReadingSeconds > 0 && authorsPool70 > 0
+      ? authorsPool70 / totalPlatformReadingSeconds
+      : 0);
 
   return {
     monthYear: id,
@@ -25,13 +40,20 @@ function normalizePool(id: string, raw: FirebaseFirestore.DocumentData): Monthly
     subscriptionGatewayFees,
     subscriptionNet,
     totalSubscriptionRevenue: subscriptionNet,
-    authorsPool70: Number(raw.authorsPool70 ?? 0),
+    authorsPool70,
     platformPool30: Number(raw.platformPool30 ?? 0),
-    totalPlatformReadingSeconds: Number(raw.totalPlatformReadingSeconds ?? 0),
-    valuePerSecond: Number(raw.valuePerSecond ?? 0),
+    totalPlatformReadingSeconds,
+    valuePerSecond,
+    totalPlatformPremiumViews,
+    valuePerView,
     status: raw.status === "closed" ? "closed" : "open",
     closedAt: raw.closedAt as string | undefined,
     updatedAt: String(raw.updatedAt ?? new Date().toISOString()),
+    consolidationId: raw.consolidationId as string | undefined,
+    consolidatedAt: raw.consolidatedAt as string | undefined,
+    authorsConsolidatedCount: Number(raw.authorsConsolidatedCount ?? 0) || undefined,
+    totalPoolDistributed: Number(raw.totalPoolDistributed ?? 0) || undefined,
+    roundingAdjustmentCents: Number(raw.roundingAdjustmentCents ?? 0) || undefined,
   };
 }
 
@@ -62,6 +84,8 @@ export async function getOrCreateOpenPool(monthYear = getCurrentMonthYear()): Pr
     platformPool30: 0,
     totalPlatformReadingSeconds: 0,
     valuePerSecond: 0,
+    totalPlatformPremiumViews: 0,
+    valuePerView: 0,
     status: "open",
     updatedAt: now,
   };
@@ -76,7 +100,7 @@ export async function addSubscriptionRevenueToPool(
   monthYear = getCurrentMonthYear(),
 ): Promise<void> {
   const { grossUsd, feeUsd, netUsd } = amounts;
-  if (netUsd <= 0 && grossUsd <= 0) return;
+  if (netUsd === 0 && grossUsd === 0 && feeUsd === 0) return;
 
   const adminDb = await getAdminDb();
   if (!adminDb) throw new Error("Firestore Admin no configurado");
@@ -100,6 +124,8 @@ export async function addSubscriptionRevenueToPool(
         platformPool30: platformShare,
         totalPlatformReadingSeconds: 0,
         valuePerSecond: 0,
+        totalPlatformPremiumViews: 0,
+        valuePerView: 0,
         status: "open",
         updatedAt: now,
       });
@@ -109,12 +135,24 @@ export async function addSubscriptionRevenueToPool(
     const data = snap.data()!;
     if (data.status === "closed") return;
 
-    const subscriptionGross = Number(data.subscriptionGross ?? data.totalSubscriptionRevenue ?? 0) + grossUsd;
-    const subscriptionGatewayFees = Number(data.subscriptionGatewayFees ?? 0) + feeUsd;
-    const subscriptionNet = Number(data.subscriptionNet ?? data.totalSubscriptionRevenue ?? 0) + netUsd;
-    const authorsPool70 = Number(data.authorsPool70 ?? 0) + authorsShare;
-    const platformPool30 = Number(data.platformPool30 ?? 0) + platformShare;
+    const subscriptionGross = Math.max(
+      0,
+      Number(data.subscriptionGross ?? data.totalSubscriptionRevenue ?? 0) + grossUsd,
+    );
+    const subscriptionGatewayFees = Math.max(
+      0,
+      Number(data.subscriptionGatewayFees ?? 0) + feeUsd,
+    );
+    const subscriptionNet = Math.max(
+      0,
+      Number(data.subscriptionNet ?? data.totalSubscriptionRevenue ?? 0) + netUsd,
+    );
+    const authorsPool70 = Math.max(0, Number(data.authorsPool70 ?? 0) + authorsShare);
+    const platformPool30 = Math.max(0, Number(data.platformPool30 ?? 0) + platformShare);
+    const totalPlatformPremiumViews = Number(data.totalPlatformPremiumViews ?? 0);
     const totalPlatformReadingSeconds = Number(data.totalPlatformReadingSeconds ?? 0);
+    const valuePerView =
+      totalPlatformPremiumViews > 0 ? authorsPool70 / totalPlatformPremiumViews : 0;
     const valuePerSecond =
       totalPlatformReadingSeconds > 0 ? authorsPool70 / totalPlatformReadingSeconds : 0;
 
@@ -125,12 +163,14 @@ export async function addSubscriptionRevenueToPool(
       totalSubscriptionRevenue: subscriptionNet,
       authorsPool70,
       platformPool30,
+      valuePerView,
       valuePerSecond,
       updatedAt: now,
     });
   });
 }
 
+/** Histórico analítico — ya no determina regalías del pool. */
 export async function incrementPoolReadingSeconds(
   seconds: number,
   monthYear = getCurrentMonthYear(),
@@ -157,6 +197,8 @@ export async function incrementPoolReadingSeconds(
         platformPool30: 0,
         totalPlatformReadingSeconds: seconds,
         valuePerSecond: 0,
+        totalPlatformPremiumViews: 0,
+        valuePerView: 0,
         status: "open",
         updatedAt: now,
       });
@@ -180,6 +222,56 @@ export async function incrementPoolReadingSeconds(
   });
 }
 
+export async function incrementPoolPremiumViews(
+  views: number,
+  monthYear = getCurrentMonthYear(),
+): Promise<void> {
+  if (views <= 0) return;
+
+  const adminDb = await getAdminDb();
+  if (!adminDb) throw new Error("Firestore Admin no configurado");
+
+  const ref = adminDb.collection(COLLECTIONS.monthlyPools).doc(monthYear);
+
+  await adminDb.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const now = new Date().toISOString();
+
+    if (!snap.exists) {
+      tx.set(ref, {
+        monthYear,
+        subscriptionGross: 0,
+        subscriptionGatewayFees: 0,
+        subscriptionNet: 0,
+        totalSubscriptionRevenue: 0,
+        authorsPool70: 0,
+        platformPool30: 0,
+        totalPlatformReadingSeconds: 0,
+        valuePerSecond: 0,
+        totalPlatformPremiumViews: views,
+        valuePerView: 0,
+        status: "open",
+        updatedAt: now,
+      });
+      return;
+    }
+
+    const data = snap.data()!;
+    if (data.status === "closed") return;
+
+    const totalPlatformPremiumViews = Number(data.totalPlatformPremiumViews ?? 0) + views;
+    const authorsPool70 = Number(data.authorsPool70 ?? 0);
+    const valuePerView =
+      totalPlatformPremiumViews > 0 ? authorsPool70 / totalPlatformPremiumViews : 0;
+
+    tx.update(ref, {
+      totalPlatformPremiumViews,
+      valuePerView,
+      updatedAt: now,
+    });
+  });
+}
+
 export async function closeMonthlyPool(monthYear: string): Promise<MonthlyPool> {
   const adminDb = await getAdminDb();
   if (!adminDb) throw new Error("Firestore Admin no configurado");
@@ -196,6 +288,10 @@ export async function closeMonthlyPool(monthYear: string): Promise<MonthlyPool> 
     const pool = normalizePool(monthYear, data);
     const valuePerSecond = computeValuePerSecond(pool);
     const now = new Date().toISOString();
+
+    if (pool.status === "closed") {
+      return;
+    }
 
     tx.update(ref, {
       valuePerSecond,
@@ -216,4 +312,34 @@ export async function getMonthlyPool(monthYear: string): Promise<MonthlyPool | n
   const snap = await adminDb.collection(COLLECTIONS.monthlyPools).doc(monthYear).get();
   if (!snap.exists) return null;
   return normalizePool(monthYear, snap.data()!);
+}
+
+export async function markPoolConsolidated(
+  monthYear: string,
+  payload: {
+    consolidationId: string;
+    authorsConsolidatedCount: number;
+    totalPoolDistributed: number;
+    roundingAdjustmentCents: number;
+    valuePerSecond: number;
+  },
+): Promise<void> {
+  const adminDb = await getAdminDb();
+  if (!adminDb) throw new Error("Firestore Admin no configurado");
+
+  const ref = adminDb.collection(COLLECTIONS.monthlyPools).doc(monthYear);
+  const now = new Date().toISOString();
+
+  await ref.set(
+    {
+      consolidationId: payload.consolidationId,
+      consolidatedAt: now,
+      authorsConsolidatedCount: payload.authorsConsolidatedCount,
+      totalPoolDistributed: payload.totalPoolDistributed,
+      roundingAdjustmentCents: payload.roundingAdjustmentCents,
+      valuePerSecond: payload.valuePerSecond,
+      updatedAt: now,
+    },
+    { merge: true },
+  );
 }

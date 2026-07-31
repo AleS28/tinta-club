@@ -1,7 +1,7 @@
 import type { UserProfile, UserRole } from "@/types/user";
 import { normalizeUserProfile } from "@/types/user";
 import type { FounderAuthorConfig } from "@/data/founder-authors";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { getAdminDb, getAdminAuth } from "@/lib/firebase-admin";
 import { AUTHOR_TERMS_VERSION } from "@/types/terms";
 import { createHash } from "crypto";
 
@@ -133,6 +133,27 @@ async function resolveAgreementFieldsForFounder(
   return founderGrandfatheredAgreement(uid, existing, founder);
 }
 
+async function resolveUserPhotoURL(
+  uid: string,
+  existing: Record<string, unknown> | null,
+): Promise<string | undefined> {
+  const current = existing?.photoURL ? String(existing.photoURL) : undefined;
+
+  if (current?.startsWith("http")) return current;
+
+  const adminAuth = await getAdminAuth();
+  if (adminAuth) {
+    try {
+      const authUser = await adminAuth.getUser(uid);
+      if (authUser.photoURL?.startsWith("http")) return authUser.photoURL;
+    } catch {
+      // Sin foto en Auth; no usar imagen curada del catálogo en la cuenta.
+    }
+  }
+
+  return undefined;
+}
+
 export async function linkFounderAuthorAdmin(
   uid: string,
   email: string,
@@ -148,9 +169,19 @@ export async function linkFounderAuthorAdmin(
   const existing = userSnap.exists ? (userSnap.data() as Record<string, unknown>) : null;
 
   if (existing?.authorSlug === founder.slug && existing?.role === "author") {
+    const photoURL = await resolveUserPhotoURL(uid, existing);
+    const patch: Record<string, unknown> = {};
+
     if (existing.agreementSigned !== true) {
-      const agreementFields = await resolveAgreementFieldsForFounder(uid, existing, founder);
-      await userRef.set(agreementFields, { merge: true });
+      Object.assign(patch, await resolveAgreementFieldsForFounder(uid, existing, founder));
+    }
+
+    if (photoURL && photoURL !== existing.photoURL) {
+      patch.photoURL = photoURL;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      await userRef.set(patch, { merge: true });
       const refreshed = await userRef.get();
       return {
         linked: true,
@@ -168,6 +199,7 @@ export async function linkFounderAuthorAdmin(
 
   const batch = adminDb.batch();
   const agreementFields = await resolveAgreementFieldsForFounder(uid, existing, founder);
+  const photoURL = await resolveUserPhotoURL(uid, existing);
 
   batch.set(
     userRef,
@@ -176,8 +208,8 @@ export async function linkFounderAuthorAdmin(
       email,
       displayName: existing?.displayName ?? founder.name,
       role: "author",
-      bio: founder.bio,
-      photoURL: existing?.photoURL ?? founder.photoUrl,
+      bio: existing?.bio ?? founder.bio,
+      ...(photoURL ? { photoURL } : {}),
       authorSlug: founder.slug,
       legacyAuthorId: founder.legacyAuthorId,
       linkedAt: new Date().toISOString(),

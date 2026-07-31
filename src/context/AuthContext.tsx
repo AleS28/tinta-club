@@ -111,7 +111,19 @@ async function fetchOrCreateUserProfile(user: User): Promise<UserProfile> {
   const userSnap = await getDoc(userRef);
 
   if (userSnap.exists()) {
-    return normalizeUserProfile(userSnap.data() as UserProfile);
+    const data = userSnap.data() as UserProfile;
+    const authPhoto = user.photoURL ?? undefined;
+    const storedPhoto = data.photoURL;
+
+    if (
+      authPhoto?.startsWith("http") &&
+      (!storedPhoto || storedPhoto.startsWith("/authors/"))
+    ) {
+      await setDoc(userRef, { photoURL: authPhoto }, { merge: true });
+      return normalizeUserProfile({ ...data, photoURL: authPhoto });
+    }
+
+    return normalizeUserProfile(data);
   }
 
   const pendingType = readPendingRegistrationType();

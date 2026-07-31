@@ -6,12 +6,7 @@ import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 
-const publicNavLinks = [
-  { label: "Explorar", href: "/" },
-  { label: "Conócenos", href: "/conocenos" },
-];
-
-const memberNavLinks = [{ label: "Mi Cuenta", href: "/biblioteca" }];
+const publicNavLinks = [{ label: "Conócenos", href: "/conocenos" }];
 
 export function Navbar() {
   const { user, userProfile, loading, restoringSession, isSubscriber, role, openAuthModal, logout } = useAuth();
@@ -72,16 +67,6 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-          {showProfile &&
-            memberNavLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="text-sm font-medium text-stone-300 transition-colors duration-300 hover:text-[#D27C5A]"
-              >
-                {link.label}
-              </Link>
-            ))}
           {showProfile && role === "admin" && (
             <Link
               href="/administracion/finanzas"

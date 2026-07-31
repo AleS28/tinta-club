@@ -2,6 +2,8 @@ import type { UserProfile, UserRole } from "@/types/user";
 import { normalizeUserProfile } from "@/types/user";
 import type { FounderAuthorConfig } from "@/data/founder-authors";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { AUTHOR_TERMS_VERSION } from "@/types/terms";
+import { createHash } from "crypto";
 
 export interface LinkFounderResult {
   linked: boolean;
@@ -28,6 +30,109 @@ function toUserProfile(uid: string, raw: Record<string, unknown>, email?: string
   });
 }
 
+function formatUtcTimestamp(date: Date = new Date()): string {
+  return date.toISOString().replace("T", " ").replace(/\.\d{3}Z$/, " UTC");
+}
+
+function agreementFieldsFromUser(
+  existing: Record<string, unknown>,
+): Record<string, unknown> | null {
+  if (existing.agreementSigned !== true) return null;
+
+  return {
+    agreementSigned: true,
+    agreementSignedAt: existing.agreementSignedAt,
+    agreementSignatureName: existing.agreementSignatureName,
+    agreementVersion: existing.agreementVersion ?? AUTHOR_TERMS_VERSION,
+    agreementHash: existing.agreementHash,
+    legalFullName: existing.legalFullName,
+    legalIdNumber: existing.legalIdNumber,
+    contactPhone: existing.contactPhone,
+    paymentDetails: existing.paymentDetails,
+  };
+}
+
+async function agreementFieldsFromLegalAudit(
+  uid: string,
+): Promise<Record<string, unknown> | null> {
+  const adminDb = await getAdminDb();
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID?.trim();
+  if (!adminDb || !appId) return null;
+
+  const snap = await adminDb
+    .collection("artifacts")
+    .doc(appId)
+    .collection("users")
+    .doc(uid)
+    .collection("legal_agreements")
+    .where("userType", "==", "author")
+    .limit(10)
+    .get();
+
+  if (snap.empty) return null;
+
+  const docs = snap.docs
+    .map((doc) => doc.data())
+    .sort((a, b) =>
+      String(b.acceptedAt ?? "").localeCompare(String(a.acceptedAt ?? "")),
+    );
+  const latest = docs[0];
+  if (!latest) return null;
+
+  return {
+    agreementSigned: true,
+    agreementSignedAt: String(latest.acceptedAt ?? formatUtcTimestamp()),
+    agreementSignatureName: String(latest.signatureName ?? latest.legalName ?? ""),
+    agreementVersion: String(latest.termsVersion ?? AUTHOR_TERMS_VERSION),
+    agreementHash: String(latest.signatureHash ?? ""),
+    legalFullName: String(latest.legalName ?? ""),
+    legalIdNumber: String(latest.legalIdNumber ?? ""),
+    contactPhone: String(latest.contactPhone ?? ""),
+    paymentDetails: String(latest.paymentDetails ?? ""),
+  };
+}
+
+/** Autores fundadores que firmaron antes de vincular la cuenta. */
+function founderGrandfatheredAgreement(
+  uid: string,
+  existing: Record<string, unknown> | null,
+  founder: FounderAuthorConfig,
+): Record<string, unknown> {
+  const signedAtUtc = String(existing?.createdAt ?? formatUtcTimestamp());
+  const legalFullName = String(existing?.displayName ?? founder.name);
+  const legalIdNumber = String(existing?.legalIdNumber ?? "FOUNDER");
+  const payload = `${uid}${legalIdNumber}${signedAtUtc}${AUTHOR_TERMS_VERSION}`;
+  const agreementHash = createHash("sha256").update(payload, "utf8").digest("hex");
+
+  return {
+    agreementSigned: true,
+    agreementSignedAt: signedAtUtc,
+    agreementSignatureName: legalFullName,
+    agreementVersion: AUTHOR_TERMS_VERSION,
+    agreementHash,
+    legalFullName,
+    ...(existing?.legalIdNumber ? { legalIdNumber: String(existing.legalIdNumber) } : {}),
+    ...(existing?.contactPhone ? { contactPhone: String(existing.contactPhone) } : {}),
+    ...(existing?.paymentDetails ? { paymentDetails: String(existing.paymentDetails) } : {}),
+  };
+}
+
+async function resolveAgreementFieldsForFounder(
+  uid: string,
+  existing: Record<string, unknown> | null,
+  founder: FounderAuthorConfig,
+): Promise<Record<string, unknown>> {
+  if (existing) {
+    const fromUser = agreementFieldsFromUser(existing);
+    if (fromUser) return fromUser;
+  }
+
+  const fromAudit = await agreementFieldsFromLegalAudit(uid);
+  if (fromAudit) return fromAudit;
+
+  return founderGrandfatheredAgreement(uid, existing, founder);
+}
+
 export async function linkFounderAuthorAdmin(
   uid: string,
   email: string,
@@ -43,6 +148,17 @@ export async function linkFounderAuthorAdmin(
   const existing = userSnap.exists ? (userSnap.data() as Record<string, unknown>) : null;
 
   if (existing?.authorSlug === founder.slug && existing?.role === "author") {
+    if (existing.agreementSigned !== true) {
+      const agreementFields = await resolveAgreementFieldsForFounder(uid, existing, founder);
+      await userRef.set(agreementFields, { merge: true });
+      const refreshed = await userRef.get();
+      return {
+        linked: true,
+        profile: toUserProfile(uid, refreshed.data() as Record<string, unknown>, email),
+        reason: "already_linked",
+      };
+    }
+
     return {
       linked: false,
       profile: toUserProfile(uid, existing, email),
@@ -51,6 +167,7 @@ export async function linkFounderAuthorAdmin(
   }
 
   const batch = adminDb.batch();
+  const agreementFields = await resolveAgreementFieldsForFounder(uid, existing, founder);
 
   batch.set(
     userRef,
@@ -60,24 +177,11 @@ export async function linkFounderAuthorAdmin(
       displayName: existing?.displayName ?? founder.name,
       role: "author",
       bio: founder.bio,
-      photoURL: founder.photoUrl,
+      photoURL: existing?.photoURL ?? founder.photoUrl,
       authorSlug: founder.slug,
       legacyAuthorId: founder.legacyAuthorId,
       linkedAt: new Date().toISOString(),
-      // Preserva acuerdo firmado si el autor ya lo completó antes de vincular.
-      ...(existing?.agreementSigned === true
-        ? {
-            agreementSigned: true,
-            agreementSignedAt: existing.agreementSignedAt,
-            agreementSignatureName: existing.agreementSignatureName,
-            agreementVersion: existing.agreementVersion,
-            agreementHash: existing.agreementHash,
-            legalFullName: existing.legalFullName,
-            legalIdNumber: existing.legalIdNumber,
-            contactPhone: existing.contactPhone,
-            paymentDetails: existing.paymentDetails,
-          }
-        : {}),
+      ...agreementFields,
     },
     { merge: true },
   );
@@ -114,6 +218,29 @@ export async function linkFounderAuthorAdmin(
     linked: true,
     profile: toUserProfile(uid, updated, email),
   };
+}
+
+export async function linkFounderAuthorByUid(
+  slug: string,
+  uid: string,
+  email?: string,
+): Promise<LinkFounderResult & { slug: string }> {
+  const { findFounderBySlug } = await import("@/data/founder-authors");
+  const founder = findFounderBySlug(slug);
+  if (!founder) {
+    return { slug, linked: false, reason: "founder_not_found" };
+  }
+
+  const adminDb = await getAdminDb();
+  if (!adminDb) {
+    return { slug, linked: false, reason: "admin_not_configured" };
+  }
+
+  const userSnap = await adminDb.collection("users").doc(uid).get();
+  const resolvedEmail = email ?? String(userSnap.data()?.email ?? "");
+
+  const result = await linkFounderAuthorAdmin(uid, resolvedEmail, founder);
+  return { slug, ...result };
 }
 
 export async function getUserProfileAdmin(uid: string, email?: string): Promise<UserProfile | null> {

@@ -10,7 +10,21 @@ export async function POST(request: NextRequest) {
   if (!auth.ok) return auth.response;
 
   try {
-    const body = (await request.json().catch(() => ({}))) as { slugs?: string[] };
+    const body = (await request.json().catch(() => ({}))) as {
+      slugs?: string[];
+      links?: Array<{ slug: string; uid?: string; email?: string }>;
+    };
+
+    if (body.links?.length) {
+      const { linkFounderAuthorByUid } = await import("@/lib/founder-author-link-admin");
+      const results = await Promise.all(
+        body.links.map((link) =>
+          linkFounderAuthorByUid(link.slug, link.uid ?? "", link.email),
+        ),
+      );
+      return NextResponse.json({ ok: true, results });
+    }
+
     const results = await linkAllFounderAuthors(body.slugs);
 
     return NextResponse.json({ ok: true, results });

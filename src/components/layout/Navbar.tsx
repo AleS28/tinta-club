@@ -197,27 +197,13 @@ export function Navbar() {
           aria-label="Navegación móvil"
         >
           <div className="flex flex-col gap-1">
-            {publicNavLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                onClick={closeMobileNav}
-                className="rounded-lg px-3 py-3 text-sm font-medium text-stone-200 transition-colors hover:bg-[#3D2518] hover:text-[#D27C5A]"
-              >
-                {link.label}
-              </Link>
-            ))}
-            {showProfile &&
-              memberNavLinks.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  onClick={closeMobileNav}
-                  className="rounded-lg px-3 py-3 text-sm font-medium text-stone-200 transition-colors hover:bg-[#3D2518] hover:text-[#D27C5A]"
-                >
-                  {link.label}
-                </Link>
-              ))}
+            <Link
+              href="/conocenos"
+              onClick={closeMobileNav}
+              className="rounded-lg px-3 py-3 text-sm font-medium text-stone-200 transition-colors hover:bg-[#3D2518] hover:text-[#D27C5A]"
+            >
+              Conócenos
+            </Link>
             {showProfile && role === "admin" && (
               <Link
                 href="/administracion/finanzas"

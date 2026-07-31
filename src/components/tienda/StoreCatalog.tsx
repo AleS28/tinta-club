@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import type { StoreBookListing } from "@/types/monetization";
 import { useAuth } from "@/context/AuthContext";
@@ -107,26 +106,16 @@ export function StoreCatalog() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-terracotta/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-terracotta">
-            <ShoppingBag className="h-3.5 w-3.5" />
-            Tienda individual
-          </div>
-          <h1 className="font-serif text-3xl font-bold text-ink">Catálogo de compra directa</h1>
-          <p className="mt-2 max-w-2xl text-muted">
-            Compra obras completas o capítulos premium. Todo el contenizado se lee aquí, en nuestro
-            visor — licencia digital de por vida, sin descargas.
-          </p>
+      <header className="mb-8">
+        <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-terracotta/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-terracotta">
+          <ShoppingBag className="h-3.5 w-3.5" />
+          Tienda individual
         </div>
-        {user && (
-          <Link
-            href="/mi-biblioteca"
-            className="inline-flex shrink-0 items-center justify-center rounded-full border border-terracotta/30 bg-white px-5 py-2.5 text-sm font-semibold text-terracotta transition-colors hover:bg-terracotta/5"
-          >
-            Mis compras
-          </Link>
-        )}
+        <h1 className="font-serif text-3xl font-bold text-ink">Catálogo de compra directa</h1>
+        <p className="mt-2 max-w-2xl text-muted">
+          Compra obras completas o capítulos premium. Todo el contenizado se lee aquí, en nuestro
+          visor — licencia digital de por vida, sin descargas.
+        </p>
       </header>
 
       {error && (

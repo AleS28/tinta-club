@@ -20,7 +20,8 @@ const tabs = [
     label: "Biblioteca",
     href: "/biblioteca",
     icon: BookOpen,
-    match: (path: string) => path.startsWith("/biblioteca"),
+    match: (path: string) =>
+      path.startsWith("/biblioteca") || path.startsWith("/mi-biblioteca"),
   },
   {
     id: "search",
@@ -48,7 +49,6 @@ export function MobileBottomNav() {
   const { user, userProfile, openAuthModal } = useAuth();
 
   if (pathname.startsWith("/leer/")) return null;
-  if (pathname.startsWith("/mi-biblioteca")) return null;
 
   const profileHref = user ? `/perfil/${user.uid}` : null;
   const profileActive = isProfileActive(pathname, user?.uid);

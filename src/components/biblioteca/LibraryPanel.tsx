@@ -2,17 +2,20 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Bookmark, Users } from "lucide-react";
 import { Book } from "@/data/mock";
 import { useAuth } from "@/context/AuthContext";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { BookCard } from "@/components/home/BookCard";
 import { SubscriptionSection } from "@/components/biblioteca/SubscriptionSection";
+import { PurchasedLibrarySection } from "@/components/mi-biblioteca/PurchasedLibraryPanel";
 import { getFavoriteBooks, getFollowedAuthors } from "@/lib/library";
 import type { PublicAuthorProfile } from "@/types/author";
 
 export function LibraryPanel() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [favorites, setFavorites] = useState<Book[]>([]);
   const [following, setFollowing] = useState<PublicAuthorProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,23 +39,42 @@ export function LibraryPanel() {
     loadLibrary();
   }, [loadLibrary]);
 
+  useEffect(() => {
+    const shouldScroll =
+      searchParams.get("purchased") === "true" ||
+      searchParams.get("section") === "compras" ||
+      window.location.hash === "#compras";
+    if (!shouldScroll) return;
+
+    const timer = window.setTimeout(() => {
+      document.getElementById("compras")?.scrollIntoView({ behavior: "smooth" });
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [searchParams]);
+
   return (
     <AuthGuard redirectTo="/">
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
         <header className="mb-8">
           <h1 className="font-serif text-3xl font-bold text-ink">Mi Biblioteca</h1>
-          <p className="mt-2 text-muted">Tus libros guardados y autores que sigues</p>
+          <p className="mt-2 text-muted">
+            Suscripción, compras, favoritos y autores que sigues
+          </p>
         </header>
 
-        {loading ? (
-          <p className="text-center text-sm text-muted">Cargando tu biblioteca...</p>
-        ) : (
-          <div className="space-y-10">
-            <Suspense fallback={null}>
-              <SubscriptionSection />
-            </Suspense>
+        <div className="space-y-10">
+          <Suspense fallback={null}>
+            <SubscriptionSection />
+          </Suspense>
 
-            <section>
+          <PurchasedLibrarySection />
+
+          {loading ? (
+            <p className="text-center text-sm text-muted">Cargando favoritos y autores…</p>
+          ) : (
+            <>
+              <section>
               <div className="mb-5 flex items-center gap-2">
                 <Bookmark className="h-5 w-5 text-terracotta" />
                 <h2 className="font-serif text-xl font-bold text-ink">Guardados / Favoritos</h2>
@@ -128,8 +150,9 @@ export function LibraryPanel() {
                 </div>
               )}
             </section>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </main>
     </AuthGuard>
   );

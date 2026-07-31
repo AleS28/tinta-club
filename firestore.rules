@@ -3,6 +3,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function touchesStorePricing() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(['directBookPriceUsd', 'directChapterPriceUsd', 'saleMode', 'pricingUpdatedAt', 'pricingUpdatedBy']);
+    }
+
     match /users/{userId} {
       allow read: if true;
       allow create, update: if request.auth != null && request.auth.uid == userId;
@@ -18,7 +29,8 @@ service cloud.firestore {
 
     match /books/{bookId} {
       allow read: if true;
-      allow create, update: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (isAdmin() || !touchesStorePricing());
     }
 
     match /chapters/{chapterId} {

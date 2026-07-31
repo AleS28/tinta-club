@@ -9,6 +9,7 @@ import { AdminGlobalFinancialSummary } from "@/components/admin/AdminGlobalFinan
 import { AdminAuthorsEarningsTable } from "@/components/admin/AdminAuthorsEarningsTable";
 import { AdminBooksEarningsTable } from "@/components/admin/AdminBooksEarningsTable";
 import { AdminMonthClosurePanel } from "@/components/admin/AdminMonthClosurePanel";
+import { AdminSectionNav } from "@/components/admin/AdminSectionNav";
 import { formatMonthYearCapitalized } from "@/lib/monetization/month-label";
 
 export function AdminFinancialReportPanel() {
@@ -166,6 +167,8 @@ export function AdminFinancialReportPanel() {
           </Link>
         </div>
       </header>
+
+      <AdminSectionNav />
 
       {linkFoundersMessage && (
         <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-900">

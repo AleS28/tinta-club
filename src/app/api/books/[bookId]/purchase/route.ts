@@ -79,7 +79,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const firstChapterId = listing.firstChapterId ?? chapters[0]?.id;
     const successPath = firstChapterId
       ? `/leer/${firstChapterId}?purchased=true`
-      : `/mi-biblioteca?purchased=true`;
+      : `/biblioteca?purchased=true&section=compras`;
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",

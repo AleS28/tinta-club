@@ -40,6 +40,10 @@ export const DEFAULT_DIRECT_CHAPTER_PRICE_USD = 1;
 /** Precio por defecto de compra directa de libro completo (USD). */
 export const DEFAULT_DIRECT_BOOK_PRICE_USD = 9.99;
 
+export function getDefaultStorePriceForMode(saleMode: "book" | "chapter"): number {
+  return saleMode === "book" ? DEFAULT_DIRECT_BOOK_PRICE_USD : DEFAULT_DIRECT_CHAPTER_PRICE_USD;
+}
+
 export const COLLECTIONS = {
   readingSessions: "reading_sessions",
   directChapterSales: "direct_chapter_sales",

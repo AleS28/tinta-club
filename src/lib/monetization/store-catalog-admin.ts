@@ -71,13 +71,13 @@ export async function buildStoreListing(
   if (!book) return null;
 
   const pricing = await fetchBookPricing(bookId);
+  const mergedPricing = {
+    directBookPriceUsd: pricing.directBookPriceUsd ?? book.directBookPriceUsd,
+    directChapterPriceUsd: pricing.directChapterPriceUsd ?? book.directChapterPriceUsd,
+    saleMode: pricing.saleMode ?? book.saleMode,
+  };
   const premiumChapterCount = chapters.filter((c) => c.isPremium).length;
-  const saleMode = resolveSaleMode(premiumChapterCount, {
-    ...pricing,
-    directBookPriceUsd: book.directBookPriceUsd ?? pricing.directBookPriceUsd,
-    directChapterPriceUsd: book.directChapterPriceUsd ?? pricing.directChapterPriceUsd,
-    saleMode: book.saleMode ?? pricing.saleMode,
-  });
+  const saleMode = resolveSaleMode(premiumChapterCount, mergedPricing);
 
   if (!saleMode) return null;
 
@@ -97,11 +97,7 @@ export async function buildStoreListing(
     premiumChapterCount,
     totalChapterCount: chapters.length,
     saleMode,
-    priceUsd: resolveListingPrice(saleMode, premiumChapterCount, {
-      ...pricing,
-      directBookPriceUsd: book.directBookPriceUsd ?? pricing.directBookPriceUsd,
-      directChapterPriceUsd: book.directChapterPriceUsd ?? pricing.directChapterPriceUsd,
-    }),
+    priceUsd: resolveListingPrice(saleMode, premiumChapterCount, mergedPricing),
     includedInSubscription: premiumChapterCount > 0,
     firstChapterId: firstChapter?.id,
   };

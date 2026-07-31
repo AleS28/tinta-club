@@ -5,6 +5,7 @@ import {
   DIRECT_SALE_PLATFORM_SHARE,
 } from "@/lib/monetization/constants";
 import { getCurrentMonthYear } from "@/lib/monetization/month-year";
+import { estimateStripeNet } from "@/lib/monetization/stripe-net";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 function earningsSummaryDocId(authorId: string, monthYear: string): string {
@@ -26,8 +27,9 @@ export async function recordDirectChapterSale(
   if (!adminDb) throw new Error("Firestore Admin no configurado");
 
   const amountPaid = Math.max(0, input.amountPaid);
-  const authorShare = amountPaid * DIRECT_SALE_AUTHOR_SHARE;
-  const platformShare = amountPaid * DIRECT_SALE_PLATFORM_SHARE;
+  const { grossUsd, feeUsd, netUsd } = estimateStripeNet(amountPaid);
+  const authorShare = netUsd * DIRECT_SALE_AUTHOR_SHARE;
+  const platformShare = netUsd * DIRECT_SALE_PLATFORM_SHARE;
   const monthYear = getCurrentMonthYear();
   const now = new Date().toISOString();
 
@@ -38,7 +40,9 @@ export async function recordDirectChapterSale(
     bookId: input.bookId,
     chapterId: input.chapterId,
     authorId: input.authorId,
-    amountPaid,
+    amountPaid: grossUsd,
+    gatewayFee: feeUsd,
+    amountNet: netUsd,
     authorShare,
     platformShare,
     createdAt: now,

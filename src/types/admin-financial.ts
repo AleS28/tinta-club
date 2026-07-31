@@ -16,11 +16,17 @@ export interface AuthorFinancialBreakdown {
 export interface GlobalFinancialReport {
   monthYear: string;
   grossRevenue: number;
+  gatewayFees: number;
+  netRevenue: number;
   platformNet30: number;
   authorsPool70: number;
   totalPlatformReadingTime: number;
-  subscriptionRevenue: number;
+  subscriptionGross: number;
+  subscriptionGatewayFees: number;
+  subscriptionNet: number;
   directSalesGross: number;
+  directSalesGatewayFees: number;
+  directSalesNet: number;
   poolStatus: "open" | "closed";
   availableMonths: string[];
   authorsBreakdown: AuthorFinancialBreakdown[];

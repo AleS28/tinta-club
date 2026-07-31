@@ -70,6 +70,9 @@ async function main() {
   await db.collection(COLLECTIONS.monthlyPools).doc(monthYear).set(
     {
       monthYear,
+      subscriptionGross: 0,
+      subscriptionGatewayFees: 0,
+      subscriptionNet: 0,
       totalSubscriptionRevenue: 0,
       authorsPool70: 0,
       platformPool30: 0,

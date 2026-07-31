@@ -74,6 +74,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.json({
       ok: true,
       saleId: sale.id,
+      grossPaid: sale.amountPaid,
+      gatewayFee: sale.gatewayFee,
+      netAmount: sale.amountNet,
       authorShare: sale.authorShare,
       platformShare: sale.platformShare,
     });

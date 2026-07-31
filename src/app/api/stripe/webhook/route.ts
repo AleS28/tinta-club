@@ -6,6 +6,10 @@ import {
   deactivateSubscriptionAdmin,
 } from "@/lib/subscription-admin";
 import { addSubscriptionRevenueToPool } from "@/lib/monetization/monthly-pool-admin";
+import {
+  getStripeNetFromCheckoutSession,
+  getStripeNetFromInvoice,
+} from "@/lib/monetization/stripe-net";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,19 +36,19 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     subscriptionStatus: "premium",
   });
 
-  const amountUsd =
-    typeof session.amount_total === "number" ? session.amount_total / 100 : 0;
-  if (amountUsd > 0) {
-    await addSubscriptionRevenueToPool(amountUsd);
+  const stripe = getStripe();
+  const amounts = await getStripeNetFromCheckoutSession(stripe, session);
+  if (amounts.netUsd > 0) {
+    await addSubscriptionRevenueToPool(amounts);
   }
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  const amountUsd =
-    typeof invoice.amount_paid === "number" ? invoice.amount_paid / 100 : 0;
-  if (amountUsd <= 0) return;
+  const stripe = getStripe();
+  const amounts = await getStripeNetFromInvoice(stripe, invoice);
+  if (amounts.netUsd <= 0) return;
 
-  await addSubscriptionRevenueToPool(amountUsd);
+  await addSubscriptionRevenueToPool(amounts);
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {

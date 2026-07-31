@@ -37,16 +37,22 @@ function resolvePayoutStatus(
 
 async function getDirectSalesTotalsForMonth(monthYear: string): Promise<{
   gross: number;
+  gatewayFees: number;
+  net: number;
   platformShare: number;
   authorShare: number;
 }> {
   const adminDb = await getAdminDb();
-  if (!adminDb) return { gross: 0, platformShare: 0, authorShare: 0 };
+  if (!adminDb) {
+    return { gross: 0, gatewayFees: 0, net: 0, platformShare: 0, authorShare: 0 };
+  }
 
   const monthPrefix = `${monthYear}-`;
   const snap = await adminDb.collection(COLLECTIONS.directChapterSales).get();
 
   let gross = 0;
+  let gatewayFees = 0;
+  let net = 0;
   let platformShare = 0;
   let authorShare = 0;
 
@@ -56,11 +62,13 @@ async function getDirectSalesTotalsForMonth(monthYear: string): Promise<{
     if (!createdAt.startsWith(monthPrefix)) continue;
 
     gross += Number(data.amountPaid ?? 0);
+    gatewayFees += Number(data.gatewayFee ?? 0);
+    net += Number(data.amountNet ?? data.amountPaid ?? 0);
     platformShare += Number(data.platformShare ?? 0);
     authorShare += Number(data.authorShare ?? 0);
   }
 
-  return { gross, platformShare, authorShare };
+  return { gross, gatewayFees, net, platformShare, authorShare };
 }
 
 async function collectAuthorIdsForMonth(monthYear: string): Promise<Set<string>> {
@@ -169,8 +177,13 @@ export async function getGlobalFinancialReport(
   const directTotals = await getDirectSalesTotalsForMonth(monthYear);
   const authorIds = await collectAuthorIdsForMonth(monthYear);
 
-  const subscriptionRevenue = pool.totalSubscriptionRevenue;
-  const grossRevenue = subscriptionRevenue + directTotals.gross;
+  const subscriptionGross = pool.subscriptionGross;
+  const subscriptionGatewayFees = pool.subscriptionGatewayFees;
+  const subscriptionNet = pool.subscriptionNet;
+
+  const grossRevenue = subscriptionGross + directTotals.gross;
+  const gatewayFees = subscriptionGatewayFees + directTotals.gatewayFees;
+  const netRevenue = subscriptionNet + directTotals.net;
   const platformNet30 = pool.platformPool30 + directTotals.platformShare;
   const authorsPool70 = pool.authorsPool70 + directTotals.authorShare;
 
@@ -210,11 +223,17 @@ export async function getGlobalFinancialReport(
   return {
     monthYear,
     grossRevenue,
+    gatewayFees,
+    netRevenue,
     platformNet30,
     authorsPool70,
     totalPlatformReadingTime: pool.totalPlatformReadingSeconds,
-    subscriptionRevenue,
+    subscriptionGross,
+    subscriptionGatewayFees,
+    subscriptionNet,
     directSalesGross: directTotals.gross,
+    directSalesGatewayFees: directTotals.gatewayFees,
+    directSalesNet: directTotals.net,
     poolStatus: pool.status,
     availableMonths,
     authorsBreakdown,

@@ -143,7 +143,9 @@ export async function getAuthorEstimatedEarnings(
     isPayoutReady,
     minPayoutThreshold: MIN_PAYOUT_USD,
     pool: {
-      totalSubscriptionRevenue: pool.totalSubscriptionRevenue,
+      subscriptionGross: pool.subscriptionGross,
+      subscriptionGatewayFees: pool.subscriptionGatewayFees,
+      subscriptionNet: pool.subscriptionNet,
       authorsPool70: pool.authorsPool70,
       totalPlatformReadingSeconds: pool.totalPlatformReadingSeconds,
       valuePerSecond,

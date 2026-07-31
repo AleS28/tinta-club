@@ -16,8 +16,8 @@ export function AuthorEarningsBreakdown({ data }: AuthorEarningsBreakdownProps) 
         Desglose de monetización
       </h3>
       <p className="mt-2 text-sm leading-relaxed text-muted">
-        Tus ganancias se calculan en función del tiempo de lectura de tus obras y las
-        ventas directas de tus capítulos premium.
+        Tus ganancias se calculan sobre ingresos netos (después de comisiones de pasarela),
+        en función del tiempo de lectura de tus obras y las ventas directas de tus capítulos premium.
       </p>
 
       <div className="mt-6 flex flex-col items-center gap-6 sm:flex-row sm:items-start">
@@ -74,9 +74,16 @@ export function AuthorEarningsBreakdown({ data }: AuthorEarningsBreakdownProps) 
           </div>
 
           <div className="rounded-xl bg-sidebar/60 px-4 py-3 text-xs text-muted">
-            Pool del mes: ${data.pool.authorsPool70.toFixed(2)} para autores ·{" "}
-            {data.pool.totalPlatformReadingSeconds.toLocaleString()} s leídos en la plataforma ·{" "}
+            Pool neto del mes: ${data.pool.subscriptionNet.toFixed(2)} para autores (70%: $
+            {data.pool.authorsPool70.toFixed(2)}) ·{" "}
+            {data.pool.totalPlatformReadingSeconds.toLocaleString()} s leídos ·{" "}
             ${data.pool.valuePerSecond.toFixed(6)}/s
+            {data.pool.subscriptionGatewayFees > 0 && (
+              <>
+                {" "}
+                · Comisiones Stripe descontadas: ${data.pool.subscriptionGatewayFees.toFixed(2)}
+              </>
+            )}
           </div>
         </div>
       </div>

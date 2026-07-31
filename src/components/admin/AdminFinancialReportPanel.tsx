@@ -132,8 +132,10 @@ export function AdminFinancialReportPanel() {
             <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           </div>
           <span className="text-xs text-muted">
-            Suscripciones: ${report.subscriptionRevenue.toFixed(2)} · Directas: $
-            {report.directSalesGross.toFixed(2)}
+            Bruto: ${report.subscriptionGross.toFixed(2)} · Comisiones: −$
+            {report.subscriptionGatewayFees.toFixed(2)} · Neto subs: $
+            {report.subscriptionNet.toFixed(2)} · Directas netas: $
+            {report.directSalesNet.toFixed(2)}
           </span>
         </div>
       )}

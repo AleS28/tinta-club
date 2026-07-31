@@ -16,17 +16,25 @@ export function AdminGlobalFinancialSummary({ report }: AdminGlobalFinancialSumm
   const cards = [
     {
       emoji: "🏦",
-      label: "Ingresos totales de la plataforma",
+      label: "Ingresos brutos",
       value: formatUsd(report.grossRevenue),
-      sub: "Suscripciones + ventas directas",
+      sub: `Neto repartible: ${formatUsd(report.netRevenue)}`,
       icon: Building2,
       color: "bg-imperial-dark/10 text-imperial-deep",
+    },
+    {
+      emoji: "💳",
+      label: "Comisiones pasarela (Stripe)",
+      value: formatUsd(report.gatewayFees),
+      sub: "Descontadas antes del 70/30",
+      icon: TrendingUp,
+      color: "bg-stone-100 text-stone-700",
     },
     {
       emoji: "📈",
       label: "Ganancia neta plataforma (30%)",
       value: formatUsd(report.platformNet30),
-      sub: "Participación del Imperio",
+      sub: "Sobre ingresos netos post-Stripe",
       icon: TrendingUp,
       color: "bg-emerald-100 text-emerald-800",
     },
@@ -49,7 +57,7 @@ export function AdminGlobalFinancialSummary({ report }: AdminGlobalFinancialSumm
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {cards.map((card) => (
         <article
           key={card.label}

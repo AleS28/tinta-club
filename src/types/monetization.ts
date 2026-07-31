@@ -19,7 +19,10 @@ export interface DirectChapterSale {
   bookId: string;
   chapterId: string;
   authorId: string;
+  /** Monto bruto pagado por el lector */
   amountPaid: number;
+  gatewayFee: number;
+  amountNet: number;
   authorShare: number;
   platformShare: number;
   createdAt: string;
@@ -27,6 +30,13 @@ export interface DirectChapterSale {
 
 export interface MonthlyPool {
   monthYear: string;
+  /** Bruto acumulado de suscripciones (antes de pasarela) */
+  subscriptionGross: number;
+  /** Comisiones Stripe acumuladas en suscripciones */
+  subscriptionGatewayFees: number;
+  /** Neto repartible de suscripciones (bruto − comisiones) */
+  subscriptionNet: number;
+  /** @deprecated Usar subscriptionNet — mantener por compatibilidad */
   totalSubscriptionRevenue: number;
   authorsPool70: number;
   platformPool30: number;
@@ -69,7 +79,9 @@ export interface AuthorEarningsDashboard {
   isPayoutReady: boolean;
   minPayoutThreshold: number;
   pool: {
-    totalSubscriptionRevenue: number;
+    subscriptionGross: number;
+    subscriptionGatewayFees: number;
+    subscriptionNet: number;
     authorsPool70: number;
     totalPlatformReadingSeconds: number;
     valuePerSecond: number;

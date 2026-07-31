@@ -1,3 +1,4 @@
+import { FieldValue } from "firebase-admin/firestore";
 import type { AdminStorePricingItem, UpdateStorePricingInput } from "@/types/admin-store-pricing";
 import type { StoreSaleMode } from "@/types/monetization";
 import {
@@ -141,7 +142,7 @@ export async function updateAdminStorePricing(
     throw new Error("Firebase Admin no está configurado.");
   }
 
-  const payload: BookPricingDoc = {
+  const payload: Record<string, unknown> = {
     saleMode: input.saleMode,
     pricingUpdatedAt: new Date().toISOString(),
     pricingUpdatedBy: adminUid,
@@ -149,10 +150,10 @@ export async function updateAdminStorePricing(
 
   if (input.saleMode === "book") {
     payload.directBookPriceUsd = bookPrice!;
-    payload.directChapterPriceUsd = chapterPrice ?? undefined;
+    payload.directChapterPriceUsd = FieldValue.delete();
   } else {
     payload.directChapterPriceUsd = chapterPrice!;
-    payload.directBookPriceUsd = bookPrice ?? undefined;
+    payload.directBookPriceUsd = FieldValue.delete();
   }
 
   await adminDb.collection("books").doc(bookId).set(payload, { merge: true });

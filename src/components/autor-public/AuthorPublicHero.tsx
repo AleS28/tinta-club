@@ -2,6 +2,8 @@ import Image from "next/image";
 import { Facebook, Globe, Instagram } from "lucide-react";
 import type { AuthorPublicProfile } from "@/types/author-profile";
 import { FollowAuthorButton } from "@/components/perfil/FollowAuthorButton";
+import { AuthorFollowerCount } from "@/components/social/AuthorFollowerCount";
+import { SupportAuthorButton } from "@/components/social/SupportAuthorButton";
 import { DiscordIcon } from "@/components/ui/DiscordIcon";
 import { DISCORD_INVITE_URL, isDiscordConfigured } from "@/lib/discord";
 
@@ -68,6 +70,8 @@ export function AuthorPublicHero({ profile }: AuthorPublicHeroProps) {
 
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-[#FCF9F5]/90">{profile.bio}</p>
 
+          <AuthorFollowerCount authorId={profile.id} className="mt-4 text-[#FCF9F5]/80" />
+
           {activeSocials.length > 0 && (
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
               {activeSocials.map(({ key, label, icon: Icon }) => (
@@ -90,6 +94,13 @@ export function AuthorPublicHero({ profile }: AuthorPublicHeroProps) {
               authorId={profile.id}
               redirectPath={`/autor/${profile.slug}`}
               className="bg-[#D27C5A] hover:bg-[#c06a48]"
+            />
+
+            <SupportAuthorButton
+              authorId={profile.id}
+              authorName={profile.name}
+              redirectTo={`/autor/${profile.slug}`}
+              className="border-[#FCF9F5]/30 bg-[#FCF9F5]/10 text-[#FCF9F5] hover:bg-[#FCF9F5]/20"
             />
 
             {isDiscordConfigured() && (

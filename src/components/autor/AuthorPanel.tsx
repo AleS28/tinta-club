@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { BookOpen, Coins, Feather, Loader2, PenLine, PlusCircle } from "lucide-react";
+import { BookOpen, Coins, Feather, Loader2, MessageCircle, PenLine, PlusCircle } from "lucide-react";
 import { BRAND_NAME } from "@/lib/brand";
 import { Book } from "@/data/mock";
 import { getBooksByAuthorId, getChaptersByAuthorBooks } from "@/lib/db";
@@ -11,13 +11,14 @@ import { useAuth } from "@/context/AuthContext";
 import { hasAuthorPanelAccess, isAdminUser } from "@/types/user";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AuthorFinancialDashboard } from "@/components/autor/AuthorFinancialDashboard";
+import { AuthorInteractionsDashboard } from "@/components/autor/AuthorInteractionsDashboard";
 import { AuthorDiscordBanner } from "@/components/autor/AuthorDiscordBanner";
 import { AuthorAgreementBanner } from "@/components/autor/AuthorAgreementBanner";
 import { MyBooksList } from "@/components/autor/MyBooksList";
 import { PublishBookForm } from "@/components/autor/PublishBookForm";
 import { PublishChapterForm } from "@/components/autor/PublishChapterForm";
 
-type Tab = "dashboard" | "books" | "publish";
+type Tab = "dashboard" | "interactions" | "books" | "publish";
 
 const authorTabs: Array<{
   id: Tab;
@@ -25,6 +26,7 @@ const authorTabs: Array<{
   icon: typeof Coins;
 }> = [
   { id: "dashboard", label: "Regalías", icon: Coins },
+  { id: "interactions", label: "Interacciones", icon: MessageCircle },
   { id: "books", label: "Mis Libros", icon: BookOpen },
   { id: "publish", label: "Publicar", icon: PlusCircle },
 ];
@@ -35,7 +37,13 @@ export function AuthorPanel() {
   const { user, userProfile, loading } = useAuth();
   const tabParam = searchParams.get("tab");
   const initialTab: Tab =
-    tabParam === "libros" ? "books" : tabParam === "publicar" ? "publish" : "dashboard";
+    tabParam === "interacciones"
+      ? "interactions"
+      : tabParam === "libros"
+        ? "books"
+        : tabParam === "publicar"
+          ? "publish"
+          : "dashboard";
   const [tab, setTab] = useState<Tab>(initialTab);
   const [books, setBooks] = useState<Book[]>([]);
   const [chapterCounts, setChapterCounts] = useState<Record<string, number>>({});
@@ -132,7 +140,7 @@ export function AuthorPanel() {
         <AuthorDiscordBanner />
         <AuthorAgreementBanner />
 
-        <div className="mt-8 grid grid-cols-3 gap-2 rounded-2xl border-2 border-[#D27C5A]/25 bg-gradient-to-r from-[#2A1810] via-[#3D2518] to-[#2A1810] p-2 shadow-lg sm:gap-3 sm:p-2.5">
+        <div className="mt-8 grid grid-cols-2 gap-2 rounded-2xl border-2 border-[#D27C5A]/25 bg-gradient-to-r from-[#2A1810] via-[#3D2518] to-[#2A1810] p-2 shadow-lg sm:grid-cols-4 sm:gap-3 sm:p-2.5">
           {authorTabs.map(({ id, label, icon: Icon }) => {
             const active = tab === id;
 
@@ -163,6 +171,8 @@ export function AuthorPanel() {
         <div className="mt-6">
           {tab === "dashboard" ? (
             <AuthorFinancialDashboard />
+          ) : tab === "interactions" ? (
+            <AuthorInteractionsDashboard />
           ) : loadingData ? (
             <p className="text-center text-sm text-muted">Cargando tus obras...</p>
           ) : tab === "books" ? (

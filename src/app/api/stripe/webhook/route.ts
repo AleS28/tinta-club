@@ -27,6 +27,7 @@ import {
   recordDirectChapterSaleFromStripe,
   recordDirectBookSaleFromStripe,
 } from "@/lib/monetization/direct-sales-admin";
+import { recordAuthorDonationFromStripe } from "@/lib/monetization/donations-admin";
 import { COLLECTIONS } from "@/lib/monetization/constants";
 import { getAdminDb } from "@/lib/firebase-admin";
 
@@ -179,11 +180,53 @@ async function handleBookPurchaseCheckoutCompleted(
   });
 }
 
+async function handleAuthorDonationCheckoutCompleted(
+  session: Stripe.Checkout.Session,
+  stripe: Stripe,
+) {
+  if (session.payment_status !== "paid") return;
+
+  const metadata = session.metadata ?? {};
+  const firebaseUid = getFirebaseUidFromMetadata(metadata);
+  const authorId = metadata.authorId;
+  const donorDisplayName = metadata.donorDisplayName ?? "Lector";
+
+  if (!firebaseUid || !authorId) {
+    console.error("[stripe/webhook] author donation missing metadata", session.id);
+    return;
+  }
+
+  const sessionKey = `checkout_payment_${session.id}`;
+  const claimed = await claimStripeProcessingKey(sessionKey, {
+    eventId: session.id,
+    type: "author_donation",
+    metadata: { sessionId: session.id, firebaseUid, authorId },
+  });
+
+  if (!claimed) return;
+
+  const amounts = await getStripeNetFromCheckoutSession(stripe, session);
+  const paymentIntentId = resolvePaymentIntentId(session.payment_intent);
+
+  await recordAuthorDonationFromStripe({
+    userId: firebaseUid,
+    donorDisplayName,
+    authorId,
+    amounts,
+    stripeCheckoutSessionId: session.id,
+    stripePaymentIntentId: paymentIntentId,
+  });
+}
+
 async function handlePaymentCheckoutCompleted(
   session: Stripe.Checkout.Session,
   stripe: Stripe,
 ) {
   const purchaseType = session.metadata?.type;
+  if (purchaseType === "author_donation") {
+    await handleAuthorDonationCheckoutCompleted(session, stripe);
+    return;
+  }
   if (purchaseType === "book_purchase") {
     await handleBookPurchaseCheckoutCompleted(session, stripe);
     return;

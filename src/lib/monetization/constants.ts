@@ -55,6 +55,11 @@ export const COLLECTIONS = {
   stripeProcessedEvents: "stripe_processed_events",
   chapterPurchases: "chapter_purchases",
   bookPurchases: "book_purchases",
+  bookLikes: "book_likes",
+  bookLikeStats: "book_like_stats",
+  chapterComments: "chapter_comments",
+  authorFollowers: "author_followers",
+  authorDonations: "author_donations",
   /** @deprecated Usar statisticalViewWindows */
   premiumViewWindows: "statistical_view_windows",
 } as const;

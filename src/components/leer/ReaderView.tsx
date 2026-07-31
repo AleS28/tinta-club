@@ -17,6 +17,9 @@ import { PaywallBanner } from "@/components/leer/PaywallBanner";
 import { TermsAcceptanceModal } from "@/components/legal/TermsAcceptanceModal";
 import { ProtectedContent } from "@/components/ui/ProtectedContent";
 import { useReadingTimeTracker } from "@/hooks/useReadingTimeTracker";
+import { BookLikeButton } from "@/components/social/BookLikeButton";
+import { ChapterCommentsSection } from "@/components/social/ChapterCommentsSection";
+import { SupportAuthorButton } from "@/components/social/SupportAuthorButton";
 
 interface ReaderViewProps {
   chapter: Chapter;
@@ -342,6 +345,17 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
               purchaseLoading={purchaseLoading}
             />
           )}
+
+          <div className="mt-10 flex flex-wrap items-center gap-3">
+            <BookLikeButton bookId={book.id} />
+            <SupportAuthorButton
+              authorId={book.authorId}
+              authorName={book.author}
+              redirectTo={`/leer/${chapter.id}`}
+            />
+          </div>
+
+          <ChapterCommentsSection chapterId={chapter.id} />
 
           <nav className="mt-12 flex items-center justify-between gap-4 border-t border-sidebar pt-8">
             {prevChapter ? (

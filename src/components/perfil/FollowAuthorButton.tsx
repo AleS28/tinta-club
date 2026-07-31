@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Loader2, UserPlus, UserCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { subscribeToFollow, toggleFollow } from "@/lib/library";
 
 interface FollowAuthorButtonProps {
   authorId: string;
@@ -23,21 +22,29 @@ export function FollowAuthorButton({
 
   const isSelf = user?.uid === authorId;
 
+  const loadState = useCallback(async () => {
+    setReady(false);
+    try {
+      const headers: HeadersInit = {};
+      if (user) {
+        headers.Authorization = `Bearer ${await user.getIdToken()}`;
+      }
+      const response = await fetch(`/api/authors/${authorId}/follow`, { headers });
+      const payload = (await response.json()) as { isFollowing?: boolean };
+      if (response.ok) setIsFollowing(Boolean(payload.isFollowing));
+    } finally {
+      setReady(true);
+    }
+  }, [authorId, user]);
+
   useEffect(() => {
     if (!user || isSelf) {
       setIsFollowing(false);
       setReady(true);
       return;
     }
-
-    setReady(false);
-    const unsubscribe = subscribeToFollow(user.uid, authorId, (value) => {
-      setIsFollowing(value);
-      setReady(true);
-    });
-
-    return unsubscribe;
-  }, [user, authorId, isSelf]);
+    void loadState();
+  }, [user, isSelf, loadState]);
 
   if (isSelf) return null;
 
@@ -49,7 +56,17 @@ export function FollowAuthorButton({
 
     setLoading(true);
     try {
-      await toggleFollow(user.uid, authorId, isFollowing);
+      const token = await user.getIdToken();
+      const response = await fetch(`/api/authors/${authorId}/follow`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: isFollowing ? "unfollow" : "follow" }),
+      });
+      const payload = (await response.json()) as { isFollowing?: boolean };
+      if (response.ok) setIsFollowing(Boolean(payload.isFollowing));
     } finally {
       setLoading(false);
     }
@@ -58,7 +75,7 @@ export function FollowAuthorButton({
   return (
     <button
       type="button"
-      onClick={handleClick}
+      onClick={() => void handleClick()}
       disabled={loading || (!!user && !ready)}
       className={`inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold uppercase tracking-wide transition-colors ${
         isFollowing

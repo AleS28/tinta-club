@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { AuthorFinancialKpis } from "@/components/autor/AuthorFinancialKpis";
 import { AuthorEarningsBreakdown } from "@/components/autor/AuthorEarningsBreakdown";
 import { AuthorDirectSalesSection } from "@/components/autor/AuthorDirectSalesSection";
+import { AuthorDonationsSection } from "@/components/autor/AuthorDonationsSection";
 import { AuthorBookPerformanceTable } from "@/components/autor/AuthorBookPerformanceTable";
 
 export function AuthorFinancialDashboard() {
@@ -78,6 +79,7 @@ export function AuthorFinancialDashboard() {
   return (
     <div className="space-y-8">
       <AuthorFinancialKpis data={data} loading={loading} />
+      <AuthorDonationsSection data={data} />
       <AuthorDirectSalesSection data={data} />
       <AuthorEarningsBreakdown data={data} />
       <AuthorBookPerformanceTable books={data.bookPerformance} />

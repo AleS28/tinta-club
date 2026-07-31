@@ -49,6 +49,22 @@ export interface GlobalFinancialReport {
   directSalesGross: number;
   directSalesGatewayFees: number;
   directSalesNet: number;
+  donationsGross: number;
+  donationsGatewayFees: number;
+  donationsNet: number;
+  donationsPlatformShare: number;
+  donationsAuthorShare: number;
+  donationsAudit: Array<{
+    id: string;
+    donorUserId: string;
+    donorDisplayName: string;
+    authorId: string;
+    authorName: string;
+    amountPaid: number;
+    platformShare: number;
+    authorShare: number;
+    createdAt: string;
+  }>;
   poolStatus: "open" | "closed";
   consolidationId?: string;
   consolidatedAt?: string;

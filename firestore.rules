@@ -94,5 +94,28 @@ service cloud.firestore {
     match /direct_book_sales/{docId} {
       allow read, write: if false;
     }
+
+    match /book_likes/{docId} {
+      allow read, write: if false;
+    }
+
+    match /book_like_stats/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /chapter_comments/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /author_followers/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /author_donations/{docId} {
+      allow read, write: if false;
+    }
   }
 }

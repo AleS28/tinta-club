@@ -2,6 +2,8 @@ import Link from "next/link";
 import { BookOpen, Calendar, Feather } from "lucide-react";
 import type { PublicAuthorProfile } from "@/types/author";
 import { FollowAuthorButton } from "@/components/perfil/FollowAuthorButton";
+import { AuthorFollowerCount } from "@/components/social/AuthorFollowerCount";
+import { SupportAuthorButton } from "@/components/social/SupportAuthorButton";
 
 interface AuthorProfileHeaderProps {
   author: PublicAuthorProfile;
@@ -60,8 +62,15 @@ export function AuthorProfileHeader({ author, bookCount }: AuthorProfileHeaderPr
             {bookCount} {bookCount === 1 ? "obra publicada" : "obras publicadas"}
           </p>
 
+          <AuthorFollowerCount authorId={author.id} className="mt-2 text-center sm:text-left" />
+
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
             <FollowAuthorButton authorId={author.id} />
+            <SupportAuthorButton
+              authorId={author.id}
+              authorName={author.displayName}
+              redirectTo={`/perfil/${author.id}`}
+            />
             <Link
               href="/"
               className="rounded-full border border-sidebar px-5 py-2.5 text-sm font-medium text-muted transition-colors hover:border-terracotta hover:text-terracotta"

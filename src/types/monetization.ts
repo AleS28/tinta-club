@@ -56,6 +56,21 @@ export interface DirectBookSale {
   refundAuthorShare?: number;
 }
 
+export interface AuthorDonation {
+  id: string;
+  userId: string;
+  donorDisplayName: string;
+  authorId: string;
+  amountPaid: number;
+  gatewayFee: number;
+  amountNet: number;
+  authorShare: number;
+  platformShare: number;
+  createdAt: string;
+  stripeCheckoutSessionId?: string;
+  stripePaymentIntentId?: string;
+}
+
 export interface BookPurchase {
   userId: string;
   bookId: string;
@@ -138,6 +153,7 @@ export interface AuthorEarningsSummary {
   totalPremiumViews: number;
   estimatedSubscriptionEarnings: number;
   directSalesEarnings: number;
+  donationsEarnings?: number;
   totalEarnings: number;
   isPayoutReady: boolean;
   payoutStatus?: PayoutStatus;
@@ -172,6 +188,7 @@ export interface AuthorEarningsDashboard {
   estimatedBalance: number;
   subscriptionEarnings: number;
   directSalesEarnings: number;
+  donationsEarnings: number;
   accumulatedReadingSeconds: number;
   totalReadingSeconds: number;
   totalViews: number;
@@ -208,6 +225,15 @@ export interface AuthorEarningsDashboard {
       chapterSalesAuthorShare: number;
       bookSalesAuthorShare: number;
       totalAuthorShare: number;
+    }>;
+  };
+  donations: {
+    totalAuthorShare: number;
+    items: Array<{
+      id: string;
+      donorDisplayName: string;
+      authorShare: number;
+      createdAt: string;
     }>;
   };
 }

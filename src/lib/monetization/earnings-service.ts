@@ -14,6 +14,7 @@ import {
   markPoolConsolidated,
 } from "@/lib/monetization/monthly-pool-admin";
 import { getAuthorDirectSalesBreakdown } from "@/lib/monetization/direct-sales-admin";
+import { getAuthorDonationsForMonth } from "@/lib/monetization/donations-admin";
 import {
   getCombinedAuthorReadingSeconds,
   getCombinedAuthorStatisticalViews,
@@ -36,15 +37,16 @@ function earningsSummaryDocId(authorId: string, monthYear: string): string {
 function computeIncomeBreakdown(
   subscriptionEarnings: number,
   directSalesEarnings: number,
+  donationsEarnings: number,
 ): { subscriptionPercent: number; directSalesPercent: number } {
-  const total = subscriptionEarnings + directSalesEarnings;
+  const total = subscriptionEarnings + directSalesEarnings + donationsEarnings;
   if (total <= 0) {
     return { subscriptionPercent: 0, directSalesPercent: 0 };
   }
 
   return {
     subscriptionPercent: Math.round((subscriptionEarnings / total) * 100),
-    directSalesPercent: Math.round((directSalesEarnings / total) * 100),
+    directSalesPercent: Math.round(((directSalesEarnings + donationsEarnings) / total) * 100),
   };
 }
 
@@ -129,15 +131,18 @@ export async function getAuthorEstimatedEarnings(
   const pool = (await getMonthlyPool(monthYear)) ?? (await getOrCreateOpenPool(monthYear));
   const aliasIds = await resolveAuthorAliasIds(authorId);
 
-  const [authorSeconds, authorViews, directSalesBreakdown, bookStats, books] = await Promise.all([
+  const [authorSeconds, authorViews, directSalesBreakdown, bookStats, books, donationsItems] =
+    await Promise.all([
     getCombinedAuthorReadingSeconds(aliasIds, monthYear),
     getCombinedAuthorStatisticalViews(aliasIds, monthYear),
     getCombinedDirectSalesBreakdown(aliasIds, monthYear),
     getBookReadingStatsForAuthor(aliasIds, monthYear),
     getAuthorBooksFromFirestore(aliasIds),
+    getAuthorDonationsForMonth(authorId, monthYear),
   ]);
 
   const directSalesEarnings = directSalesBreakdown.totalAuthorShare;
+  const donationsEarnings = donationsItems.reduce((sum, row) => sum + row.authorShare, 0);
 
   const closedSummary = await getAuthorEarningsSummary(authorId, monthYear);
   const frozenValuePerSecond =
@@ -163,8 +168,12 @@ export async function getAuthorEstimatedEarnings(
           frozenValuePerSecond,
         );
 
-  const estimatedBalance = subscriptionEarnings + directSalesEarnings;
-  const incomeBreakdown = computeIncomeBreakdown(subscriptionEarnings, directSalesEarnings);
+  const estimatedBalance = subscriptionEarnings + directSalesEarnings + donationsEarnings;
+  const incomeBreakdown = computeIncomeBreakdown(
+    subscriptionEarnings,
+    directSalesEarnings,
+    donationsEarnings,
+  );
 
   const bookTitleMap = new Map(books.map((b) => [b.id, b.title]));
 
@@ -219,6 +228,7 @@ export async function getAuthorEstimatedEarnings(
     estimatedBalance,
     subscriptionEarnings,
     directSalesEarnings,
+    donationsEarnings,
     accumulatedReadingSeconds: authorSeconds,
     totalReadingSeconds: authorSeconds,
     totalViews: authorViews,
@@ -256,6 +266,15 @@ export async function getAuthorEstimatedEarnings(
         }))
         .filter((row) => row.totalAuthorShare > 0)
         .sort((a, b) => b.totalAuthorShare - a.totalAuthorShare),
+    },
+    donations: {
+      totalAuthorShare: donationsEarnings,
+      items: donationsItems.map((row) => ({
+        id: row.id,
+        donorDisplayName: row.donorDisplayName,
+        authorShare: row.authorShare,
+        createdAt: row.createdAt,
+      })),
     },
   };
 }

@@ -9,6 +9,7 @@ import { AdminGlobalFinancialSummary } from "@/components/admin/AdminGlobalFinan
 import { AdminAuthorsEarningsTable } from "@/components/admin/AdminAuthorsEarningsTable";
 import { AdminBooksEarningsTable } from "@/components/admin/AdminBooksEarningsTable";
 import { AdminMonthClosurePanel } from "@/components/admin/AdminMonthClosurePanel";
+import { AdminDonationsAuditPanel } from "@/components/admin/AdminDonationsAuditPanel";
 import { AdminSectionNav } from "@/components/admin/AdminSectionNav";
 import { formatMonthYearCapitalized } from "@/lib/monetization/month-label";
 
@@ -220,6 +221,7 @@ export function AdminFinancialReportPanel() {
         <div className="space-y-8">
           <AdminGlobalFinancialSummary report={report} />
           <AdminMonthClosurePanel report={report} />
+          <AdminDonationsAuditPanel report={report} />
           <AdminAuthorsEarningsTable
             report={report}
             onMarkPaid={handleMarkPaid}

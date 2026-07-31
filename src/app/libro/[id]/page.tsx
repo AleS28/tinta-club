@@ -10,6 +10,9 @@ import { ChapterList } from "@/components/libro/ChapterList";
 import { StartReadingButton } from "@/components/auth/StartReadingButton";
 import { FavoriteButton } from "@/components/libro/FavoriteButton";
 import { BookSynopsis } from "@/components/libro/BookSynopsis";
+import { BookLikeButton } from "@/components/social/BookLikeButton";
+import { SupportAuthorButton } from "@/components/social/SupportAuthorButton";
+import { FollowAuthorButton } from "@/components/perfil/FollowAuthorButton";
 import { BRAND_NAME } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
@@ -84,6 +87,14 @@ export default async function BookPage({ params }: BookPageProps) {
                 />
               )}
               <FavoriteButton bookId={book.id} />
+              <BookLikeButton bookId={book.id} />
+              <FollowAuthorButton authorId={book.authorId} redirectPath={`/libro/${book.id}`} />
+              <SupportAuthorButton
+                authorId={book.authorId}
+                authorName={book.author}
+                redirectTo={`/libro/${book.id}`}
+                variant="primary"
+              />
             </div>
           </div>
         </header>

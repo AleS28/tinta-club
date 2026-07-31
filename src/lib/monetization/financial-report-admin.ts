@@ -10,7 +10,11 @@ import {
   getMonthlyPool,
   getOrCreateOpenPool,
 } from "@/lib/monetization/monthly-pool-admin";
-import { getAuthorDirectSalesTotal } from "@/lib/monetization/direct-sales-admin";
+import {
+  getAuthorDirectSalesTotal,
+  getAuthorDirectSalesBreakdown,
+} from "@/lib/monetization/direct-sales-admin";
+import { getDonationTotalsForMonth } from "@/lib/monetization/donations-admin";
 import {
   getCombinedAuthorReadingSeconds,
   getCombinedAuthorStatisticalViews,
@@ -245,6 +249,7 @@ export async function getGlobalFinancialReport(
 ): Promise<GlobalFinancialReport> {
   const pool = (await getMonthlyPool(monthYear)) ?? (await getOrCreateOpenPool(monthYear));
   const directTotals = await getDirectSalesTotalsForMonth(monthYear);
+  const donationTotals = await getDonationTotalsForMonth(monthYear);
   const identityIndex = await buildAuthorIdentityIndex();
   const authorIds = await collectAuthorIdsForMonth(monthYear, identityIndex);
   const identityByCanonical = new Map<string, ResolvedAuthorIdentity>();
@@ -260,11 +265,11 @@ export async function getGlobalFinancialReport(
   const subscriptionAuthorsPool70 = pool.authorsPool70;
   const subscriptionPlatformPool30 = pool.platformPool30;
 
-  const grossRevenue = subscriptionGross + directTotals.gross;
-  const gatewayFees = subscriptionGatewayFees + directTotals.gatewayFees;
-  const netRevenue = subscriptionNet + directTotals.net;
-  const platformNet30 = subscriptionPlatformPool30 + directTotals.platformShare;
-  const authorsPool70 = subscriptionAuthorsPool70 + directTotals.authorShare;
+  const grossRevenue = subscriptionGross + directTotals.gross + donationTotals.gross;
+  const gatewayFees = subscriptionGatewayFees + directTotals.gatewayFees + donationTotals.gatewayFees;
+  const netRevenue = subscriptionNet + directTotals.net + donationTotals.net;
+  const platformNet30 = subscriptionPlatformPool30 + directTotals.platformShare + donationTotals.platformShare;
+  const authorsPool70 = subscriptionAuthorsPool70 + directTotals.authorShare + donationTotals.authorShare;
 
   const totalPlatformReadingSeconds = pool.totalPlatformReadingSeconds;
   const valuePerSecond = pool.valuePerSecond;
@@ -384,6 +389,21 @@ export async function getGlobalFinancialReport(
 
   const availableMonths = await listAvailableMonthYears();
 
+  const donationsAudit = donationTotals.items.map((row) => {
+    const identity = resolveAuthorFromIndex(row.authorId, identityIndex);
+    return {
+      id: row.id,
+      donorUserId: row.userId,
+      donorDisplayName: row.donorDisplayName,
+      authorId: row.authorId,
+      authorName: identity.displayName,
+      amountPaid: row.amountPaid,
+      platformShare: row.platformShare,
+      authorShare: row.authorShare,
+      createdAt: row.createdAt,
+    };
+  });
+
   return {
     monthYear,
     grossRevenue,
@@ -403,6 +423,12 @@ export async function getGlobalFinancialReport(
     directSalesGross: directTotals.gross,
     directSalesGatewayFees: directTotals.gatewayFees,
     directSalesNet: directTotals.net,
+    donationsGross: donationTotals.gross,
+    donationsGatewayFees: donationTotals.gatewayFees,
+    donationsNet: donationTotals.net,
+    donationsPlatformShare: donationTotals.platformShare,
+    donationsAuthorShare: donationTotals.authorShare,
+    donationsAudit,
     poolStatus: pool.status,
     consolidationId: pool.consolidationId,
     consolidatedAt: pool.consolidatedAt,

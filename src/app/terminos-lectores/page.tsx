@@ -2,6 +2,7 @@ import { BookOpen, Ban, CreditCard, XCircle } from "lucide-react";
 import { LegalDocLayout } from "@/components/legal/LegalDocLayout";
 import { LegalHighlightGrid } from "@/components/legal/LegalHighlightGrid";
 import { BRAND_NAME } from "@/lib/brand";
+import { formatSubscriptionPrice } from "@/lib/subscription";
 
 export const metadata = {
   title: `Términos para Lectores y Suscriptores — ${BRAND_NAME}`,
@@ -10,6 +11,8 @@ export const metadata = {
 };
 
 export default function TerminosLectoresPage() {
+  const membershipPrice = formatSubscriptionPrice();
+
   return (
     <LegalDocLayout
       activeDoc="terminos-lectores"
@@ -29,7 +32,7 @@ export default function TerminosLectoresPage() {
             icon: CreditCard,
             title: "Suscripción Premium",
             description:
-              "Desde el capítulo 4 en adelante, el acceso completo requiere una membresía de $5 USD/mes por autor u obra según el modelo de la plataforma.",
+              `Desde el capítulo 4 en adelante, el acceso completo requiere una membresía de ${membershipPrice} USD/mes en toda la plataforma.`,
             tone: "terracotta",
           },
           {
@@ -67,7 +70,7 @@ export default function TerminosLectoresPage() {
         Salvo indicación contraria en la ficha de cada obra, los <strong>capítulos 1 al 3</strong> se
         ofrecen de forma gratuita con el fin de que el lector evalúe la historia. A partir del{" "}
         <strong>capítulo 4</strong>, el acceso al resto de la obra puede requerir una suscripción premium
-        activa, cuyo precio referencial es de <strong>$5 USD/mes</strong>, sujeto a actualización con
+        activa, cuyo precio referencial es de <strong>{membershipPrice} USD/mes</strong>, sujeto a actualización con
         aviso previo en la plataforma.
       </p>
 

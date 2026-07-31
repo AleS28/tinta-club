@@ -10,6 +10,7 @@ import {
   READER_TERMS_VERSION,
   TermsServiceError,
 } from "@/lib/termsService";
+import { DEFAULT_SUBSCRIPTION_PRICE } from "@/lib/subscription";
 
 const TERMS_SUMMARY = [
   "Los capítulos 1 al 3 son gratuitos como vista previa de cada obra.",
@@ -37,7 +38,7 @@ export function TermsAcceptanceModal({
   bookTitle,
   bookId,
   chapterNumber = 4,
-  priceUsd = 5,
+  priceUsd = DEFAULT_SUBSCRIPTION_PRICE,
   authorName,
   redirectTo,
   onClose,

@@ -30,7 +30,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
   const [contentLoading, setContentLoading] = useState(false);
   const [contentError, setContentError] = useState("");
 
-  const subscriptionPrice = book.membershipPrice ?? DEFAULT_SUBSCRIPTION_PRICE;
+  const subscriptionPrice = DEFAULT_SUBSCRIPTION_PRICE;
   const hasActiveSubscription = isSubscriber && isPremiumUser(userProfile);
   const isPremiumLocked = chapter.isPremium && !hasActiveSubscription;
 

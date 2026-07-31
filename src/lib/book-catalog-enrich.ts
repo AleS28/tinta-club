@@ -1,5 +1,6 @@
 import { getBookById as getMockBookById, type Book } from "@/data/mock";
 import { isCatalogBookId } from "@/data/catalog";
+import { DEFAULT_SUBSCRIPTION_PRICE } from "@/lib/subscription";
 
 /** Completa portadas y metadatos locales cuando Firestore no los trae. */
 export function enrichBookFromCatalog(book: Book): Book {
@@ -19,6 +20,6 @@ export function enrichBookFromCatalog(book: Book): Book {
     authorId: book.authorId || mock.authorId,
     genre: book.genre || mock.genre,
     rating: typeof book.rating === "number" ? book.rating : mock.rating,
-    membershipPrice: book.membershipPrice ?? mock.membershipPrice,
+    membershipPrice: DEFAULT_SUBSCRIPTION_PRICE,
   };
 }

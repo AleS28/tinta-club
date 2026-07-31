@@ -24,6 +24,7 @@ import {
 } from "@/data/catalog";
 import { enrichBookFromCatalog } from "@/lib/book-catalog-enrich";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
+import { DEFAULT_SUBSCRIPTION_PRICE } from "@/lib/subscription";
 
 const GENRE_GRADIENTS: Record<Genre, { gradient: string; accent: string }> = {
   Romance: { gradient: "from-rose-300 via-rose-400 to-pink-500", accent: "#FB7185" },
@@ -63,7 +64,7 @@ function withBookDefaults(book: Book): Book {
   return {
     ...enriched,
     rating: typeof enriched.rating === "number" ? enriched.rating : 4.5,
-    membershipPrice: enriched.membershipPrice ?? 4.99,
+    membershipPrice: DEFAULT_SUBSCRIPTION_PRICE,
   };
 }
 
@@ -200,7 +201,6 @@ export interface CreateBookInput {
   synopsis: string;
   genre: Genre;
   coverUrl?: string;
-  membershipPrice?: number;
   authorId: string;
   authorName: string;
 }
@@ -243,7 +243,7 @@ export async function createBook(input: CreateBookInput, authorUid?: string): Pr
     coverGradient: style.gradient,
     coverAccent: style.accent,
     coverUrl: input.coverUrl || undefined,
-    membershipPrice: input.membershipPrice ?? 4.99,
+    membershipPrice: DEFAULT_SUBSCRIPTION_PRICE,
   };
 
   await setDoc(bookRef, book);

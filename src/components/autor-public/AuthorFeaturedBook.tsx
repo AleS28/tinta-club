@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { StartReadingButton } from "@/components/auth/StartReadingButton";
+import { DEFAULT_SUBSCRIPTION_PRICE } from "@/lib/subscription";
 import type { AuthorFeaturedWork } from "@/types/author-profile";
 
 interface AuthorFeaturedBookProps {
@@ -69,7 +70,7 @@ export function AuthorFeaturedBook({ work }: AuthorFeaturedBookProps) {
 
           <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-sm font-medium text-[#F5E6C8]">
             Capítulos 1 a {work.freeChaptersCount} Gratuitos · Membresía $
-            {work.membershipPriceUsd} USD/mes para continuar
+            {DEFAULT_SUBSCRIPTION_PRICE.toFixed(2)} USD/mes para continuar
           </p>
         </div>
       </div>

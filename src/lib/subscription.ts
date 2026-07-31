@@ -4,6 +4,10 @@ import type { SubscriptionStatus } from "@/types/user";
 
 export const DEFAULT_SUBSCRIPTION_PRICE = 6.49;
 
+export function formatSubscriptionPrice(price = DEFAULT_SUBSCRIPTION_PRICE): string {
+  return `$${price.toFixed(2)}`;
+}
+
 export async function activateSubscription(uid: string): Promise<void> {
   if (!db || !isFirebaseConfigured) {
     throw new Error("Firestore no está configurado");

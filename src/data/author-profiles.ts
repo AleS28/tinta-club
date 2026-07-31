@@ -21,7 +21,7 @@ export const authorProfiles: AuthorPublicProfile[] = [
       coverUrl: "/authors/pedro-garcia-martinez/amor-aroma-cafe-cover.png",
       firstChapterId: "pedro-amor-cafe-cap-1",
       freeChaptersCount: 3,
-      membershipPriceUsd: 5,
+      membershipPriceUsd: 6.49,
     },
     upcomingWorks: [],
   },
@@ -44,7 +44,7 @@ export const authorProfiles: AuthorPublicProfile[] = [
       coverAccent: "#A16207",
       firstChapterId: "will-chica-cafe-cap-1",
       freeChaptersCount: 2,
-      membershipPriceUsd: 5,
+      membershipPriceUsd: 6.49,
     },
     upcomingWorks: [
       {

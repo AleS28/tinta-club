@@ -20,7 +20,6 @@ export function PublishBookForm({ onSuccess }: PublishBookFormProps) {
   const [synopsis, setSynopsis] = useState("");
   const [genre, setGenre] = useState<Genre>("Fantasía");
   const [coverUrl, setCoverUrl] = useState("");
-  const [membershipPrice, setMembershipPrice] = useState("4.99");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -40,7 +39,6 @@ export function PublishBookForm({ onSuccess }: PublishBookFormProps) {
           synopsis: synopsis.trim(),
           genre,
           coverUrl: coverUrl.trim() || undefined,
-          membershipPrice: parseFloat(membershipPrice) || 4.99,
           authorId: user.uid,
           authorName: userProfile?.displayName ?? user.displayName ?? "Autor",
         },
@@ -51,7 +49,6 @@ export function PublishBookForm({ onSuccess }: PublishBookFormProps) {
       setTitle("");
       setSynopsis("");
       setCoverUrl("");
-      setMembershipPrice("4.99");
       onSuccess();
     } catch (err) {
       setError(
@@ -102,39 +99,22 @@ export function PublishBookForm({ onSuccess }: PublishBookFormProps) {
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="book-genre" className="mb-1.5 block text-xs font-medium text-muted">
-            Género
-          </label>
-          <select
-            id="book-genre"
-            value={genre}
-            onChange={(e) => setGenre(e.target.value as Genre)}
-            className="w-full rounded-xl border border-sidebar bg-paper px-4 py-2.5 text-sm text-ink outline-none focus:border-terracotta"
-          >
-            {genres.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.id}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="book-price" className="mb-1.5 block text-xs font-medium text-muted">
-            Precio membresía (USD/mes)
-          </label>
-          <input
-            id="book-price"
-            type="number"
-            min="0"
-            step="0.01"
-            value={membershipPrice}
-            onChange={(e) => setMembershipPrice(e.target.value)}
-            className="w-full rounded-xl border border-sidebar bg-paper px-4 py-2.5 text-sm text-ink outline-none focus:border-terracotta"
-          />
-        </div>
+      <div>
+        <label htmlFor="book-genre" className="mb-1.5 block text-xs font-medium text-muted">
+          Género
+        </label>
+        <select
+          id="book-genre"
+          value={genre}
+          onChange={(e) => setGenre(e.target.value as Genre)}
+          className="w-full rounded-xl border border-sidebar bg-paper px-4 py-2.5 text-sm text-ink outline-none focus:border-terracotta"
+        >
+          {genres.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.id}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>

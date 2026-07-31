@@ -35,11 +35,6 @@ export function MyBooksList({ books, chapterCounts }: MyBooksListProps) {
               <span className="rounded-full bg-sidebar px-2.5 py-0.5 text-xs text-muted">
                 {book.genre}
               </span>
-              {book.membershipPrice != null && (
-                <span className="rounded-full bg-terracotta/10 px-2.5 py-0.5 text-xs font-medium text-terracotta">
-                  ${book.membershipPrice.toFixed(2)}/mes
-                </span>
-              )}
             </div>
             <h3 className="mt-1 font-serif text-lg font-bold text-ink">{book.title}</h3>
             <p className="mt-1 line-clamp-2 text-sm text-muted">{book.synopsis}</p>

@@ -2,6 +2,7 @@
 
 import { Sparkles, X } from "lucide-react";
 import { BRAND_NAME } from "@/lib/brand";
+import { formatSubscriptionPrice } from "@/lib/subscription";
 
 interface PaywallModalProps {
   authorName: string;
@@ -38,7 +39,7 @@ export function PaywallModal({ authorName, onClose }: PaywallModalProps) {
         <div className="px-6 py-6">
           <p className="text-sm leading-relaxed text-ink">
             Este capítulo es exclusivo para suscriptores. Únete a {BRAND_NAME} por{" "}
-            <span className="font-semibold text-terracotta">$4.99/mes</span> para continuar
+            <span className="font-semibold text-terracotta">{formatSubscriptionPrice()}/mes</span> para continuar
             leyendo y apoyar directamente a{" "}
             <span className="font-semibold">{authorName}</span>.
           </p>

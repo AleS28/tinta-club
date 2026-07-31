@@ -1,5 +1,7 @@
 export type MonthlyPoolStatus = "open" | "closed";
 
+export type PayoutStatus = "pending" | "ready_for_payout" | "paid";
+
 export interface ReadingSession {
   id: string;
   userId: string;
@@ -43,6 +45,8 @@ export interface AuthorEarningsSummary {
   directSalesEarnings: number;
   totalEarnings: number;
   isPayoutReady: boolean;
+  payoutStatus?: PayoutStatus;
+  paidAt?: string;
   updatedAt: string;
 }
 

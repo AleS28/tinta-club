@@ -203,6 +203,8 @@ export async function consolidateAuthorEarningsForMonth(
     directSalesEarnings,
     totalEarnings,
     isPayoutReady: totalEarnings >= MIN_PAYOUT_USD,
+    payoutStatus:
+      totalEarnings >= MIN_PAYOUT_USD ? "ready_for_payout" : "pending",
     updatedAt: now,
   };
 

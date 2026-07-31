@@ -39,7 +39,7 @@ export function isAdminUser(profile: UserProfile | null | undefined): boolean {
 }
 
 export function hasAuthorPanelAccess(profile: UserProfile | null | undefined): boolean {
-  return profile?.role === "author" || profile?.role === "admin";
+  return profile?.role === "author";
 }
 
 /** Acuerdo de autor vigente firmado una sola vez por cuenta. */

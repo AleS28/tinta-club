@@ -101,10 +101,10 @@ export function AdminFinancialReportPanel() {
           </div>
         </div>
         <Link
-          href="/autor"
+          href="/"
           className="rounded-full border border-sidebar px-4 py-2 text-sm font-medium text-ink hover:bg-sidebar/60"
         >
-          ← Panel del autor
+          ← Inicio
         </Link>
       </header>
 

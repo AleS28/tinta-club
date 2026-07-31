@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, LogOut, PenLine, User } from "lucide-react";
+import { ChevronDown, LogOut, PenLine, Shield, User } from "lucide-react";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -73,12 +73,20 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-          {showProfile && (role === "author" || role === "admin") && (
+          {showProfile && role === "admin" && (
+            <Link
+              href="/administracion/finanzas"
+              className="text-sm font-semibold text-[#D4A359] transition-colors duration-300 hover:text-[#D27C5A]"
+            >
+              Administración
+            </Link>
+          )}
+          {showProfile && role === "author" && (
             <Link
               href="/autor"
               className="text-sm font-semibold text-[#D4A359] transition-colors duration-300 hover:text-[#D27C5A]"
             >
-              {role === "admin" ? "Administración" : "Panel del Autor"}
+              Panel del Autor
             </Link>
           )}
         </nav>
@@ -157,7 +165,18 @@ export function Navbar() {
                       <p className="text-xs text-stone-500">Acceso ilimitado activo</p>
                     </div>
                   )}
-                  {(role === "author" || role === "admin") && (
+                  {role === "admin" && (
+                    <Link
+                      href="/administracion/finanzas"
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#2A1810] transition-colors hover:bg-[#D27C5A]/10"
+                    >
+                      <Shield className="h-4 w-4 text-[#D27C5A]" />
+                      Administración
+                    </Link>
+                  )}
+                  {role === "author" && (
                     <Link
                       href="/autor"
                       role="menuitem"
@@ -165,7 +184,7 @@ export function Navbar() {
                       className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#2A1810] transition-colors hover:bg-[#D27C5A]/10"
                     >
                       <PenLine className="h-4 w-4 text-[#D27C5A]" />
-                      {role === "admin" ? "Administración" : "Panel del Autor"}
+                      Panel del Autor
                     </Link>
                   )}
                   <Link

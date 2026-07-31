@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Feather, PenLine, Shield } from "lucide-react";
+import { Feather, Loader2, PenLine } from "lucide-react";
 import { BRAND_NAME } from "@/lib/brand";
 import { Book } from "@/data/mock";
 import { getBooksByAuthorId, getChaptersByAuthorBooks } from "@/lib/db";
@@ -20,8 +20,9 @@ import { PublishChapterForm } from "@/components/autor/PublishChapterForm";
 type Tab = "dashboard" | "books" | "publish";
 
 export function AuthorPanel() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, loading } = useAuth();
   const tabParam = searchParams.get("tab");
   const initialTab: Tab =
     tabParam === "libros" ? "books" : tabParam === "publicar" ? "publish" : "dashboard";
@@ -30,8 +31,16 @@ export function AuthorPanel() {
   const [chapterCounts, setChapterCounts] = useState<Record<string, number>>({});
   const [loadingData, setLoadingData] = useState(true);
 
+  const isAdmin = isAdminUser(userProfile);
+
+  useEffect(() => {
+    if (!loading && isAdmin) {
+      router.replace("/administracion/finanzas");
+    }
+  }, [loading, isAdmin, router]);
+
   const loadAuthorData = useCallback(async () => {
-    if (!user) return;
+    if (!user || isAdmin) return;
 
     setLoadingData(true);
     try {
@@ -48,11 +57,19 @@ export function AuthorPanel() {
     } finally {
       setLoadingData(false);
     }
-  }, [user, userProfile?.legacyAuthorId]);
+  }, [user, userProfile?.legacyAuthorId, isAdmin]);
 
   useEffect(() => {
     loadAuthorData();
   }, [loadAuthorData]);
+
+  if (isAdmin) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-terracotta" />
+      </div>
+    );
+  }
 
   return (
     <AuthGuard redirectTo="/" authModalRedirect="/autor">
@@ -60,8 +77,8 @@ export function AuthorPanel() {
         <main className="mx-auto max-w-lg px-4 py-20 text-center">
           <h2 className="font-serif text-2xl font-bold text-ink">Panel solo para autores</h2>
           <p className="mt-4 text-sm leading-relaxed text-muted">
-            Esta sección es para autores y administradoras del Imperio. Si acabas de
-            registrarte con un email autorizado, cierra sesión e inicia de nuevo.
+            Esta sección es para autores del Imperio. Si acabas de registrarte como autora,
+            cierra sesión e inicia de nuevo.
           </p>
           <Link
             href="/"
@@ -73,43 +90,32 @@ export function AuthorPanel() {
       ) : (
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
         <header className="mb-8">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-terracotta/10 p-3">
-                <PenLine className="h-6 w-6 text-terracotta" />
-              </div>
-              <div>
-                <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
-                  {isAdminUser(userProfile) ? "Panel de Administración" : "Panel del Autor"}
-                </h1>
-                <p className="text-sm text-muted">
-                  Bienvenida, {userProfile?.displayName ?? "Autor"} ·{" "}
-                  <Feather className="inline h-3.5 w-3.5 text-terracotta" />{" "}
-                  {isAdminUser(userProfile) ? "Administradora del Imperio" : "Autor del Imperio"} · {BRAND_NAME}
-                  {userProfile?.authorSlug && (
-                    <>
-                      {" "}
-                      ·{" "}
-                      <Link
-                        href={`/autor/${userProfile.authorSlug}`}
-                        className="text-terracotta hover:underline"
-                      >
-                        Ver perfil público
-                      </Link>
-                    </>
-                  )}
-                </p>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-terracotta/10 p-3">
+              <PenLine className="h-6 w-6 text-terracotta" />
             </div>
-            {isAdminUser(userProfile) && (
-              <Link
-                href="/administracion/finanzas"
-                className="inline-flex items-center gap-2 rounded-full border border-imperial-deep/30 bg-imperial-dark/5 px-4 py-2 text-sm font-semibold text-imperial-deep hover:bg-imperial-dark/10"
-              >
-                <Shield className="h-4 w-4" />
-                Reporte Financiero
-              </Link>
-            )}
+            <div>
+              <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
+                Panel del Autor
+              </h1>
+              <p className="text-sm text-muted">
+                Bienvenida, {userProfile?.displayName ?? "Autor"} ·{" "}
+                <Feather className="inline h-3.5 w-3.5 text-terracotta" /> Autor del Imperio ·{" "}
+                {BRAND_NAME}
+                {userProfile?.authorSlug && (
+                  <>
+                    {" "}
+                    ·{" "}
+                    <Link
+                      href={`/autor/${userProfile.authorSlug}`}
+                      className="text-terracotta hover:underline"
+                    >
+                      Ver perfil público
+                    </Link>
+                  </>
+                )}
+              </p>
+            </div>
           </div>
         </header>
 

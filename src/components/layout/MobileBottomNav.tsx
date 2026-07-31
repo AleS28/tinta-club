@@ -71,7 +71,7 @@ export function MobileBottomNav() {
           );
         })}
 
-        {profileHref ? (
+        {user && profileHref ? (
           <Link
             href={profileHref}
             className={`flex min-w-[4.5rem] flex-col items-center gap-1 rounded-xl px-3 py-1.5 transition-colors md:min-w-[5.5rem] md:px-5 md:py-2 ${

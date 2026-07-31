@@ -123,6 +123,8 @@ export async function getAuthorEstimatedEarnings(
 
   bookPerformance.sort((a, b) => b.estimatedEarnings - a.estimatedEarnings);
 
+  const totalViews = Array.from(bookStats.values()).reduce((sum, stats) => sum + stats.views, 0);
+
   const closedSummary = await getAuthorEarningsSummary(authorId, monthYear);
   const availableForWithdrawal =
     pool.status === "closed" && closedSummary?.isPayoutReady
@@ -139,6 +141,7 @@ export async function getAuthorEstimatedEarnings(
     subscriptionEarnings,
     directSalesEarnings,
     totalReadingSeconds: authorSeconds,
+    totalViews,
     availableForWithdrawal,
     isPayoutReady,
     minPayoutThreshold: MIN_PAYOUT_USD,

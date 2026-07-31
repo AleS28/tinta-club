@@ -5,8 +5,6 @@ import { Loader2 } from "lucide-react";
 import type { AuthorEarningsDashboard } from "@/types/monetization";
 import { useAuth } from "@/context/AuthContext";
 import { AuthorFinancialKpis } from "@/components/autor/AuthorFinancialKpis";
-import { AuthorEarningsBreakdown } from "@/components/autor/AuthorEarningsBreakdown";
-import { AuthorBookPerformanceTable } from "@/components/autor/AuthorBookPerformanceTable";
 
 export function AuthorFinancialDashboard() {
   const { user } = useAuth();
@@ -74,11 +72,5 @@ export function AuthorFinancialDashboard() {
 
   if (!data) return null;
 
-  return (
-    <div className="space-y-8">
-      <AuthorFinancialKpis data={data} loading={loading} />
-      <AuthorEarningsBreakdown data={data} />
-      <AuthorBookPerformanceTable books={data.bookPerformance} />
-    </div>
-  );
+  return <AuthorFinancialKpis data={data} loading={loading} />;
 }

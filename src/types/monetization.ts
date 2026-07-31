@@ -75,6 +75,7 @@ export interface AuthorEarningsDashboard {
   subscriptionEarnings: number;
   directSalesEarnings: number;
   totalReadingSeconds: number;
+  totalViews: number;
   availableForWithdrawal: number;
   isPayoutReady: boolean;
   minPayoutThreshold: number;

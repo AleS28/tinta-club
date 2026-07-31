@@ -1,8 +1,7 @@
 "use client";
 
-import { Clock, Coins, Loader2, Wallet } from "lucide-react";
+import { Coins, Eye, Loader2, Wallet } from "lucide-react";
 import type { AuthorEarningsDashboard } from "@/types/monetization";
-import { formatReadingDuration } from "@/lib/monetization/format";
 
 interface AuthorFinancialKpisProps {
   data: AuthorEarningsDashboard;
@@ -31,11 +30,11 @@ export function AuthorFinancialKpis({ data, loading }: AuthorFinancialKpisProps)
       emoji: "💰",
     },
     {
-      label: "Tiempo total de lectura",
-      value: formatReadingDuration(data.totalReadingSeconds),
-      icon: Clock,
+      label: "Vistas totales este mes",
+      value: data.totalViews.toLocaleString("es-ES"),
+      icon: Eye,
       color: "bg-amber-100 text-amber-800",
-      emoji: "🕒",
+      emoji: "👁️",
     },
     {
       label: "Ventas directas de capítulos",

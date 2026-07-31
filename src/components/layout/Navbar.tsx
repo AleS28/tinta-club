@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, LogOut, PenLine, Shield } from "lucide-react";
+import { ChevronDown, LogOut, Menu, PenLine, Shield, X } from "lucide-react";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -16,10 +16,11 @@ const memberNavLinks = [{ label: "Mi Cuenta", href: "/biblioteca" }];
 export function Navbar() {
   const { user, userProfile, loading, restoringSession, isSubscriber, role, openAuthModal, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen && !mobileNavOpen) return;
 
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -29,7 +30,18 @@ export function Navbar() {
 
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
-  }, [menuOpen]);
+  }, [menuOpen, mobileNavOpen]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileNavOpen]);
+
+  const closeMobileNav = () => setMobileNavOpen(false);
 
   const displayName = userProfile?.displayName ?? user?.displayName ?? "Lector";
   const initials = displayName
@@ -88,7 +100,16 @@ export function Navbar() {
           )}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            aria-expanded={mobileNavOpen}
+            aria-label={mobileNavOpen ? "Cerrar menú" : "Abrir menú"}
+            onClick={() => setMobileNavOpen((open) => !open)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#D27C5A]/30 text-[#FCF9F5] transition-colors hover:border-[#D27C5A]/60 hover:bg-[#3D2518] md:hidden"
+          >
+            {mobileNavOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
           {showProfile && role === "admin" && (
             <span className="hidden items-center gap-1 rounded-full border border-[#D27C5A]/50 bg-[#D27C5A]/20 px-3 py-1 text-xs font-semibold text-[#D27C5A] sm:inline-flex">
               Administradora +
@@ -202,6 +223,68 @@ export function Navbar() {
           ) : null}
         </div>
       </div>
+
+      {mobileNavOpen && (
+        <nav
+          className="border-t border-[#D27C5A]/20 bg-[#2A1810] px-4 py-4 md:hidden"
+          aria-label="Navegación móvil"
+        >
+          <div className="flex flex-col gap-1">
+            {publicNavLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={closeMobileNav}
+                className="rounded-lg px-3 py-3 text-sm font-medium text-stone-200 transition-colors hover:bg-[#3D2518] hover:text-[#D27C5A]"
+              >
+                {link.label}
+              </Link>
+            ))}
+            {showProfile &&
+              memberNavLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={closeMobileNav}
+                  className="rounded-lg px-3 py-3 text-sm font-medium text-stone-200 transition-colors hover:bg-[#3D2518] hover:text-[#D27C5A]"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            {showProfile && role === "admin" && (
+              <Link
+                href="/administracion/finanzas"
+                onClick={closeMobileNav}
+                className="rounded-lg px-3 py-3 text-sm font-semibold text-[#D4A359] transition-colors hover:bg-[#3D2518]"
+              >
+                Administración
+              </Link>
+            )}
+            {showProfile && role === "author" && (
+              <Link
+                href="/autor"
+                onClick={closeMobileNav}
+                className="rounded-lg px-3 py-3 text-sm font-semibold text-[#D4A359] transition-colors hover:bg-[#3D2518]"
+              >
+                Panel del Autor
+              </Link>
+            )}
+            {showLogin && (
+              <button
+                type="button"
+                onClick={() => {
+                  closeMobileNav();
+                  openAuthModal("/autor/acuerdo", { intent: "author" });
+                }}
+                className="mt-2 inline-flex items-center justify-center gap-2 rounded-full border border-[#D4A359]/50 bg-[#D4A359]/10 px-4 py-3 text-sm font-bold uppercase tracking-wide text-[#D4A359]"
+              >
+                <PenLine className="h-4 w-4" aria-hidden />
+                Soy Escritor
+              </button>
+            )}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }

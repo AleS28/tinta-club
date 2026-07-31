@@ -17,7 +17,7 @@ import {
   resolveAuthorFromIndex,
   type ResolvedAuthorIdentity,
 } from "@/lib/author-identity-admin";
-import { founderAuthors } from "@/data/founder-authors";
+import { founderAuthors, isFounderAuthorIdentity } from "@/data/founder-authors";
 
 function earningsSummaryDocId(authorId: string, monthYear: string): string {
   return `${authorId}_${monthYear}`;
@@ -104,7 +104,9 @@ async function collectAuthorIdsForMonth(
     if (!String(data.readAt ?? "").startsWith(monthPrefix)) continue;
     const id = String(data.authorId ?? "");
     if (!id) continue;
-    canonicalIds.add(resolveAuthorFromIndex(id, identityIndex).canonicalId);
+    const resolved = resolveAuthorFromIndex(id, identityIndex);
+    if (!isFounderAuthorIdentity(resolved)) continue;
+    canonicalIds.add(resolved.canonicalId);
   }
 
   for (const doc of salesSnap.docs) {
@@ -112,13 +114,17 @@ async function collectAuthorIdsForMonth(
     if (!String(data.createdAt ?? "").startsWith(monthPrefix)) continue;
     const id = String(data.authorId ?? "");
     if (!id) continue;
-    canonicalIds.add(resolveAuthorFromIndex(id, identityIndex).canonicalId);
+    const resolved = resolveAuthorFromIndex(id, identityIndex);
+    if (!isFounderAuthorIdentity(resolved)) continue;
+    canonicalIds.add(resolved.canonicalId);
   }
 
   for (const doc of summariesSnap.docs) {
     if (doc.id.endsWith(`_${monthYear}`)) {
       const rawId = doc.id.replace(`_${monthYear}`, "");
-      canonicalIds.add(resolveAuthorFromIndex(rawId, identityIndex).canonicalId);
+      const resolved = resolveAuthorFromIndex(rawId, identityIndex);
+      if (!isFounderAuthorIdentity(resolved)) continue;
+      canonicalIds.add(resolved.canonicalId);
     }
   }
 
@@ -244,10 +250,9 @@ export async function getGlobalFinancialReport(
   const authorIds = await collectAuthorIdsForMonth(monthYear, identityIndex);
   const identityByCanonical = new Map<string, ResolvedAuthorIdentity>();
   for (const authorId of authorIds) {
-    identityByCanonical.set(
-      authorId,
-      resolveAuthorFromIndex(authorId, identityIndex),
-    );
+    const identity = resolveAuthorFromIndex(authorId, identityIndex);
+    if (!isFounderAuthorIdentity(identity)) continue;
+    identityByCanonical.set(authorId, identity);
   }
 
   const subscriptionGross = pool.subscriptionGross;

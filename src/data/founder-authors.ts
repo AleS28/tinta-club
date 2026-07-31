@@ -53,3 +53,30 @@ export function findFounderByEmail(email: string): FounderAuthorConfig | undefin
 export function findFounderBySlug(slug: string): FounderAuthorConfig | undefined {
   return founderAuthors.find((founder) => founder.slug === slug);
 }
+
+export function findFounderByLegacyId(legacyAuthorId: string): FounderAuthorConfig | undefined {
+  return founderAuthors.find((founder) => founder.legacyAuthorId === legacyAuthorId);
+}
+
+/** Autores reales de la plataforma (fundadores vinculados o del catálogo). */
+export function isRealPlatformAuthorRef(params: {
+  authorId?: string;
+  legacyAuthorId?: string;
+  authorSlug?: string;
+}): boolean {
+  if (params.legacyAuthorId && findFounderByLegacyId(params.legacyAuthorId)) return true;
+  if (params.authorSlug && findFounderBySlug(params.authorSlug)) return true;
+  if (params.authorId && findFounderByLegacyId(params.authorId)) return true;
+  return false;
+}
+
+export function isFounderAuthorIdentity(identity: {
+  canonicalId: string;
+  aliasIds: string[];
+}): boolean {
+  return founderAuthors.some(
+    (founder) =>
+      identity.aliasIds.includes(founder.legacyAuthorId) ||
+      identity.canonicalId === founder.legacyAuthorId,
+  );
+}

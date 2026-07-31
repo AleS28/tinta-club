@@ -1,4 +1,4 @@
-import { founderAuthors, getFounderEmails } from "@/data/founder-authors";
+import { founderAuthors, getFounderEmails, isFounderAuthorIdentity } from "@/data/founder-authors";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 export interface ResolvedAuthorIdentity {
@@ -90,37 +90,24 @@ export async function buildAuthorIdentityIndex(): Promise<
   const usersSnap = await adminDb.collection("users").where("role", "==", "author").get();
   for (const doc of usersSnap.docs) {
     const data = doc.data();
-    const uid = doc.id;
     const legacyId = data.legacyAuthorId ? String(data.legacyAuthorId) : undefined;
+    const authorSlug = data.authorSlug ? String(data.authorSlug) : undefined;
+    const founder =
+      (legacyId ? founderAuthors.find((f) => f.legacyAuthorId === legacyId) : undefined) ??
+      (authorSlug ? founderAuthors.find((f) => f.slug === authorSlug) : undefined);
+
+    if (!founder) continue;
+
+    const uid = doc.id;
     const aliasIds = legacyId ? [uid, legacyId] : [uid];
-    const founder = legacyId
-      ? founderAuthors.find((f) => f.legacyAuthorId === legacyId)
-      : undefined;
 
     registerIdentity(index, {
       canonicalId: uid,
       aliasIds,
-      displayName: String(data.displayName ?? founder?.name ?? "Autor"),
-      email: String(
-        data.email ?? (founder ? getFounderEmails(founder)[0] : "") ?? "",
-      ),
-      photoURL: (data.photoURL as string | undefined) ?? founder?.photoUrl,
+      displayName: String(data.displayName ?? founder.name),
+      email: String(data.email ?? getFounderEmails(founder)[0] ?? ""),
+      photoURL: (data.photoURL as string | undefined) ?? founder.photoUrl,
       isLinked: true,
-    });
-  }
-
-  const booksSnap = await adminDb.collection("books").get();
-  for (const doc of booksSnap.docs) {
-    const authorId = String(doc.data().authorId ?? "");
-    if (!authorId || index.has(authorId)) continue;
-
-    const uid = legacyToUid.get(authorId);
-    registerIdentity(index, {
-      canonicalId: uid ?? authorId,
-      aliasIds: uid ? [uid, authorId] : [authorId],
-      displayName: String(doc.data().author ?? "Autor"),
-      email: "",
-      isLinked: Boolean(uid),
     });
   }
 
@@ -151,6 +138,7 @@ export function listCanonicalAuthorIdentities(
 
   for (const identity of index.values()) {
     if (seen.has(identity.canonicalId)) continue;
+    if (!isFounderAuthorIdentity(identity)) continue;
     seen.add(identity.canonicalId);
     identities.push(identity);
   }

@@ -1,4 +1,4 @@
-import type { UserProfile, UserRole } from "@/types/user";
+import type { UserProfile, UserRole, SubscriptionStatus } from "@/types/user";
 import { normalizeUserProfile } from "@/types/user";
 import type { FounderAuthorConfig } from "@/data/founder-authors";
 import { getAdminDb, getAdminAuth } from "@/lib/firebase-admin";
@@ -23,10 +23,22 @@ function toUserProfile(uid: string, raw: Record<string, unknown>, email?: string
     role: (raw.role as UserRole) ?? "reader",
     isSubscriber: isTruthy(raw.isSubscriber),
     isPremium: isTruthy(raw.isPremium),
+    subscriptionStatus: raw.subscriptionStatus as SubscriptionStatus | undefined,
     photoURL: raw.photoURL as string | undefined,
     bio: raw.bio as string | undefined,
     authorSlug: raw.authorSlug as string | undefined,
     legacyAuthorId: raw.legacyAuthorId as string | undefined,
+    agreementSigned: raw.agreementSigned === true,
+    agreementSignedAt: raw.agreementSignedAt as string | undefined,
+    agreementSignatureName: raw.agreementSignatureName as string | undefined,
+    agreementVersion: raw.agreementVersion as string | undefined,
+    agreementHash: raw.agreementHash as string | undefined,
+    legalFullName: raw.legalFullName as string | undefined,
+    legalIdNumber: raw.legalIdNumber as string | undefined,
+    contactPhone: raw.contactPhone as string | undefined,
+    paymentDetails: raw.paymentDetails as string | undefined,
+    createdAt: raw.createdAt as string | undefined,
+    subscribedAt: raw.subscribedAt as string | undefined,
   });
 }
 

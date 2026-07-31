@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, Heart, Home, Search, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { resolveAccountAvatar } from "@/lib/account-avatar";
 
 const tabs = [
   { id: "home", label: "Inicio", href: "/", icon: Home, match: (path: string) => path === "/" },
@@ -37,12 +38,13 @@ function isProfileActive(path: string, uid?: string): boolean {
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const { user, openAuthModal } = useAuth();
+  const { user, userProfile, openAuthModal } = useAuth();
 
   if (pathname.startsWith("/leer/")) return null;
 
   const profileHref = user ? `/perfil/${user.uid}` : null;
   const profileActive = isProfileActive(pathname, user?.uid);
+  const avatarUrl = resolveAccountAvatar(user, userProfile);
 
   return (
     <nav
@@ -93,9 +95,9 @@ export function MobileBottomNav() {
                   : "border-[#D27C5A]/30 bg-[#3D2518]"
               }`}
             >
-              {user.photoURL ? (
+              {avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.photoURL} alt="" className="h-full w-full object-cover" />
+                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 <User className="h-4 w-4" />
               )}

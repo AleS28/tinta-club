@@ -28,6 +28,7 @@ import {
   readAuthSessionHint,
 } from "@/lib/auth-session";
 import { activateSubscription } from "@/lib/subscription";
+import { findFounderByEmail } from "@/data/founder-authors";
 import { startStripeCheckout } from "@/lib/stripe-checkout";
 import {
   isPremiumUser,
@@ -114,10 +115,16 @@ async function fetchOrCreateUserProfile(user: User): Promise<UserProfile> {
     const data = userSnap.data() as UserProfile;
     const authPhoto = user.photoURL ?? undefined;
     const storedPhoto = data.photoURL;
+    const isFounderAccount = Boolean(
+      data.authorSlug ||
+        data.legacyAuthorId ||
+        (data.email ? findFounderByEmail(data.email) : undefined),
+    );
 
     if (
       authPhoto?.startsWith("http") &&
-      (!storedPhoto || storedPhoto.startsWith("/authors/"))
+      (!storedPhoto || storedPhoto.startsWith("/authors/")) &&
+      !isFounderAccount
     ) {
       await setDoc(userRef, { photoURL: authPhoto }, { merge: true });
       return normalizeUserProfile({ ...data, photoURL: authPhoto });

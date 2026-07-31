@@ -1,4 +1,5 @@
 import { AUTHOR_TERMS_VERSION } from "@/types/terms";
+import { findFounderBySlug } from "@/data/founder-authors";
 
 export type UserRole = "reader" | "author" | "admin";
 export type SubscriptionStatus = "free" | "premium";
@@ -44,7 +45,9 @@ export function hasAuthorPanelAccess(profile: UserProfile | null | undefined): b
 
 /** Acuerdo de autor vigente firmado una sola vez por cuenta. */
 export function hasAuthorAgreementSigned(profile: UserProfile | null | undefined): boolean {
-  if (!profile?.agreementSigned) return false;
+  if (!profile) return false;
+  if (profile.authorSlug && findFounderBySlug(profile.authorSlug)) return true;
+  if (!profile.agreementSigned) return false;
   if (!profile.agreementVersion) return true;
   return profile.agreementVersion === AUTHOR_TERMS_VERSION;
 }

@@ -168,36 +168,12 @@ export async function linkFounderAuthorAdmin(
   const userSnap = await userRef.get();
   const existing = userSnap.exists ? (userSnap.data() as Record<string, unknown>) : null;
 
-  if (existing?.authorSlug === founder.slug && existing?.role === "author") {
-    const photoURL = await resolveUserPhotoURL(uid, existing);
-    const patch: Record<string, unknown> = {};
-
-    if (existing.agreementSigned !== true) {
-      Object.assign(patch, await resolveAgreementFieldsForFounder(uid, existing, founder));
-    }
-
-    if (photoURL && photoURL !== existing.photoURL) {
-      patch.photoURL = photoURL;
-    }
-
-    if (Object.keys(patch).length > 0) {
-      await userRef.set(patch, { merge: true });
-      const refreshed = await userRef.get();
-      return {
-        linked: true,
-        profile: toUserProfile(uid, refreshed.data() as Record<string, unknown>, email),
-        reason: "already_linked",
-      };
-    }
-
-    return {
-      linked: false,
-      profile: toUserProfile(uid, existing, email),
-      reason: "already_linked",
-    };
-  }
-
   const batch = adminDb.batch();
+  const wasLinked =
+    existing?.authorSlug === founder.slug &&
+    existing?.role === "author" &&
+    existing?.legacyAuthorId === founder.legacyAuthorId;
+
   const agreementFields = await resolveAgreementFieldsForFounder(uid, existing, founder);
   const photoURL = await resolveUserPhotoURL(uid, existing);
 
@@ -206,13 +182,13 @@ export async function linkFounderAuthorAdmin(
     {
       uid,
       email,
-      displayName: existing?.displayName ?? founder.name,
+      displayName: founder.name,
       role: "author",
-      bio: existing?.bio ?? founder.bio,
-      ...(photoURL ? { photoURL } : {}),
+      bio: founder.bio,
       authorSlug: founder.slug,
       legacyAuthorId: founder.legacyAuthorId,
-      linkedAt: new Date().toISOString(),
+      linkedAt: existing?.linkedAt ?? new Date().toISOString(),
+      ...(photoURL ? { photoURL } : {}),
       ...agreementFields,
     },
     { merge: true },
@@ -249,6 +225,7 @@ export async function linkFounderAuthorAdmin(
   return {
     linked: true,
     profile: toUserProfile(uid, updated, email),
+    reason: wasLinked ? "already_linked" : undefined,
   };
 }
 

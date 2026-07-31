@@ -6,7 +6,7 @@ import { AuthorProfileHeader } from "@/components/perfil/AuthorProfileHeader";
 import { OwnProfileActions } from "@/components/perfil/OwnProfileActions";
 import { BookCard } from "@/components/home/BookCard";
 import { getBooksByAuthorId } from "@/lib/db";
-import { getPublicAuthorProfile } from "@/lib/users";
+import { getPublicAuthorProfile, getUserProfileById, resolveLegacyAuthorIdForProfile } from "@/lib/users";
 import { BRAND_NAME } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +32,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   if (!author) notFound();
 
-  const books = await getBooksByAuthorId(id);
+  const userProfile = await getUserProfileById(id);
+  const legacyAuthorId = resolveLegacyAuthorIdForProfile(id, userProfile);
+  const books = await getBooksByAuthorId(id, legacyAuthorId);
 
   return (
     <>

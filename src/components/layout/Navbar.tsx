@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, LogOut, PenLine, Shield, User } from "lucide-react";
+import { ChevronDown, LogOut, PenLine, Shield } from "lucide-react";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -11,10 +11,7 @@ const publicNavLinks = [
   { label: "Conócenos", href: "/conocenos" },
 ];
 
-const memberNavLinks = [
-  { label: "Mis Lecturas", href: "/biblioteca" },
-  { label: "Mi Cuenta", href: "/biblioteca" },
-];
+const memberNavLinks = [{ label: "Mi Cuenta", href: "/biblioteca" }];
 
 export function Navbar() {
   const { user, userProfile, loading, restoringSession, isSubscriber, role, openAuthModal, logout } = useAuth();
@@ -187,15 +184,6 @@ export function Navbar() {
                       Panel del Autor
                     </Link>
                   )}
-                  <Link
-                    href="/biblioteca"
-                    role="menuitem"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#2A1810] transition-colors hover:bg-[#D27C5A]/10"
-                  >
-                    <User className="h-4 w-4 text-stone-500" />
-                    Mi Biblioteca
-                  </Link>
                   <button
                     type="button"
                     role="menuitem"

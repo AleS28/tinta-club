@@ -64,6 +64,20 @@ export async function linkFounderAuthorAdmin(
       authorSlug: founder.slug,
       legacyAuthorId: founder.legacyAuthorId,
       linkedAt: new Date().toISOString(),
+      // Preserva acuerdo firmado si el autor ya lo completó antes de vincular.
+      ...(existing?.agreementSigned === true
+        ? {
+            agreementSigned: true,
+            agreementSignedAt: existing.agreementSignedAt,
+            agreementSignatureName: existing.agreementSignatureName,
+            agreementVersion: existing.agreementVersion,
+            agreementHash: existing.agreementHash,
+            legalFullName: existing.legalFullName,
+            legalIdNumber: existing.legalIdNumber,
+            contactPhone: existing.contactPhone,
+            paymentDetails: existing.paymentDetails,
+          }
+        : {}),
     },
     { merge: true },
   );

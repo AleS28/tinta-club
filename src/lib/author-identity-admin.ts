@@ -1,0 +1,159 @@
+import { founderAuthors, getFounderEmails } from "@/data/founder-authors";
+import { getAdminDb } from "@/lib/firebase-admin";
+
+export interface ResolvedAuthorIdentity {
+  /** UID de Firebase si está vinculado; si no, el ID legacy del catálogo. */
+  canonicalId: string;
+  /** Todos los IDs que representan al mismo autor (uid + legacy). */
+  aliasIds: string[];
+  displayName: string;
+  email: string;
+  photoURL?: string;
+  isLinked: boolean;
+}
+
+function mergeIdentity(
+  existing: ResolvedAuthorIdentity | undefined,
+  next: ResolvedAuthorIdentity,
+): ResolvedAuthorIdentity {
+  if (!existing) return next;
+
+  const aliasIds = Array.from(new Set([...existing.aliasIds, ...next.aliasIds]));
+  return {
+    canonicalId: next.isLinked ? next.canonicalId : existing.canonicalId,
+    aliasIds,
+    displayName: next.displayName || existing.displayName,
+    email: next.email || existing.email,
+    photoURL: next.photoURL ?? existing.photoURL,
+    isLinked: existing.isLinked || next.isLinked,
+  };
+}
+
+function registerIdentity(
+  index: Map<string, ResolvedAuthorIdentity>,
+  identity: ResolvedAuthorIdentity,
+): void {
+  const existing = index.get(identity.canonicalId);
+  const merged = mergeIdentity(existing, identity);
+
+  index.set(merged.canonicalId, merged);
+  for (const aliasId of merged.aliasIds) {
+    index.set(aliasId, merged);
+  }
+}
+
+/**
+ * Índice de autores del catálogo, fundadores y cuentas vinculadas en Firestore.
+ * Permite resolver IDs legacy (p. ej. author-pedro-garcia) al UID de Firebase.
+ */
+export async function buildAuthorIdentityIndex(): Promise<
+  Map<string, ResolvedAuthorIdentity>
+> {
+  const adminDb = await getAdminDb();
+  const index = new Map<string, ResolvedAuthorIdentity>();
+  if (!adminDb) {
+    for (const founder of founderAuthors) {
+      registerIdentity(index, {
+        canonicalId: founder.legacyAuthorId,
+        aliasIds: [founder.legacyAuthorId],
+        displayName: founder.name,
+        email: getFounderEmails(founder)[0] ?? "",
+        photoURL: founder.photoUrl,
+        isLinked: false,
+      });
+    }
+    return index;
+  }
+
+  const legacyToUid = new Map<string, string>();
+  const authorsSnap = await adminDb.collection("authors").get();
+  for (const doc of authorsSnap.docs) {
+    const linkedUid = doc.data().linkedUid;
+    if (linkedUid) legacyToUid.set(doc.id, String(linkedUid));
+  }
+
+  for (const founder of founderAuthors) {
+    const uid = legacyToUid.get(founder.legacyAuthorId);
+    const canonicalId = uid ?? founder.legacyAuthorId;
+    const aliasIds = uid ? [uid, founder.legacyAuthorId] : [founder.legacyAuthorId];
+
+    registerIdentity(index, {
+      canonicalId,
+      aliasIds,
+      displayName: founder.name,
+      email: getFounderEmails(founder)[0] ?? "",
+      photoURL: founder.photoUrl,
+      isLinked: Boolean(uid),
+    });
+  }
+
+  const usersSnap = await adminDb.collection("users").where("role", "==", "author").get();
+  for (const doc of usersSnap.docs) {
+    const data = doc.data();
+    const uid = doc.id;
+    const legacyId = data.legacyAuthorId ? String(data.legacyAuthorId) : undefined;
+    const aliasIds = legacyId ? [uid, legacyId] : [uid];
+    const founder = legacyId
+      ? founderAuthors.find((f) => f.legacyAuthorId === legacyId)
+      : undefined;
+
+    registerIdentity(index, {
+      canonicalId: uid,
+      aliasIds,
+      displayName: String(data.displayName ?? founder?.name ?? "Autor"),
+      email: String(
+        data.email ?? (founder ? getFounderEmails(founder)[0] : "") ?? "",
+      ),
+      photoURL: (data.photoURL as string | undefined) ?? founder?.photoUrl,
+      isLinked: true,
+    });
+  }
+
+  const booksSnap = await adminDb.collection("books").get();
+  for (const doc of booksSnap.docs) {
+    const authorId = String(doc.data().authorId ?? "");
+    if (!authorId || index.has(authorId)) continue;
+
+    const uid = legacyToUid.get(authorId);
+    registerIdentity(index, {
+      canonicalId: uid ?? authorId,
+      aliasIds: uid ? [uid, authorId] : [authorId],
+      displayName: String(doc.data().author ?? "Autor"),
+      email: "",
+      isLinked: Boolean(uid),
+    });
+  }
+
+  return index;
+}
+
+export function resolveAuthorFromIndex(
+  authorId: string,
+  index: Map<string, ResolvedAuthorIdentity>,
+): ResolvedAuthorIdentity {
+  const known = index.get(authorId);
+  if (known) return known;
+
+  return {
+    canonicalId: authorId,
+    aliasIds: [authorId],
+    displayName: "Autor",
+    email: "",
+    isLinked: false,
+  };
+}
+
+export function listCanonicalAuthorIdentities(
+  index: Map<string, ResolvedAuthorIdentity>,
+): ResolvedAuthorIdentity[] {
+  const seen = new Set<string>();
+  const identities: ResolvedAuthorIdentity[] = [];
+
+  for (const identity of index.values()) {
+    if (seen.has(identity.canonicalId)) continue;
+    seen.add(identity.canonicalId);
+    identities.push(identity);
+  }
+
+  return identities;
+}

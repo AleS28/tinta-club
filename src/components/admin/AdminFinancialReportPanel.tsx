@@ -15,6 +15,8 @@ export function AdminFinancialReportPanel() {
   const [monthYear, setMonthYear] = useState("");
   const [loading, setLoading] = useState(true);
   const [markingId, setMarkingId] = useState<string | null>(null);
+  const [linkingFounders, setLinkingFounders] = useState(false);
+  const [linkFoundersMessage, setLinkFoundersMessage] = useState("");
   const [error, setError] = useState("");
 
   const loadReport = useCallback(
@@ -84,6 +86,51 @@ export function AdminFinancialReportPanel() {
     }
   };
 
+  const handleLinkFounders = async () => {
+    if (!user) return;
+
+    setLinkingFounders(true);
+    setLinkFoundersMessage("");
+    setError("");
+
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/admin/link-founders", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        results?: Array<{ slug: string; email: string; linked: boolean; reason?: string }>;
+        error?: string;
+      };
+
+      if (!response.ok) {
+        setError(payload.error ?? "No se pudieron vincular los autores fundadores.");
+        return;
+      }
+
+      const lines = (payload.results ?? []).map((result) => {
+        if (result.linked) {
+          return `✓ ${result.slug} (${result.email})`;
+        }
+        return `✗ ${result.slug}: ${result.reason ?? "error"}`;
+      });
+
+      setLinkFoundersMessage(lines.join(" · ") || "Proceso completado.");
+      await loadReport(monthYear);
+    } catch {
+      setError("No se pudo conectar con el servidor.");
+    } finally {
+      setLinkingFounders(false);
+    }
+  };
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
       <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
@@ -100,13 +147,29 @@ export function AdminFinancialReportPanel() {
             </p>
           </div>
         </div>
-        <Link
-          href="/"
-          className="rounded-full border border-sidebar px-4 py-2 text-sm font-medium text-ink hover:bg-sidebar/60"
-        >
-          ← Inicio
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void handleLinkFounders()}
+            disabled={linkingFounders || !user}
+            className="rounded-full border border-terracotta/30 bg-terracotta/5 px-4 py-2 text-sm font-medium text-terracotta hover:bg-terracotta/10 disabled:opacity-50"
+          >
+            {linkingFounders ? "Vinculando…" : "Vincular autores fundadores"}
+          </button>
+          <Link
+            href="/"
+            className="rounded-full border border-sidebar px-4 py-2 text-sm font-medium text-ink hover:bg-sidebar/60"
+          >
+            ← Inicio
+          </Link>
+        </div>
       </header>
+
+      {linkFoundersMessage && (
+        <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-900">
+          {linkFoundersMessage}
+        </div>
+      )}
 
       {report && (
         <div className="mb-8 flex flex-wrap items-center gap-3 rounded-2xl border border-sidebar bg-white/70 px-5 py-4">

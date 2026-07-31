@@ -28,6 +28,18 @@ export async function POST(request: NextRequest) {
 
     const result = await linkFounderAuthorAdmin(decoded.uid, decoded.email, founder);
 
+    if (result.reason === "admin_not_configured") {
+      console.error("[auth/link-founder] Firebase Admin no configurado en el servidor");
+      return NextResponse.json(
+        {
+          linked: false,
+          reason: result.reason,
+          error: "El servidor no puede vincular autores fundadores. Contacta al administrador.",
+        },
+        { status: 503 },
+      );
+    }
+
     return NextResponse.json({
       linked: result.linked,
       profile: result.profile,

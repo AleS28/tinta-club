@@ -11,6 +11,13 @@ import {
   getAuthorReadingSeconds,
 } from "@/lib/monetization/reading-tracking-admin";
 import { getAdminDb } from "@/lib/firebase-admin";
+import {
+  buildAuthorIdentityIndex,
+  listCanonicalAuthorIdentities,
+  resolveAuthorFromIndex,
+  type ResolvedAuthorIdentity,
+} from "@/lib/author-identity-admin";
+import { founderAuthors } from "@/data/founder-authors";
 
 function earningsSummaryDocId(authorId: string, monthYear: string): string {
   return `${authorId}_${monthYear}`;
@@ -71,68 +78,126 @@ async function getDirectSalesTotalsForMonth(monthYear: string): Promise<{
   return { gross, gatewayFees, net, platformShare, authorShare };
 }
 
-async function collectAuthorIdsForMonth(monthYear: string): Promise<Set<string>> {
+async function collectAuthorIdsForMonth(
+  monthYear: string,
+  identityIndex: Map<string, ResolvedAuthorIdentity>,
+): Promise<Set<string>> {
   const adminDb = await getAdminDb();
-  const authorIds = new Set<string>();
-  if (!adminDb) return authorIds;
+  const canonicalIds = new Set<string>();
+
+  for (const identity of listCanonicalAuthorIdentities(identityIndex)) {
+    canonicalIds.add(identity.canonicalId);
+  }
+
+  if (!adminDb) return canonicalIds;
 
   const monthPrefix = `${monthYear}-`;
 
-  const [sessionsSnap, salesSnap, summariesSnap, authorsSnap] = await Promise.all([
+  const [sessionsSnap, salesSnap, summariesSnap] = await Promise.all([
     adminDb.collection(COLLECTIONS.readingSessions).get(),
     adminDb.collection(COLLECTIONS.directChapterSales).get(),
     adminDb.collection(COLLECTIONS.authorEarningsSummary).get(),
-    adminDb.collection("users").where("role", "in", ["author", "admin"]).get(),
   ]);
 
   for (const doc of sessionsSnap.docs) {
     const data = doc.data();
     if (!String(data.readAt ?? "").startsWith(monthPrefix)) continue;
     const id = String(data.authorId ?? "");
-    if (id) authorIds.add(id);
+    if (!id) continue;
+    canonicalIds.add(resolveAuthorFromIndex(id, identityIndex).canonicalId);
   }
 
   for (const doc of salesSnap.docs) {
     const data = doc.data();
     if (!String(data.createdAt ?? "").startsWith(monthPrefix)) continue;
     const id = String(data.authorId ?? "");
-    if (id) authorIds.add(id);
+    if (!id) continue;
+    canonicalIds.add(resolveAuthorFromIndex(id, identityIndex).canonicalId);
   }
 
   for (const doc of summariesSnap.docs) {
     if (doc.id.endsWith(`_${monthYear}`)) {
-      authorIds.add(doc.id.replace(`_${monthYear}`, ""));
+      const rawId = doc.id.replace(`_${monthYear}`, "");
+      canonicalIds.add(resolveAuthorFromIndex(rawId, identityIndex).canonicalId);
     }
   }
 
-  for (const doc of authorsSnap.docs) {
-    authorIds.add(doc.id);
-  }
-
-  return authorIds;
+  return canonicalIds;
 }
 
-async function getAuthorProfile(authorId: string) {
+async function getAuthorProfileFromIdentity(identity: ResolvedAuthorIdentity) {
   const adminDb = await getAdminDb();
-  if (!adminDb) return null;
+  if (!adminDb) {
+    return {
+      displayName: identity.displayName,
+      email: identity.email,
+      photoURL: identity.photoURL,
+    };
+  }
 
-  const snap = await adminDb.collection("users").doc(authorId).get();
-  if (!snap.exists) return null;
+  const snap = await adminDb.collection("users").doc(identity.canonicalId).get();
+  if (snap.exists) {
+    const data = snap.data()!;
+    return {
+      displayName: String(data.displayName ?? identity.displayName),
+      email: String(data.email ?? identity.email),
+      photoURL: (data.photoURL as string | undefined) ?? identity.photoURL,
+    };
+  }
 
-  const data = snap.data()!;
   return {
-    displayName: String(data.displayName ?? "Autor"),
-    email: String(data.email ?? ""),
-    photoURL: data.photoURL as string | undefined,
+    displayName: identity.displayName,
+    email: identity.email,
+    photoURL: identity.photoURL,
   };
 }
 
-async function countActiveBooks(authorId: string): Promise<number> {
+async function countActiveBooksForIdentity(identity: ResolvedAuthorIdentity): Promise<number> {
   const adminDb = await getAdminDb();
-  if (!adminDb) return 0;
+  if (!adminDb) {
+    const founder = founderAuthors.find((f) => identity.aliasIds.includes(f.legacyAuthorId));
+    return founder?.bookIds.length ?? 0;
+  }
 
-  const snap = await adminDb.collection("books").where("authorId", "==", authorId).get();
-  return snap.size;
+  const bookIds = new Set<string>();
+  for (const authorId of identity.aliasIds) {
+    const snap = await adminDb.collection("books").where("authorId", "==", authorId).get();
+    for (const doc of snap.docs) bookIds.add(doc.id);
+  }
+  return bookIds.size;
+}
+
+async function getCombinedReadingSeconds(
+  identity: ResolvedAuthorIdentity,
+  monthYear: string,
+): Promise<number> {
+  let total = 0;
+  for (const authorId of identity.aliasIds) {
+    total += await getAuthorReadingSeconds(authorId, monthYear);
+  }
+  return total;
+}
+
+async function getCombinedDirectSales(
+  identity: ResolvedAuthorIdentity,
+  monthYear: string,
+): Promise<number> {
+  let total = 0;
+  for (const authorId of identity.aliasIds) {
+    total += await getAuthorDirectSalesTotal(authorId, monthYear);
+  }
+  return total;
+}
+
+async function getCombinedEarningsSummaryRaw(
+  identity: ResolvedAuthorIdentity,
+  monthYear: string,
+) {
+  for (const authorId of identity.aliasIds) {
+    const summary = await getEarningsSummaryRaw(authorId, monthYear);
+    if (summary) return summary;
+  }
+  return null;
 }
 
 async function getEarningsSummaryRaw(authorId: string, monthYear: string) {
@@ -175,7 +240,15 @@ export async function getGlobalFinancialReport(
 ): Promise<GlobalFinancialReport> {
   const pool = (await getMonthlyPool(monthYear)) ?? (await getOrCreateOpenPool(monthYear));
   const directTotals = await getDirectSalesTotalsForMonth(monthYear);
-  const authorIds = await collectAuthorIdsForMonth(monthYear);
+  const identityIndex = await buildAuthorIdentityIndex();
+  const authorIds = await collectAuthorIdsForMonth(monthYear, identityIndex);
+  const identityByCanonical = new Map<string, ResolvedAuthorIdentity>();
+  for (const authorId of authorIds) {
+    identityByCanonical.set(
+      authorId,
+      resolveAuthorFromIndex(authorId, identityIndex),
+    );
+  }
 
   const subscriptionGross = pool.subscriptionGross;
   const subscriptionGatewayFees = pool.subscriptionGatewayFees;
@@ -188,14 +261,14 @@ export async function getGlobalFinancialReport(
   const authorsPool70 = pool.authorsPool70 + directTotals.authorShare;
 
   const authorsBreakdown: AuthorFinancialBreakdown[] = await Promise.all(
-    Array.from(authorIds).map(async (authorId) => {
+    Array.from(identityByCanonical.entries()).map(async ([authorId, identity]) => {
       const [profile, readingSeconds, directSalesEarnings, activeBooksCount, summaryRaw] =
         await Promise.all([
-          getAuthorProfile(authorId),
-          getAuthorReadingSeconds(authorId, monthYear),
-          getAuthorDirectSalesTotal(authorId, monthYear),
-          countActiveBooks(authorId),
-          getEarningsSummaryRaw(authorId, monthYear),
+          getAuthorProfileFromIdentity(identity),
+          getCombinedReadingSeconds(identity, monthYear),
+          getCombinedDirectSales(identity, monthYear),
+          countActiveBooksForIdentity(identity),
+          getCombinedEarningsSummaryRaw(identity, monthYear),
         ]);
 
       const poolEarnings = computePoolEarnings(readingSeconds, pool);
@@ -203,9 +276,9 @@ export async function getGlobalFinancialReport(
 
       return {
         authorId,
-        authorName: profile?.displayName ?? "Autor",
-        email: profile?.email ?? "",
-        photoURL: profile?.photoURL,
+        authorName: profile.displayName,
+        email: profile.email,
+        photoURL: profile.photoURL,
         activeBooksCount,
         readingTimeSeconds: readingSeconds,
         poolEarnings,

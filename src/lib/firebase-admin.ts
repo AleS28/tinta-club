@@ -1,6 +1,8 @@
 import type { App } from "firebase-admin/app";
 import type { Auth } from "firebase-admin/auth";
 import type { Firestore } from "firebase-admin/firestore";
+import { existsSync, readFileSync } from "fs";
+import { resolve } from "path";
 
 let adminApp: App | null = null;
 let adminInitFailed = false;
@@ -19,38 +21,135 @@ function normalizePrivateKey(raw: string | undefined): string | undefined {
     key = key.slice(1, -1);
   }
 
-  return key.replace(/\\n/g, "\n");
+  key = key.replace(/\\n/g, "\n").replace(/\r/g, "");
+
+  if (!key.includes("\n") && key.includes("-----BEGIN PRIVATE KEY-----")) {
+    key = key
+      .replace(/-----BEGIN PRIVATE KEY-----\s*/, "-----BEGIN PRIVATE KEY-----\n")
+      .replace(/\s*-----END PRIVATE KEY-----/, "\n-----END PRIVATE KEY-----\n");
+  }
+
+  if (!key.endsWith("\n")) key += "\n";
+
+  return key;
+}
+
+function readServiceAccountFromFile(): {
+  projectId: string;
+  clientEmail: string;
+  privateKey: string;
+} | null {
+  const candidates = [
+    process.env.GOOGLE_APPLICATION_CREDENTIALS,
+    process.env.FIREBASE_SERVICE_ACCOUNT_PATH,
+    resolve(process.cwd(), "firebase-service-account.json"),
+    resolve(process.cwd(), "serviceAccountKey.json"),
+  ].filter(Boolean) as string[];
+
+  for (const filePath of candidates) {
+    if (!existsSync(filePath)) continue;
+
+    try {
+      const parsed = JSON.parse(readFileSync(filePath, "utf8")) as {
+        project_id?: string;
+        client_email?: string;
+        private_key?: string;
+      };
+
+      if (!parsed.project_id || !parsed.client_email || !parsed.private_key) continue;
+
+      return {
+        projectId: parsed.project_id,
+        clientEmail: parsed.client_email,
+        privateKey: normalizePrivateKey(parsed.private_key) ?? parsed.private_key,
+      };
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
 }
 
 async function initAdminApp(): Promise<App | null> {
   if (adminInitFailed) return null;
   if (adminApp) return adminApp;
 
-  const projectId =
-    process.env.FIREBASE_PROJECT_ID ?? process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = normalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY);
-
-  if (!projectId || !clientEmail || !privateKey) {
-    return null;
-  }
-
   try {
-    const { cert, getApps, initializeApp } = await import("firebase-admin/app");
+    const { cert, getApps, initializeApp, applicationDefault } = await import("firebase-admin/app");
 
     if (getApps().length > 0) {
       adminApp = getApps()[0]!;
       return adminApp;
     }
 
-    adminApp = initializeApp({
-      credential: cert({ projectId, clientEmail, privateKey }),
-    });
+    const fromFile = readServiceAccountFromFile();
+    const fromEnvJson = readServiceAccountFromEnv();
+    const serviceAccount = fromFile ?? fromEnvJson;
 
+    if (serviceAccount) {
+      adminApp = initializeApp({
+        credential: cert({
+          projectId: serviceAccount.projectId,
+          clientEmail: serviceAccount.clientEmail,
+          privateKey: serviceAccount.privateKey,
+        }),
+      });
+      return adminApp;
+    }
+
+    const projectId =
+      process.env.FIREBASE_PROJECT_ID ?? process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = normalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY);
+
+    if (projectId && clientEmail && privateKey) {
+      try {
+        adminApp = initializeApp({
+          credential: cert({ projectId, clientEmail, privateKey }),
+        });
+        return adminApp;
+      } catch (certError) {
+        console.error("[firebase-admin] cert() falló, probando ADC…", certError);
+      }
+    }
+
+    adminApp = initializeApp({
+      credential: applicationDefault(),
+      projectId:
+        process.env.FIREBASE_PROJECT_ID ?? process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    });
     return adminApp;
   } catch (error) {
     adminInitFailed = true;
     console.error("[firebase-admin] Error al inicializar:", error);
+    return null;
+  }
+}
+
+function readServiceAccountFromEnv(): {
+  projectId: string;
+  clientEmail: string;
+  privateKey: string;
+} | null {
+  const inlineJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
+  if (!inlineJson) return null;
+
+  try {
+    const parsed = JSON.parse(inlineJson) as {
+      project_id?: string;
+      client_email?: string;
+      private_key?: string;
+    };
+
+    if (!parsed.project_id || !parsed.client_email || !parsed.private_key) return null;
+
+    return {
+      projectId: parsed.project_id,
+      clientEmail: parsed.client_email,
+      privateKey: normalizePrivateKey(parsed.private_key) ?? parsed.private_key,
+    };
+  } catch {
     return null;
   }
 }

@@ -3,6 +3,7 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { AuthorProfileHeader } from "@/components/perfil/AuthorProfileHeader";
+import { OwnProfileActions } from "@/components/perfil/OwnProfileActions";
 import { BookCard } from "@/components/home/BookCard";
 import { getBooksByAuthorId } from "@/lib/db";
 import { getPublicAuthorProfile } from "@/lib/users";
@@ -40,6 +41,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
         <AuthorProfileHeader author={author} bookCount={books.length} />
+        <OwnProfileActions profileId={id} />
 
         <section className="mt-10">
           <h2 className="font-serif text-xl font-bold text-ink">Obras publicadas</h2>

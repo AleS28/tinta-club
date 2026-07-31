@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Feather, Loader2, PenLine } from "lucide-react";
+import { BookOpen, Coins, Feather, Loader2, PenLine, PlusCircle } from "lucide-react";
 import { BRAND_NAME } from "@/lib/brand";
 import { Book } from "@/data/mock";
 import { getBooksByAuthorId, getChaptersByAuthorBooks } from "@/lib/db";
@@ -18,6 +18,16 @@ import { PublishBookForm } from "@/components/autor/PublishBookForm";
 import { PublishChapterForm } from "@/components/autor/PublishChapterForm";
 
 type Tab = "dashboard" | "books" | "publish";
+
+const authorTabs: Array<{
+  id: Tab;
+  label: string;
+  icon: typeof Coins;
+}> = [
+  { id: "dashboard", label: "Regalías", icon: Coins },
+  { id: "books", label: "Mis Libros", icon: BookOpen },
+  { id: "publish", label: "Publicar", icon: PlusCircle },
+];
 
 export function AuthorPanel() {
   const router = useRouter();
@@ -122,34 +132,32 @@ export function AuthorPanel() {
         <AuthorDiscordBanner />
         <AuthorAgreementBanner />
 
-        <div className="mt-8 flex rounded-full bg-sidebar p-1">
-          <button
-            type="button"
-            onClick={() => setTab("dashboard")}
-            className={`flex-1 rounded-full py-2.5 text-sm font-medium transition-colors ${
-              tab === "dashboard" ? "bg-white text-ink shadow-sm" : "text-muted"
-            }`}
-          >
-            Finanzas
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("books")}
-            className={`flex-1 rounded-full py-2.5 text-sm font-medium transition-colors ${
-              tab === "books" ? "bg-white text-ink shadow-sm" : "text-muted"
-            }`}
-          >
-            Mis Libros
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("publish")}
-            className={`flex-1 rounded-full py-2.5 text-sm font-medium transition-colors ${
-              tab === "publish" ? "bg-white text-ink shadow-sm" : "text-muted"
-            }`}
-          >
-            Publicar
-          </button>
+        <div className="mt-8 grid grid-cols-3 gap-2 rounded-2xl border-2 border-[#D27C5A]/25 bg-gradient-to-r from-[#2A1810] via-[#3D2518] to-[#2A1810] p-2 shadow-lg sm:gap-3 sm:p-2.5">
+          {authorTabs.map(({ id, label, icon: Icon }) => {
+            const active = tab === id;
+
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setTab(id)}
+                className={`flex flex-col items-center justify-center gap-1.5 rounded-xl px-2 py-3 text-center transition-all duration-200 sm:gap-2 sm:px-3 sm:py-3.5 ${
+                  active
+                    ? "bg-[#D27C5A] text-white shadow-md shadow-[#D27C5A]/30 ring-2 ring-[#FCF9F5]/20"
+                    : "bg-[#FCF9F5]/8 text-[#FCF9F5]/75 hover:bg-[#FCF9F5]/12 hover:text-[#FCF9F5]"
+                }`}
+                aria-current={active ? "page" : undefined}
+              >
+                <Icon
+                  className={`h-5 w-5 sm:h-[1.35rem] sm:w-[1.35rem] ${active ? "text-white" : "text-[#D4A359]"}`}
+                  strokeWidth={active ? 2.25 : 2}
+                />
+                <span className={`text-[11px] leading-tight sm:text-sm ${active ? "font-bold" : "font-semibold"}`}>
+                  {label}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="mt-6">

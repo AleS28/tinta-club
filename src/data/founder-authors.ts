@@ -9,6 +9,8 @@ export interface FounderAuthorConfig {
   photoUrl: string;
   /** Variable de entorno con email(s) permitidos, separados por coma */
   envEmailKey: string;
+  /** Emails oficiales del fundador (respaldo para vinculación admin). */
+  knownEmails?: string[];
 }
 
 const pedroProfile = getAuthorProfileBySlug("pedro-garcia-martinez");
@@ -23,6 +25,7 @@ export const founderAuthors: FounderAuthorConfig[] = [
     bio: pedroProfile?.bio ?? "",
     photoUrl: pedroProfile?.photoUrl ?? "",
     envEmailKey: "FOUNDER_AUTHOR_PEDRO_EMAIL",
+    knownEmails: ["pgarcialiteratura@gmail.com"],
   },
   {
     slug: "will-flechas",
@@ -32,15 +35,19 @@ export const founderAuthors: FounderAuthorConfig[] = [
     bio: willProfile?.bio ?? "",
     photoUrl: willProfile?.photoUrl ?? "",
     envEmailKey: "FOUNDER_AUTHOR_WILL_EMAIL",
+    knownEmails: ["willflechas77@gmail.com"],
   },
 ];
 
 export function getFounderEmails(config: FounderAuthorConfig): string[] {
   const raw = process.env[config.envEmailKey] ?? "";
-  return raw
+  const fromEnv = raw
     .split(",")
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean);
+  const fromKnown = (config.knownEmails ?? []).map((email) => email.trim().toLowerCase()).filter(Boolean);
+
+  return Array.from(new Set([...fromEnv, ...fromKnown]));
 }
 
 export function findFounderByEmail(email: string): FounderAuthorConfig | undefined {

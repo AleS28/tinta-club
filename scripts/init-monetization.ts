@@ -91,7 +91,7 @@ async function main() {
   console.log(`  - ${COLLECTIONS.readingSessions}`);
   console.log(`  - ${COLLECTIONS.directChapterSales}`);
   console.log(`  - ${COLLECTIONS.monthlyPools}`);
-  console.log(`  - ${COLLECTIONS.stripeProcessedEvents}`);
+  console.log(`  - ${COLLECTIONS.paymentProcessedEvents}`);
   console.log(`  - ${COLLECTIONS.chapterPurchases}`);
   console.log(`  - ${COLLECTIONS.bookPurchases}`);
   console.log(`  - ${COLLECTIONS.directBookSales}`);

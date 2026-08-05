@@ -29,7 +29,7 @@ export function AdminGlobalFinancialSummary({ report }: AdminGlobalFinancialSumm
     },
     {
       emoji: "💳",
-      label: "Comisiones pasarela (Stripe)",
+      label: "Comisiones pasarela (PayPal)",
       value: formatUsd(report.gatewayFees),
       sub: "Suscripciones + ventas directas",
       icon: TrendingUp,

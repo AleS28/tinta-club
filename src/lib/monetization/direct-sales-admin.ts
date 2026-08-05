@@ -5,7 +5,7 @@ import {
   DIRECT_SALE_PLATFORM_SHARE,
 } from "@/lib/monetization/constants";
 import { getCurrentMonthYear } from "@/lib/monetization/month-year";
-import type { RevenueAmounts } from "@/lib/monetization/stripe-net";
+import type { RevenueAmounts } from "@/lib/monetization/gateway-net";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 function earningsSummaryDocId(authorId: string, monthYear: string): string {
@@ -20,19 +20,29 @@ export interface RecordDirectSaleInput {
   amountPaid: number;
 }
 
-export interface RecordDirectSaleFromStripeInput {
+export interface RecordDirectChapterSaleInput {
   userId: string;
   bookId: string;
   chapterId: string;
   authorId: string;
   amounts: RevenueAmounts;
-  stripeCheckoutSessionId: string;
-  stripePaymentIntentId?: string;
+  checkoutId: string;
+  paymentId?: string;
   monthYear?: string;
 }
 
-export async function recordDirectChapterSaleFromStripe(
-  input: RecordDirectSaleFromStripeInput,
+export interface RecordDirectBookSaleInput {
+  userId: string;
+  bookId: string;
+  authorId: string;
+  amounts: RevenueAmounts;
+  checkoutId: string;
+  paymentId?: string;
+  monthYear?: string;
+}
+
+export async function recordDirectChapterSale(
+  input: RecordDirectChapterSaleInput,
 ): Promise<DirectChapterSale> {
   const adminDb = await getAdminDb();
   if (!adminDb) throw new Error("Firestore Admin no configurado");
@@ -43,9 +53,7 @@ export async function recordDirectChapterSaleFromStripe(
   const monthYear = input.monthYear ?? getCurrentMonthYear();
   const now = new Date().toISOString();
 
-  const ref = adminDb
-    .collection(COLLECTIONS.directChapterSales)
-    .doc(input.stripeCheckoutSessionId);
+  const ref = adminDb.collection(COLLECTIONS.directChapterSales).doc(input.checkoutId);
 
   const sale: DirectChapterSale = {
     id: ref.id,
@@ -58,8 +66,8 @@ export async function recordDirectChapterSaleFromStripe(
     amountNet: netUsd,
     authorShare,
     platformShare,
-    stripeCheckoutSessionId: input.stripeCheckoutSessionId,
-    stripePaymentIntentId: input.stripePaymentIntentId,
+    checkoutId: input.checkoutId,
+    paymentId: input.paymentId,
     createdAt: now,
   };
 
@@ -68,18 +76,14 @@ export async function recordDirectChapterSaleFromStripe(
     .doc(earningsSummaryDocId(input.authorId, monthYear));
 
   await adminDb.runTransaction(async (tx) => {
-    const existing = await tx.get(ref);
-    if (existing.exists) {
-      return;
-    }
+    const [existing, summarySnap] = await Promise.all([tx.get(ref), tx.get(summaryRef)]);
+    if (existing.exists) return;
 
-    tx.set(ref, sale);
-
-    const summarySnap = await tx.get(summaryRef);
     const prevDirect = summarySnap.exists
       ? Number(summarySnap.data()?.directSalesEarnings ?? 0)
       : 0;
 
+    tx.set(ref, sale);
     tx.set(
       summaryRef,
       {
@@ -100,15 +104,13 @@ export async function recordDirectChapterSaleFromStripe(
 }
 
 export async function applyDirectSaleRefund(input: {
-  stripeCheckoutSessionId: string;
+  checkoutId: string;
   refundAmounts: RevenueAmounts;
 }): Promise<void> {
   const adminDb = await getAdminDb();
   if (!adminDb) throw new Error("Firestore Admin no configurado");
 
-  const saleRef = adminDb
-    .collection(COLLECTIONS.directChapterSales)
-    .doc(input.stripeCheckoutSessionId);
+  const saleRef = adminDb.collection(COLLECTIONS.directChapterSales).doc(input.checkoutId);
 
   const saleSnap = await saleRef.get();
   if (!saleSnap.exists) return;
@@ -126,20 +128,18 @@ export async function applyDirectSaleRefund(input: {
     .doc(earningsSummaryDocId(String(sale.authorId), monthYear));
 
   await adminDb.runTransaction(async (tx) => {
-    const current = await tx.get(saleRef);
+    const [current, summarySnap] = await Promise.all([tx.get(saleRef), tx.get(summaryRef)]);
     if (!current.exists || current.data()?.refundedAt) return;
+
+    const prevDirect = summarySnap.exists
+      ? Number(summarySnap.data()?.directSalesEarnings ?? 0)
+      : 0;
 
     tx.update(saleRef, {
       refundedAt: now,
       refundNet: netRefund,
       refundAuthorShare: authorRefund,
     });
-
-    const summarySnap = await tx.get(summaryRef);
-    const prevDirect = summarySnap.exists
-      ? Number(summarySnap.data()?.directSalesEarnings ?? 0)
-      : 0;
-
     tx.set(
       summaryRef,
       {
@@ -153,18 +153,8 @@ export async function applyDirectSaleRefund(input: {
   });
 }
 
-export interface RecordDirectBookSaleFromStripeInput {
-  userId: string;
-  bookId: string;
-  authorId: string;
-  amounts: RevenueAmounts;
-  stripeCheckoutSessionId: string;
-  stripePaymentIntentId?: string;
-  monthYear?: string;
-}
-
-export async function recordDirectBookSaleFromStripe(
-  input: RecordDirectBookSaleFromStripeInput,
+export async function recordDirectBookSale(
+  input: RecordDirectBookSaleInput,
 ): Promise<DirectBookSale> {
   const adminDb = await getAdminDb();
   if (!adminDb) throw new Error("Firestore Admin no configurado");
@@ -175,9 +165,7 @@ export async function recordDirectBookSaleFromStripe(
   const monthYear = input.monthYear ?? getCurrentMonthYear();
   const now = new Date().toISOString();
 
-  const ref = adminDb
-    .collection(COLLECTIONS.directBookSales)
-    .doc(input.stripeCheckoutSessionId);
+  const ref = adminDb.collection(COLLECTIONS.directBookSales).doc(input.checkoutId);
 
   const sale: DirectBookSale = {
     id: ref.id,
@@ -189,8 +177,8 @@ export async function recordDirectBookSaleFromStripe(
     amountNet: netUsd,
     authorShare,
     platformShare,
-    stripeCheckoutSessionId: input.stripeCheckoutSessionId,
-    stripePaymentIntentId: input.stripePaymentIntentId,
+    checkoutId: input.checkoutId,
+    paymentId: input.paymentId,
     createdAt: now,
   };
 
@@ -199,16 +187,14 @@ export async function recordDirectBookSaleFromStripe(
     .doc(earningsSummaryDocId(input.authorId, monthYear));
 
   await adminDb.runTransaction(async (tx) => {
-    const existing = await tx.get(ref);
+    const [existing, summarySnap] = await Promise.all([tx.get(ref), tx.get(summaryRef)]);
     if (existing.exists) return;
 
-    tx.set(ref, sale);
-
-    const summarySnap = await tx.get(summaryRef);
     const prevDirect = summarySnap.exists
       ? Number(summarySnap.data()?.directSalesEarnings ?? 0)
       : 0;
 
+    tx.set(ref, sale);
     tx.set(
       summaryRef,
       {
@@ -229,15 +215,13 @@ export async function recordDirectBookSaleFromStripe(
 }
 
 export async function applyDirectBookSaleRefund(input: {
-  stripeCheckoutSessionId: string;
+  checkoutId: string;
   refundAmounts: RevenueAmounts;
 }): Promise<void> {
   const adminDb = await getAdminDb();
   if (!adminDb) throw new Error("Firestore Admin no configurado");
 
-  const saleRef = adminDb
-    .collection(COLLECTIONS.directBookSales)
-    .doc(input.stripeCheckoutSessionId);
+  const saleRef = adminDb.collection(COLLECTIONS.directBookSales).doc(input.checkoutId);
 
   const saleSnap = await saleRef.get();
   if (!saleSnap.exists) return;
@@ -255,20 +239,18 @@ export async function applyDirectBookSaleRefund(input: {
     .doc(earningsSummaryDocId(String(sale.authorId), monthYear));
 
   await adminDb.runTransaction(async (tx) => {
-    const current = await tx.get(saleRef);
+    const [current, summarySnap] = await Promise.all([tx.get(saleRef), tx.get(summaryRef)]);
     if (!current.exists || current.data()?.refundedAt) return;
+
+    const prevDirect = summarySnap.exists
+      ? Number(summarySnap.data()?.directSalesEarnings ?? 0)
+      : 0;
 
     tx.update(saleRef, {
       refundedAt: now,
       refundNet: netRefund,
       refundAuthorShare: authorRefund,
     });
-
-    const summarySnap = await tx.get(summaryRef);
-    const prevDirect = summarySnap.exists
-      ? Number(summarySnap.data()?.directSalesEarnings ?? 0)
-      : 0;
-
     tx.set(
       summaryRef,
       {
@@ -282,40 +264,61 @@ export async function applyDirectBookSaleRefund(input: {
   });
 }
 
-export async function findDirectBookSaleByPaymentIntent(
-  paymentIntentId: string,
-): Promise<DirectBookSale | null> {
+async function findSaleByPaymentField<T>(
+  collection: string,
+  paymentId: string,
+): Promise<T | null> {
   const adminDb = await getAdminDb();
   if (!adminDb) return null;
 
-  const snap = await adminDb
-    .collection(COLLECTIONS.directBookSales)
-    .where("stripePaymentIntentId", "==", paymentIntentId)
-    .limit(1)
-    .get();
+  for (const field of ["paymentId", "stripePaymentIntentId"] as const) {
+    const snap = await adminDb
+      .collection(collection)
+      .where(field, "==", paymentId)
+      .limit(1)
+      .get();
+    if (!snap.empty) {
+      const data = snap.docs[0]!.data() as T & { checkoutId?: string; stripeCheckoutSessionId?: string };
+      if (!("checkoutId" in data) || !data.checkoutId) {
+        return {
+          ...data,
+          checkoutId: data.stripeCheckoutSessionId ?? snap.docs[0]!.id,
+        } as T;
+      }
+      return data;
+    }
+  }
 
-  if (snap.empty) return null;
-  return snap.docs[0]!.data() as DirectBookSale;
+  return null;
 }
 
-/** @deprecated Usar recordDirectChapterSaleFromStripe vía webhook Stripe */
-export async function recordDirectChapterSale(
+export async function findDirectBookSaleByPaymentId(
+  paymentId: string,
+): Promise<DirectBookSale | null> {
+  return findSaleByPaymentField<DirectBookSale>(COLLECTIONS.directBookSales, paymentId);
+}
+
+export async function findDirectChapterSaleByPaymentId(
+  paymentId: string,
+): Promise<DirectChapterSale | null> {
+  return findSaleByPaymentField<DirectChapterSale>(COLLECTIONS.directChapterSales, paymentId);
+}
+
+/** @deprecated Usar findDirectBookSaleByPaymentId */
+export const findDirectBookSaleByPaymentIntent = findDirectBookSaleByPaymentId;
+
+/** Registro legacy sin pasarela */
+export async function recordLegacyDirectChapterSale(
   input: RecordDirectSaleInput,
 ): Promise<DirectChapterSale> {
-  const adminDb = await getAdminDb();
-  if (!adminDb) throw new Error("Firestore Admin no configurado");
-
   const amountPaid = Math.max(0, input.amountPaid);
-  const feeUsd = 0;
-  const netUsd = amountPaid;
-
-  return recordDirectChapterSaleFromStripe({
+  return recordDirectChapterSale({
     userId: input.userId,
     bookId: input.bookId,
     chapterId: input.chapterId,
     authorId: input.authorId,
-    amounts: { grossUsd: amountPaid, feeUsd, netUsd },
-    stripeCheckoutSessionId: `legacy_${input.userId}_${input.chapterId}_${Date.now()}`,
+    amounts: { grossUsd: amountPaid, feeUsd: 0, netUsd: amountPaid },
+    checkoutId: `legacy_${input.userId}_${input.chapterId}_${Date.now()}`,
   });
 }
 

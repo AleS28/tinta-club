@@ -5,7 +5,7 @@ import {
   DIRECT_SALE_PLATFORM_SHARE,
 } from "@/lib/monetization/constants";
 import { getCurrentMonthYear } from "@/lib/monetization/month-year";
-import type { RevenueAmounts } from "@/lib/monetization/stripe-net";
+import type { RevenueAmounts } from "@/lib/monetization/gateway-net";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 function earningsSummaryDocId(authorId: string, monthYear: string): string {
@@ -17,12 +17,12 @@ export interface RecordAuthorDonationInput {
   donorDisplayName: string;
   authorId: string;
   amounts: RevenueAmounts;
-  stripeCheckoutSessionId: string;
-  stripePaymentIntentId?: string;
+  checkoutId: string;
+  paymentId?: string;
   monthYear?: string;
 }
 
-export async function recordAuthorDonationFromStripe(
+export async function recordAuthorDonation(
   input: RecordAuthorDonationInput,
 ): Promise<AuthorDonation> {
   const adminDb = await getAdminDb();
@@ -34,9 +34,7 @@ export async function recordAuthorDonationFromStripe(
   const monthYear = input.monthYear ?? getCurrentMonthYear();
   const now = new Date().toISOString();
 
-  const ref = adminDb
-    .collection(COLLECTIONS.authorDonations)
-    .doc(input.stripeCheckoutSessionId);
+  const ref = adminDb.collection(COLLECTIONS.authorDonations).doc(input.checkoutId);
 
   const donation: AuthorDonation = {
     id: ref.id,
@@ -48,8 +46,8 @@ export async function recordAuthorDonationFromStripe(
     amountNet: netUsd,
     authorShare,
     platformShare,
-    stripeCheckoutSessionId: input.stripeCheckoutSessionId,
-    stripePaymentIntentId: input.stripePaymentIntentId,
+    checkoutId: input.checkoutId,
+    paymentId: input.paymentId,
     createdAt: now,
   };
 
@@ -58,14 +56,12 @@ export async function recordAuthorDonationFromStripe(
     .doc(earningsSummaryDocId(input.authorId, monthYear));
 
   await adminDb.runTransaction(async (tx) => {
-    const existing = await tx.get(ref);
+    const [existing, summarySnap] = await Promise.all([tx.get(ref), tx.get(summaryRef)]);
     if (existing.exists) return;
 
-    tx.set(ref, donation);
-
-    const summarySnap = await tx.get(summaryRef);
     const prevDonations = Number(summarySnap.data()?.donationsEarnings ?? 0);
 
+    tx.set(ref, donation);
     tx.set(
       summaryRef,
       {
@@ -102,7 +98,14 @@ export async function getAuthorDonationsForMonth(authorId: string, monthYear: st
 export async function getDonationTotalsForMonth(monthYear: string) {
   const adminDb = await getAdminDb();
   if (!adminDb) {
-    return { gross: 0, gatewayFees: 0, net: 0, platformShare: 0, authorShare: 0, items: [] as AuthorDonation[] };
+    return {
+      gross: 0,
+      gatewayFees: 0,
+      net: 0,
+      platformShare: 0,
+      authorShare: 0,
+      items: [] as AuthorDonation[],
+    };
   }
 
   const monthPrefix = `${monthYear}-`;

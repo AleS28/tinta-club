@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       uid,
       email,
-      hadStripeSubscription: Boolean(before.stripeSubscriptionId),
+      hadPayPalSubscription: Boolean(before.paypalSubscriptionId || before.stripeSubscriptionId),
       message: "Membresía revocada. La usuaria debe cerrar sesión e iniciar de nuevo.",
     });
   } catch (error) {

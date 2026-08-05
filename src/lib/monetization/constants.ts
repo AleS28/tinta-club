@@ -52,7 +52,9 @@ export const COLLECTIONS = {
   authorEarningsSummary: "author_earnings_summary",
   statisticalViewWindows: "statistical_view_windows",
   readingCapSessions: "reading_cap_sessions",
-  stripeProcessedEvents: "stripe_processed_events",
+  paymentProcessedEvents: "payment_processed_events",
+  /** @deprecated Usar paymentProcessedEvents */
+  stripeProcessedEvents: "payment_processed_events",
   chapterPurchases: "chapter_purchases",
   bookPurchases: "book_purchases",
   bookLikes: "book_likes",

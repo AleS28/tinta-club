@@ -1,7 +1,7 @@
 import { COLLECTIONS } from "@/lib/monetization/constants";
 import { getAdminDb } from "@/lib/firebase-admin";
 
-export interface StripeProcessedEventRecord {
+export interface PaymentProcessedEventRecord {
   key: string;
   eventId?: string;
   type: string;
@@ -10,17 +10,17 @@ export interface StripeProcessedEventRecord {
 }
 
 /**
- * Reclama una clave de idempotencia de Stripe (event.id, invoice.id, session.id, etc.).
+ * Reclama una clave de idempotencia de pagos (event.id, order.id, capture.id, etc.).
  * Devuelve true si es la primera vez; false si ya fue procesada.
  */
-export async function claimStripeProcessingKey(
+export async function claimPaymentProcessingKey(
   key: string,
-  payload: Omit<StripeProcessedEventRecord, "key" | "processedAt">,
+  payload: Omit<PaymentProcessedEventRecord, "key" | "processedAt">,
 ): Promise<boolean> {
   const adminDb = await getAdminDb();
   if (!adminDb) throw new Error("Firestore Admin no configurado");
 
-  const ref = adminDb.collection(COLLECTIONS.stripeProcessedEvents).doc(key);
+  const ref = adminDb.collection(COLLECTIONS.paymentProcessedEvents).doc(key);
 
   return adminDb.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
@@ -35,10 +35,13 @@ export async function claimStripeProcessingKey(
   });
 }
 
-export async function wasStripeProcessingKeyClaimed(key: string): Promise<boolean> {
+export async function wasPaymentProcessingKeyClaimed(key: string): Promise<boolean> {
   const adminDb = await getAdminDb();
   if (!adminDb) return false;
 
-  const snap = await adminDb.collection(COLLECTIONS.stripeProcessedEvents).doc(key).get();
+  const snap = await adminDb.collection(COLLECTIONS.paymentProcessedEvents).doc(key).get();
   return snap.exists;
 }
+
+/** @deprecated Usar claimPaymentProcessingKey */
+export const claimStripeProcessingKey = claimPaymentProcessingKey;

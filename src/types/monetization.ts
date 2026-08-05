@@ -31,7 +31,11 @@ export interface DirectChapterSale {
   authorShare: number;
   platformShare: number;
   createdAt: string;
+  checkoutId?: string;
+  paymentId?: string;
+  /** @deprecated Compat Stripe */
   stripeCheckoutSessionId?: string;
+  /** @deprecated Compat Stripe */
   stripePaymentIntentId?: string;
   refundedAt?: string;
   refundNet?: number;
@@ -49,7 +53,11 @@ export interface DirectBookSale {
   authorShare: number;
   platformShare: number;
   createdAt: string;
+  checkoutId?: string;
+  paymentId?: string;
+  /** @deprecated Compat Stripe */
   stripeCheckoutSessionId?: string;
+  /** @deprecated Compat Stripe */
   stripePaymentIntentId?: string;
   refundedAt?: string;
   refundNet?: number;
@@ -67,7 +75,11 @@ export interface AuthorDonation {
   authorShare: number;
   platformShare: number;
   createdAt: string;
+  checkoutId?: string;
+  paymentId?: string;
+  /** @deprecated Compat Stripe */
   stripeCheckoutSessionId?: string;
+  /** @deprecated Compat Stripe */
   stripePaymentIntentId?: string;
 }
 
@@ -75,7 +87,11 @@ export interface BookPurchase {
   userId: string;
   bookId: string;
   authorId: string;
-  stripeCheckoutSessionId: string;
+  checkoutId: string;
+  paymentId?: string | null;
+  /** @deprecated Compat Stripe */
+  stripeCheckoutSessionId?: string;
+  /** @deprecated Compat Stripe */
   stripePaymentIntentId?: string | null;
   purchasedAt: string;
   active: boolean;
@@ -87,7 +103,11 @@ export interface ChapterPurchase {
   userId: string;
   bookId: string;
   chapterId: string;
-  stripeCheckoutSessionId: string;
+  checkoutId: string;
+  paymentId?: string | null;
+  /** @deprecated Compat Stripe */
+  stripeCheckoutSessionId?: string;
+  /** @deprecated Compat Stripe */
   stripePaymentIntentId?: string | null;
   purchasedAt: string;
   active: boolean;

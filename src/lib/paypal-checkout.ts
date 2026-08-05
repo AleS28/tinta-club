@@ -2,18 +2,18 @@
 
 import type { User } from "firebase/auth";
 
-interface StripeCheckoutOptions {
+interface PayPalCheckoutOptions {
   bookId?: string;
   redirectTo?: string;
   priceUsd?: number;
 }
 
-export async function startStripeCheckout(
+export async function startPayPalCheckout(
   user: User,
-  options: StripeCheckoutOptions = {},
+  options: PayPalCheckoutOptions = {},
 ): Promise<void> {
   const token = await user.getIdToken();
-  const response = await fetch("/api/stripe/checkout", {
+  const response = await fetch("/api/paypal/checkout", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -25,24 +25,22 @@ export async function startStripeCheckout(
   const payload = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
 
   if (!response.ok || !payload.url) {
-    throw new Error(payload.error ?? "No se pudo iniciar el pago con Stripe");
+    throw new Error(payload.error ?? "No se pudo iniciar el pago con PayPal");
   }
 
   window.location.href = payload.url;
 }
 
-export async function openStripeBillingPortal(user: User): Promise<void> {
+export async function cancelPayPalSubscription(user: User): Promise<void> {
   const token = await user.getIdToken();
-  const response = await fetch("/api/stripe/portal", {
+  const response = await fetch("/api/paypal/cancel", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  const payload = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
+  const payload = (await response.json().catch(() => ({}))) as { error?: string; ok?: boolean };
 
-  if (!response.ok || !payload.url) {
-    throw new Error(payload.error ?? "No se pudo abrir el portal de facturación");
+  if (!response.ok) {
+    throw new Error(payload.error ?? "No se pudo cancelar la suscripción");
   }
-
-  window.location.href = payload.url;
 }

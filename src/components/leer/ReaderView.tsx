@@ -205,7 +205,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
 
       window.location.href = payload.url;
     } catch {
-      setPurchaseError("No pudimos conectar con Stripe.");
+      setPurchaseError("No pudimos conectar con PayPal.");
     } finally {
       setPurchaseLoading(false);
     }
@@ -236,7 +236,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
 
       window.location.href = payload.url;
     } catch {
-      setPurchaseError("No pudimos conectar con Stripe.");
+      setPurchaseError("No pudimos conectar con PayPal.");
     } finally {
       setPurchaseLoading(false);
     }

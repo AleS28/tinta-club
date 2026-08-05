@@ -18,7 +18,11 @@ export interface UserProfile {
   authorSlug?: string;
   /** ID legacy del mock antes de vincular la cuenta Firebase */
   legacyAuthorId?: string;
+  paypalPayerId?: string;
+  paypalSubscriptionId?: string;
+  /** @deprecated Compat Stripe */
   stripeCustomerId?: string;
+  /** @deprecated Compat Stripe */
   stripeSubscriptionId?: string;
   subscriptionExpiresAt?: string;
   createdAt?: string;

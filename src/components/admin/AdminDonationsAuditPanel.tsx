@@ -11,12 +11,12 @@ export function AdminDonationsAuditPanel({ report }: AdminDonationsAuditPanelPro
     <section className="rounded-2xl border border-sidebar bg-white/80 p-6 shadow-sm">
       <h2 className="font-serif text-xl font-bold text-ink">Auditoría de donaciones</h2>
       <p className="mt-1 text-sm text-muted">
-        Reparto 70% autor / 30% plataforma sobre el neto post-Stripe.
+        Reparto 70% autor / 30% plataforma sobre el neto post-PayPal.
       </p>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Stat label="Bruto" value={report.donationsGross} />
-        <Stat label="Comisiones Stripe" value={report.donationsGatewayFees} negative />
+        <Stat label="Comisiones PayPal" value={report.donationsGatewayFees} negative />
         <Stat label="Neto" value={report.donationsNet} />
         <Stat label="Plataforma 30%" value={report.donationsPlatformShare} />
         <Stat label="Autores 70%" value={report.donationsAuthorShare} highlight />

@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyFirebaseIdToken } from "@/lib/firebase-admin";
-import { getUserProfileFromFirestore } from "@/lib/firestore-admin";
-import { getStripe, getAppBaseUrl, isStripeConfigured } from "@/lib/stripe";
-import { getStripeCustomerId, saveStripeCustomerId } from "@/lib/subscription-admin";
+import { isPayPalConfigured } from "@/lib/paypal";
+import { createPayPalOrder } from "@/lib/paypal-orders";
 import { hasBookPurchaseAccess } from "@/lib/monetization/book-access-admin";
 import { getChaptersByBookId, getBookById } from "@/lib/db";
 import { buildStoreListing, resolveBookPriceUsd } from "@/lib/monetization/store-catalog-admin";
-import { isPremiumUser } from "@/types/user";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,8 +15,8 @@ interface RouteContext {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    if (!isStripeConfigured()) {
-      return NextResponse.json({ error: "Stripe no está configurado" }, { status: 503 });
+    if (!isPayPalConfigured()) {
+      return NextResponse.json({ error: "PayPal no está configurado" }, { status: 503 });
     }
 
     const { bookId } = await context.params;
@@ -50,78 +48,28 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const profile = await getUserProfileFromFirestore(decoded.uid, decoded.email);
-    if (profile && isPremiumUser(profile)) {
-      return NextResponse.json(
-        { error: "Ya tienes acceso premium con tu suscripción" },
-        { status: 400 },
-      );
-    }
-
     if (await hasBookPurchaseAccess(decoded.uid, bookId)) {
       return NextResponse.json({ error: "Ya compraste este libro" }, { status: 400 });
     }
 
     const priceUsd = await resolveBookPriceUsd(bookId);
-    const baseUrl = getAppBaseUrl();
-    const stripe = getStripe();
-
-    let customerId = await getStripeCustomerId(decoded.uid);
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: decoded.email,
-        metadata: { firebaseUid: decoded.uid },
-      });
-      customerId = customer.id;
-      await saveStripeCustomerId(decoded.uid, customerId);
-    }
-
     const firstChapterId = listing.firstChapterId ?? chapters[0]?.id;
     const successPath = firstChapterId
       ? `/leer/${firstChapterId}?purchased=true`
       : `/biblioteca?purchased=true&section=compras`;
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      customer: customerId,
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            unit_amount: Math.round(priceUsd * 100),
-            product_data: {
-              name: book.title,
-              description:
-                "Compra única — lectura de por vida en el visor de El Imperio de la Tinta (sin descarga).",
-            },
-          },
-          quantity: 1,
-        },
-      ],
-      metadata: {
-        type: "book_purchase",
-        firebaseUid: decoded.uid,
-        userId: decoded.uid,
-        bookId,
-        authorId: book.authorId,
-      },
-      payment_intent_data: {
-        metadata: {
-          type: "book_purchase",
-          firebaseUid: decoded.uid,
-          bookId,
-          authorId: book.authorId,
-        },
-      },
-      success_url: `${baseUrl}${successPath}`,
-      cancel_url: `${baseUrl}/tienda?purchase=canceled&bookId=${bookId}`,
+    const { orderId, approveUrl } = await createPayPalOrder({
+      type: "book_purchase",
+      firebaseUid: decoded.uid,
+      amountUsd: priceUsd,
+      description: `${book.title} — Compra de libro`,
+      successPath,
+      cancelPath: `/tienda?purchase=canceled&bookId=${bookId}`,
+      bookId,
+      authorId: book.authorId,
     });
 
-    if (!session.url) {
-      return NextResponse.json({ error: "No se pudo crear la sesión de pago" }, { status: 500 });
-    }
-
-    return NextResponse.json({ url: session.url, sessionId: session.id, priceUsd });
+    return NextResponse.json({ url: approveUrl, sessionId: orderId, priceUsd });
   } catch (error) {
     console.error("[books/purchase]", error);
     return NextResponse.json({ error: "Error al iniciar la compra" }, { status: 500 });

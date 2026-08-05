@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyFirebaseIdToken } from "@/lib/firebase-admin";
 import { getUserProfileFromFirestore } from "@/lib/firestore-admin";
-import { getStripe, getAppBaseUrl, isStripeConfigured } from "@/lib/stripe";
-import { getStripeCustomerId, saveStripeCustomerId } from "@/lib/subscription-admin";
+import { isPayPalConfigured } from "@/lib/paypal";
+import { createPayPalOrder } from "@/lib/paypal-orders";
 import { buildAuthorIdentityIndex, resolveAuthorFromIndex } from "@/lib/author-identity-admin";
 
 export const runtime = "nodejs";
@@ -23,8 +23,8 @@ async function resolveAuthorDisplayName(authorId: string): Promise<string> {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    if (!isStripeConfigured()) {
-      return NextResponse.json({ error: "Stripe no está configurado" }, { status: 503 });
+    if (!isPayPalConfigured()) {
+      return NextResponse.json({ error: "PayPal no está configurado" }, { status: 503 });
     }
 
     const { authorId } = await context.params;
@@ -53,62 +53,22 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const profile = await getUserProfileFromFirestore(decoded.uid, decoded.email);
     const donorDisplayName = profile?.displayName ?? decoded.email ?? "Lector";
     const authorName = await resolveAuthorDisplayName(authorId);
-    const stripe = getStripe();
-    const baseUrl = getAppBaseUrl();
-
-    let customerId = await getStripeCustomerId(decoded.uid);
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: decoded.email,
-        metadata: { firebaseUid: decoded.uid },
-      });
-      customerId = customer.id;
-      await saveStripeCustomerId(decoded.uid, customerId);
-    }
 
     const redirectTo = body.redirectTo ?? `/perfil/${authorId}?donated=true`;
+    const cancelBase = redirectTo.split("?")[0] ?? `/perfil/${authorId}`;
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      customer: customerId,
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            unit_amount: Math.round(amountUsd * 100),
-            product_data: {
-              name: `Apoyo a ${authorName}`,
-              description: "Donación directa al autor — El Imperio de la Tinta",
-            },
-          },
-          quantity: 1,
-        },
-      ],
-      metadata: {
-        type: "author_donation",
-        firebaseUid: decoded.uid,
-        userId: decoded.uid,
-        authorId,
-        donorDisplayName,
-        grossAmount: amountUsd.toFixed(2),
-      },
-      payment_intent_data: {
-        metadata: {
-          type: "author_donation",
-          firebaseUid: decoded.uid,
-          authorId,
-          donorDisplayName,
-        },
-      },
-      success_url: `${baseUrl}${redirectTo}`,
-      cancel_url: `${baseUrl}${redirectTo.split("?")[0]}?donate=canceled`,
+    const { orderId, approveUrl } = await createPayPalOrder({
+      type: "author_donation",
+      firebaseUid: decoded.uid,
+      amountUsd,
+      description: `Apoyo a ${authorName}`,
+      successPath: redirectTo.startsWith("/") ? redirectTo : `/${redirectTo}`,
+      cancelPath: `${cancelBase}?donate=canceled`,
+      authorId,
+      donorDisplayName,
     });
 
-    if (!session.url) {
-      return NextResponse.json({ error: "No se pudo crear la sesión de pago" }, { status: 500 });
-    }
-
-    return NextResponse.json({ url: session.url, sessionId: session.id, amountUsd });
+    return NextResponse.json({ url: approveUrl, sessionId: orderId, amountUsd });
   } catch (error) {
     console.error("[authors/donate]", error);
     return NextResponse.json({ error: "Error al iniciar la donación" }, { status: 500 });

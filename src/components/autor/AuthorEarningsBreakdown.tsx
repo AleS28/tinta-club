@@ -82,7 +82,7 @@ export function AuthorEarningsBreakdown({ data }: AuthorEarningsBreakdownProps) 
             {data.pool.subscriptionGatewayFees > 0 && (
               <>
                 {" "}
-                · Comisiones Stripe descontadas: ${data.pool.subscriptionGatewayFees.toFixed(2)}
+                · Comisiones PayPal descontadas: ${data.pool.subscriptionGatewayFees.toFixed(2)}
               </>
             )}
           </div>

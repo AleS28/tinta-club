@@ -58,7 +58,7 @@ export function SupportAuthorModal({
       }
       window.location.href = payload.url;
     } catch {
-      setError("No pudimos conectar con Stripe.");
+      setError("No pudimos conectar con PayPal.");
     } finally {
       setLoading(false);
     }

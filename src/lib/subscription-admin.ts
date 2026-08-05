@@ -1,8 +1,12 @@
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import type { SubscriptionStatus } from "@/types/user";
 
-export interface SubscriptionStripeData {
+export interface SubscriptionGatewayData {
+  paypalPayerId?: string;
+  paypalSubscriptionId?: string;
+  /** @deprecated Compatibilidad con datos Stripe previos */
   stripeCustomerId?: string;
+  /** @deprecated Compatibilidad con datos Stripe previos */
   stripeSubscriptionId?: string;
   subscriptionStatus?: SubscriptionStatus | "canceled" | "past_due";
   subscriptionExpiresAt?: string;
@@ -10,7 +14,7 @@ export interface SubscriptionStripeData {
 
 export async function activateSubscriptionAdmin(
   uid: string,
-  stripeData: SubscriptionStripeData = {},
+  gatewayData: SubscriptionGatewayData = {},
 ): Promise<void> {
   const adminDb = await getAdminDb();
   if (!adminDb) throw new Error("Firestore Admin no configurado");
@@ -24,7 +28,7 @@ export async function activateSubscriptionAdmin(
         isSubscriber: true,
         subscriptionStatus: "premium",
         subscribedAt: new Date().toISOString(),
-        ...stripeData,
+        ...gatewayData,
       },
       { merge: true },
     );
@@ -61,7 +65,7 @@ export async function deactivateSubscriptionAdmin(uid: string): Promise<void> {
   }
 }
 
-export async function getStripeCustomerId(uid: string): Promise<string | undefined> {
+export async function getPayPalSubscriptionId(uid: string): Promise<string | undefined> {
   const adminDb = await getAdminDb();
   if (!adminDb) return undefined;
 
@@ -69,12 +73,13 @@ export async function getStripeCustomerId(uid: string): Promise<string | undefin
   if (!snap.exists) return undefined;
 
   const data = snap.data();
-  return typeof data?.stripeCustomerId === "string" ? data.stripeCustomerId : undefined;
+  if (typeof data?.paypalSubscriptionId === "string") return data.paypalSubscriptionId;
+  return undefined;
 }
 
-export async function saveStripeCustomerId(uid: string, stripeCustomerId: string): Promise<void> {
+export async function savePayPalPayerId(uid: string, paypalPayerId: string): Promise<void> {
   const adminDb = await getAdminDb();
   if (!adminDb) return;
 
-  await adminDb.collection("users").doc(uid).set({ stripeCustomerId }, { merge: true });
+  await adminDb.collection("users").doc(uid).set({ paypalPayerId }, { merge: true });
 }

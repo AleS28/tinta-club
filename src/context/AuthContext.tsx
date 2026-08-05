@@ -29,7 +29,7 @@ import {
 } from "@/lib/auth-session";
 import { activateSubscription } from "@/lib/subscription";
 import { findFounderByEmail } from "@/data/founder-authors";
-import { startStripeCheckout } from "@/lib/stripe-checkout";
+import { startPayPalCheckout } from "@/lib/paypal-checkout";
 import {
   isPremiumUser,
   normalizeUserProfile,
@@ -393,8 +393,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (options?: { bookId?: string; redirectTo?: string; priceUsd?: number }) => {
       if (!user) throw new Error("Debes iniciar sesión para suscribirte");
 
-      if (process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
-        await startStripeCheckout(user, options);
+      if (process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID) {
+        await startPayPalCheckout(user, options);
         return;
       }
 

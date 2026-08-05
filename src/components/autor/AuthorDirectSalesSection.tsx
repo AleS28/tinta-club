@@ -19,7 +19,7 @@ export function AuthorDirectSalesSection({ data }: AuthorDirectSalesSectionProps
         Ventas directas individuales (70% autor)
       </h3>
       <p className="mt-2 text-sm text-muted">
-        Compras de capítulos y libros completos en la tienda. Tu parte es el 70% del neto post-Stripe,
+        Compras de capítulos y libros completos en la tienda. Tu parte es el 70% del neto post-PayPal,
         separado del pool de suscripciones.
       </p>
 

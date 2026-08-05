@@ -5,7 +5,7 @@ import {
   PLATFORM_POOL_SHARE,
 } from "@/lib/monetization/constants";
 import { getCurrentMonthYear } from "@/lib/monetization/month-year";
-import type { RevenueAmounts } from "@/lib/monetization/stripe-net";
+import type { RevenueAmounts } from "@/lib/monetization/gateway-net";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 function normalizePool(id: string, raw: FirebaseFirestore.DocumentData): MonthlyPool {
@@ -94,7 +94,7 @@ export async function getOrCreateOpenPool(monthYear = getCurrentMonthYear()): Pr
   return empty;
 }
 
-/** Registra ingreso de suscripción: el 70/30 se aplica sobre el neto post-Stripe. */
+/** Registra ingreso de suscripción: el 70/30 se aplica sobre el neto post-PayPal. */
 export async function addSubscriptionRevenueToPool(
   amounts: RevenueAmounts,
   monthYear = getCurrentMonthYear(),

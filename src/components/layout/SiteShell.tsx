@@ -1,6 +1,7 @@
 import { SideCommunityNavLeft } from "@/components/layout/SideCommunityNavLeft";
 import { SideSocialBannerRight } from "@/components/layout/SideSocialBannerRight";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { PaymentSuccessModal } from "@/components/payments/PaymentSuccessModal";
 
 interface SiteShellProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ export function SiteShell({ children }: SiteShellProps) {
       </div>
 
       <MobileBottomNav />
+      <PaymentSuccessModal />
     </div>
   );
 }

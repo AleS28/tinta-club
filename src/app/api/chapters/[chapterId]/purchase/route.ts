@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyFirebaseIdToken } from "@/lib/firebase-admin";
-import { getChapterForApi, getUserProfileFromFirestore } from "@/lib/firestore-admin";
+import { getChapterForApi } from "@/lib/firestore-admin";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { getStripe, getAppBaseUrl, isStripeConfigured } from "@/lib/stripe";
-import { getStripeCustomerId, saveStripeCustomerId } from "@/lib/subscription-admin";
+import { isPayPalConfigured } from "@/lib/paypal";
+import { createPayPalOrder } from "@/lib/paypal-orders";
 import { hasChapterPurchaseAccess } from "@/lib/monetization/chapter-access-admin";
 import { hasBookPurchaseAccess } from "@/lib/monetization/book-access-admin";
 import { resolveChapterPriceUsd } from "@/lib/monetization/store-catalog-admin";
-import { isPremiumUser } from "@/types/user";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,14 +26,10 @@ async function resolveAuthorId(bookId: string): Promise<string | null> {
   return typeof authorId === "string" && authorId.length > 0 ? authorId : null;
 }
 
-async function resolveChapterPriceUsdForPurchase(chapterId: string, bookId: string): Promise<number> {
-  return resolveChapterPriceUsd(chapterId, bookId);
-}
-
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    if (!isStripeConfigured()) {
-      return NextResponse.json({ error: "Stripe no está configurado" }, { status: 503 });
+    if (!isPayPalConfigured()) {
+      return NextResponse.json({ error: "PayPal no está configurado" }, { status: 503 });
     }
 
     const { chapterId } = await context.params;
@@ -60,14 +55,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Este capítulo no es premium" }, { status: 400 });
     }
 
-    const profile = await getUserProfileFromFirestore(decoded.uid, decoded.email);
-    if (profile && isPremiumUser(profile)) {
-      return NextResponse.json(
-        { error: "Ya tienes acceso premium con tu suscripción" },
-        { status: 400 },
-      );
-    }
-
     if (await hasBookPurchaseAccess(decoded.uid, chapter.bookId)) {
       return NextResponse.json({ error: "Ya tienes acceso a este libro" }, { status: 400 });
     }
@@ -81,62 +68,21 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Autor no encontrado para esta obra" }, { status: 404 });
     }
 
-    const priceUsd = await resolveChapterPriceUsdForPurchase(chapterId, chapter.bookId);
-    const baseUrl = getAppBaseUrl();
-    const stripe = getStripe();
+    const priceUsd = await resolveChapterPriceUsd(chapterId, chapter.bookId);
 
-    let customerId = await getStripeCustomerId(decoded.uid);
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: decoded.email,
-        metadata: { firebaseUid: decoded.uid },
-      });
-      customerId = customer.id;
-      await saveStripeCustomerId(decoded.uid, customerId);
-    }
-
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      customer: customerId,
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            unit_amount: Math.round(priceUsd * 100),
-            product_data: {
-              name: chapter.title,
-              description: "Compra directa de capítulo — El Imperio de la Tinta",
-            },
-          },
-          quantity: 1,
-        },
-      ],
-      metadata: {
-        type: "chapter_purchase",
-        firebaseUid: decoded.uid,
-        userId: decoded.uid,
-        chapterId,
-        bookId: chapter.bookId,
-        authorId,
-      },
-      payment_intent_data: {
-        metadata: {
-          type: "chapter_purchase",
-          firebaseUid: decoded.uid,
-          chapterId,
-          bookId: chapter.bookId,
-          authorId,
-        },
-      },
-      success_url: `${baseUrl}/leer/${chapterId}?purchased=true`,
-      cancel_url: `${baseUrl}/leer/${chapterId}?purchase=canceled`,
+    const { orderId, approveUrl } = await createPayPalOrder({
+      type: "chapter_purchase",
+      firebaseUid: decoded.uid,
+      amountUsd: priceUsd,
+      description: `${chapter.title} — Compra de capítulo`,
+      successPath: `/leer/${chapterId}?purchased=true`,
+      cancelPath: `/leer/${chapterId}?purchase=canceled`,
+      bookId: chapter.bookId,
+      chapterId,
+      authorId,
     });
 
-    if (!session.url) {
-      return NextResponse.json({ error: "No se pudo crear la sesión de pago" }, { status: 500 });
-    }
-
-    return NextResponse.json({ url: session.url, sessionId: session.id, priceUsd });
+    return NextResponse.json({ url: approveUrl, sessionId: orderId, priceUsd });
   } catch (error) {
     console.error("[chapters/purchase]", error);
     return NextResponse.json({ error: "Error al iniciar la compra" }, { status: 500 });

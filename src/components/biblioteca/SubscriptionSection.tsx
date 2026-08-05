@@ -1,45 +1,42 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { CheckCircle2, Crown, ExternalLink, Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { CheckCircle2, Crown, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { openStripeBillingPortal } from "@/lib/stripe-checkout";
+import { cancelPayPalSubscription } from "@/lib/paypal-checkout";
 import { DEFAULT_SUBSCRIPTION_PRICE } from "@/lib/subscription";
 
 export function SubscriptionSection() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { user, userProfile, isSubscriber, refreshUserProfile } = useAuth();
   const [portalLoading, setPortalLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const status = searchParams.get("subscription");
-    if (!status || !user) return;
-
-    if (status === "success") {
-      setMessage("¡Pago recibido! Activando tu membresía…");
-      void refreshUserProfile().then(() => {
-        setMessage("¡Bienvenida, Socia del Imperio! Tu acceso premium ya está activo.");
-      });
-    } else if (status === "canceled") {
-      setMessage("El pago fue cancelado. Puedes intentarlo de nuevo cuando quieras.");
+    // El mensaje visual lo muestra PaymentSuccessModal; aquí solo refrescamos el perfil.
+    if (searchParams.get("subscription") === "success" && user) {
+      void refreshUserProfile();
     }
+  }, [searchParams, user, refreshUserProfile]);
 
-    const cleanUrl = window.location.pathname;
-    router.replace(cleanUrl);
-  }, [searchParams, user, refreshUserProfile, router]);
-
-  const handleManage = async () => {
+  const handleCancel = async () => {
     if (!user) return;
+    const confirmed = window.confirm(
+      "¿Segura de que quieres cancelar tu suscripción? Perderás el acceso premium al final del ciclo actual.",
+    );
+    if (!confirmed) return;
+
     setPortalLoading(true);
     try {
-      await openStripeBillingPortal(user);
+      await cancelPayPalSubscription(user);
+      await refreshUserProfile();
+      setMessage("Tu suscripción fue cancelada.");
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "No se pudo abrir el portal de Stripe",
+        error instanceof Error ? error.message : "No se pudo cancelar la suscripción",
       );
+    } finally {
       setPortalLoading(false);
     }
   };
@@ -81,16 +78,12 @@ export function SubscriptionSection() {
             </div>
             <button
               type="button"
-              onClick={handleManage}
+              onClick={handleCancel}
               disabled={portalLoading}
               className="inline-flex items-center justify-center gap-2 rounded-full border border-terracotta/30 bg-white px-5 py-2.5 text-sm font-semibold text-terracotta transition-colors hover:bg-terracotta/5 disabled:opacity-60"
             >
-              {portalLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ExternalLink className="h-4 w-4" />
-              )}
-              Gestionar / Cancelar
+              {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Cancelar suscripción
             </button>
           </div>
         ) : (

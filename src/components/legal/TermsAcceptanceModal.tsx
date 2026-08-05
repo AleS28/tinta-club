@@ -74,7 +74,7 @@ export function TermsAcceptanceModal({
       await recordReaderTermsAcceptance(appId, user.uid, {
         termsVersion: READER_TERMS_VERSION,
         bookId,
-        subscriptionIntent: `stripe-premium-monthly-${priceUsd}-usd`,
+        subscriptionIntent: `paypal-premium-monthly-${priceUsd}-usd`,
         legalName: user.displayName ?? undefined,
       });
 
@@ -222,12 +222,12 @@ export function TermsAcceptanceModal({
                   Procesando…
                 </>
               ) : (
-                "Ir a pagar con Stripe"
+                "Ir a pagar con PayPal"
               )}
             </button>
 
             <p className="mt-3 text-center text-xs text-[#FCF9F5]/45">
-              Pago seguro con Stripe · Cancela cuando quieras desde Mi Biblioteca
+              Pago seguro con PayPal · Cancela cuando quieras desde Mi Biblioteca
             </p>
           </div>
         </div>

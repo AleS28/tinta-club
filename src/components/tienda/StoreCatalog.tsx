@@ -98,7 +98,7 @@ export function StoreCatalog() {
 
       window.location.href = payload.url;
     } catch {
-      setError("No pudimos conectar con Stripe.");
+      setError("No pudimos conectar con PayPal.");
     } finally {
       setPurchaseLoadingId(null);
     }

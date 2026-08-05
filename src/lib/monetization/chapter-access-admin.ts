@@ -10,8 +10,8 @@ export async function grantChapterPurchaseAccess(input: {
   userId: string;
   bookId: string;
   chapterId: string;
-  stripeCheckoutSessionId: string;
-  stripePaymentIntentId?: string;
+  checkoutId: string;
+  paymentId?: string;
 }): Promise<void> {
   const adminDb = await getAdminDb();
   if (!adminDb) throw new Error("Firestore Admin no configurado");
@@ -26,8 +26,8 @@ export async function grantChapterPurchaseAccess(input: {
       userId: input.userId,
       bookId: input.bookId,
       chapterId: input.chapterId,
-      stripeCheckoutSessionId: input.stripeCheckoutSessionId,
-      stripePaymentIntentId: input.stripePaymentIntentId ?? null,
+      checkoutId: input.checkoutId,
+      paymentId: input.paymentId ?? null,
       purchasedAt: now,
       active: true,
       updatedAt: now,
@@ -88,24 +88,28 @@ export async function getUserChapterPurchases(userId: string): Promise<ChapterPu
     .sort((a, b) => String(b.purchasedAt).localeCompare(String(a.purchasedAt)));
 }
 
-export async function findChapterPurchaseByPaymentIntent(
-  paymentIntentId: string,
+export async function findChapterPurchaseByPaymentId(
+  paymentId: string,
 ): Promise<{ userId: string; chapterId: string; bookId: string } | null> {
   const adminDb = await getAdminDb();
   if (!adminDb) return null;
 
-  const snap = await adminDb
-    .collection(COLLECTIONS.chapterPurchases)
-    .where("stripePaymentIntentId", "==", paymentIntentId)
-    .limit(1)
-    .get();
+  for (const field of ["paymentId", "stripePaymentIntentId"] as const) {
+    const snap = await adminDb
+      .collection(COLLECTIONS.chapterPurchases)
+      .where(field, "==", paymentId)
+      .limit(1)
+      .get();
 
-  if (snap.empty) return null;
+    if (!snap.empty) {
+      const data = snap.docs[0]!.data();
+      return {
+        userId: String(data.userId ?? ""),
+        chapterId: String(data.chapterId ?? ""),
+        bookId: String(data.bookId ?? ""),
+      };
+    }
+  }
 
-  const data = snap.docs[0]!.data();
-  return {
-    userId: String(data.userId ?? ""),
-    chapterId: String(data.chapterId ?? ""),
-    bookId: String(data.bookId ?? ""),
-  };
+  return null;
 }

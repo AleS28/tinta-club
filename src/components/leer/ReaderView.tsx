@@ -12,6 +12,7 @@ import type { StoreBookListing } from "@/types/monetization";
 import { useAuth } from "@/context/AuthContext";
 import { isPremiumUser } from "@/types/user";
 import { ReaderTopbar } from "@/components/leer/ReaderTopbar";
+import { ReaderParagraph } from "@/components/leer/ReaderParagraph";
 import { ReaderWatermark } from "@/components/leer/ReaderWatermark";
 import { PaywallBanner } from "@/components/leer/PaywallBanner";
 import { TermsAcceptanceModal } from "@/components/legal/TermsAcceptanceModal";
@@ -313,11 +314,11 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
             <div className="relative mt-8">
               <div className={`space-y-6 ${isPremiumLocked ? "max-h-[420px] overflow-hidden" : ""}`}>
                 {paragraphs.map((paragraph, index) => (
-                  <p
+                  <ReaderParagraph
                     key={index}
-                    className="leading-relaxed text-ink/90"
-                    style={{ fontSize: `${fontSize}px`, lineHeight: 1.8 }}
-                    dangerouslySetInnerHTML={{ __html: paragraph }}
+                    text={paragraph}
+                    prevText={index > 0 ? paragraphs[index - 1] : undefined}
+                    fontSize={fontSize}
                   />
                 ))}
               </div>

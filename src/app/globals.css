@@ -187,6 +187,53 @@
   }
 }
 
+/* Visor de lectura: narrativa vs textos destacados */
+.reader-paragraph-message {
+  @apply my-2 flex justify-end;
+}
+
+.reader-paragraph-note,
+.reader-paragraph-quote {
+  @apply my-2;
+}
+
+.reader-paragraph-dialogue {
+  @apply my-1;
+}
+
+.reader-message-bubble {
+  @apply max-w-[92%] rounded-2xl rounded-br-md border border-slate-200/80 bg-slate-50 px-4 py-3 shadow-sm sm:max-w-[85%];
+}
+
+.reader-note-bubble {
+  @apply max-w-[92%] rounded-xl border border-red-200/70 bg-red-50/80 px-4 py-3 shadow-sm sm:max-w-[85%];
+}
+
+.reader-message-label,
+.reader-note-label {
+  @apply block text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500;
+}
+
+.reader-note-label {
+  @apply text-red-700/70;
+}
+
+.reader-dialogue {
+  @apply border-l-[3px] border-terracotta/35 bg-amber-50/40 px-4 py-2.5 italic;
+}
+
+.reader-quote {
+  @apply border-l-[3px] border-imperial-deep/20 bg-sidebar/70 px-4 py-2.5 italic;
+}
+
+.reader-paragraph-narrative {
+  @apply font-serif;
+}
+
+.reader-paragraph-scene-break {
+  @apply select-none;
+}
+
 @media print {
   .no-print {
     display: none !important;

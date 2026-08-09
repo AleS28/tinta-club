@@ -12,7 +12,6 @@ export interface ReaderSegment {
 }
 
 const SCENE_BREAK = /^\*+$/;
-const SPOKEN_DIALOGUE = /^[\u2014\u2013-]/;
 
 const BLOCK_MESSAGE_PREV =
   /(?:abri[óo]\s+el\s+mensaje|escribi[óo]\s+(?:su\s+respuesta|un\s+mensaje)|envi[óo]\s+(?:un(?:\s+[úu]ltimo)?\s+mensaje|su\s+respuesta)|La respuesta de .+ no tard[óo] en llegar|mensaje de .+|nota dec[ií]a|el mensaje dec[ií]a|la nota dec[ií]a|mensaje en la pantalla|contest[óo] por escrito|escribi[óo] por (?:chat|whatsapp|mensaje))[^.?!]*:?\s*$/i;
@@ -20,17 +19,28 @@ const BLOCK_MESSAGE_PREV =
 const NOTE_PREV =
   /(?:nota dec[ií]a|la nota dec[ií]a|el papel dec[ií]a|escrito dec[ií]a|cartel dec[ií]a|dec[ií]a)\s*:?\s*$/i;
 
-const DASH = "\u2014\u2013-";
-const QUOTE_OPEN = "\u201c\u201d\u00ab\"";
-const QUOTE_CLOSE = "\u201d\u201c\u00bb\"";
+const QUOTE_OPEN_CHARS = ["\u201c", "\u201d", "\u00ab", '"'];
+const QUOTE_CLOSE_CHARS = ["\u201d", "\u201c", "\u00bb", '"'];
+const DASH_CHARS = ["\u2014", "\u2013", "-"];
 
-const FULLY_QUOTED = new RegExp(`^[${QUOTE_OPEN}]([\\s\\S]+)[${QUOTE_CLOSE}]$`);
+function charClass(chars: string[]): string {
+  return [...new Set(chars)]
+    .map((ch) => `\\u${(ch.codePointAt(0) ?? 0).toString(16).padStart(4, "0")}`)
+    .join("");
+}
+
+const QUOTE_OPEN_CLASS = charClass(QUOTE_OPEN_CHARS);
+const QUOTE_CLOSE_CLASS = charClass(QUOTE_CLOSE_CHARS);
+const DASH_CLASS = charClass(DASH_CHARS);
+const SPOKEN_DIALOGUE = new RegExp(`^[${DASH_CLASS}]`);
+
+const FULLY_QUOTED = new RegExp(`^[${QUOTE_OPEN_CLASS}]([\\s\\S]+)[${QUOTE_CLOSE_CLASS}]$`);
 const INLINE_MESSAGE = new RegExp(
-  `^([\\s\\S]*?)(?:te mandar[éé]|mandar[éé]|enviar[éé])\\s+un mensaje:\\s*([${QUOTE_OPEN}][\\s\\S]+?[${QUOTE_CLOSE}])([\\s\\S]*)$`,
+  `^([\\s\\S]*?)(?:te mandar[éé]|mandar[éé]|enviar[éé])\\s+un mensaje:\\s*([${QUOTE_OPEN_CLASS}][\\s\\S]+?[${QUOTE_CLOSE_CLASS}])([\\s\\S]*)$`,
   "i",
 );
 const INLINE_HIGHLIGHT = new RegExp(
-  `[${QUOTE_OPEN}][^${QUOTE_CLOSE}]+[${QUOTE_CLOSE}]|[${DASH}][^${DASH}\\n]+?(?=(?:[${DASH}${QUOTE_OPEN}]|$))`,
+  `[${QUOTE_OPEN_CLASS}][^${QUOTE_CLOSE_CLASS}]+[${QUOTE_CLOSE_CLASS}]|[${DASH_CLASS}][^${DASH_CLASS}\\n]+?(?=(?:[${DASH_CLASS}${QUOTE_OPEN_CLASS}]|$))`,
   "g",
 );
 
@@ -39,11 +49,11 @@ function normalize(text: string): string {
 }
 
 function stripQuotes(text: string): string {
-  return text.replace(new RegExp(`^[${QUOTE_OPEN}]+|[${QUOTE_CLOSE}]+$`, "g"), "").trim();
+  return text.replace(new RegExp(`^[${QUOTE_OPEN_CLASS}]+|[${QUOTE_CLOSE_CLASS}]+$`, "g"), "").trim();
 }
 
 function stripDialogueMark(text: string): string {
-  return text.replace(new RegExp(`^[${DASH}]\\s*`), "").trim();
+  return text.replace(new RegExp(`^[${DASH_CLASS}]\\s*`), "").trim();
 }
 
 function isBlockMessage(text: string, prevText?: string): boolean {

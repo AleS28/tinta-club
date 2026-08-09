@@ -33,6 +33,19 @@ const GENRE_GRADIENTS: Record<Genre, { gradient: string; accent: string }> = {
   "Ciencia Ficción": { gradient: "from-blue-600 via-indigo-700 to-purple-800", accent: "#4F46E5" },
 };
 
+function preferRicherChapter(firestoreChapter: Chapter, mockChapter?: Chapter): Chapter {
+  if (!mockChapter) return firestoreChapter;
+  if (mockChapter.content.length > firestoreChapter.content.length) {
+    return {
+      ...firestoreChapter,
+      title: mockChapter.title,
+      content: mockChapter.content,
+      isPremium: mockChapter.isPremium,
+    };
+  }
+  return firestoreChapter;
+}
+
 async function fetchBooksFromFirestore(): Promise<Book[]> {
   if (!db || !isFirebaseConfigured) return [];
 
@@ -108,7 +121,14 @@ export async function getChaptersByBookId(bookId: string): Promise<Chapter[]> {
 
   try {
     const firestoreChapters = await fetchChaptersFromFirestore(bookId);
-    if (firestoreChapters.length > 0) return firestoreChapters;
+    if (firestoreChapters.length > 0) {
+      const mockById = new Map(
+        getMockChaptersByBookId(bookId).map((chapter) => [chapter.id, chapter]),
+      );
+      return firestoreChapters.map((chapter) =>
+        preferRicherChapter(chapter, mockById.get(chapter.id)),
+      );
+    }
   } catch {
     // fallback to mock
   }
@@ -123,7 +143,8 @@ export async function getChapterById(chapterId: string): Promise<Chapter | undef
     if (db && isFirebaseConfigured) {
       const docSnap = await getDoc(doc(db, "chapters", chapterId));
       if (docSnap.exists()) {
-        chapter = { id: docSnap.id, ...docSnap.data() } as Chapter;
+        const firestoreChapter = { id: docSnap.id, ...docSnap.data() } as Chapter;
+        chapter = preferRicherChapter(firestoreChapter, getMockChapterById(chapterId));
       }
     }
   } catch {
@@ -144,7 +165,10 @@ export async function getAllChapters(): Promise<Chapter[]> {
     if (firestoreChapters.length > 0) {
       const firestoreIds = new Set(firestoreChapters.map((c) => c.id));
       const mockOnly = mockChapters.filter((c) => !firestoreIds.has(c.id));
-      return filterCatalogChapters([...firestoreChapters, ...mockOnly]);
+      const merged = firestoreChapters.map((chapter) =>
+        preferRicherChapter(chapter, getMockChapterById(chapter.id)),
+      );
+      return filterCatalogChapters([...merged, ...mockOnly]);
     }
   } catch {
     // fallback to mock

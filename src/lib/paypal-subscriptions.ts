@@ -4,12 +4,15 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import {
   findPayPalApproveUrl,
   getAppBaseUrl,
+  getPayPalMode,
   paypalFetch,
   type PayPalLink,
 } from "@/lib/paypal";
 import { savePendingPayment } from "@/lib/monetization/pending-payments-admin";
 
-const PLAN_DOC = "paypal_subscription_plan";
+function getPlanDocId(): string {
+  return `paypal_subscription_plan_${getPayPalMode()}`;
+}
 
 interface PayPalProduct {
   id: string;
@@ -41,7 +44,7 @@ async function getCachedPlanId(priceUsd: number): Promise<string | null> {
   const adminDb = await getAdminDb();
   if (!adminDb) return null;
 
-  const snap = await adminDb.collection("app_config").doc(PLAN_DOC).get();
+  const snap = await adminDb.collection("app_config").doc(getPlanDocId()).get();
   if (!snap.exists) return null;
 
   const data = snap.data();
@@ -53,10 +56,11 @@ async function saveCachedPlanId(planId: string, priceUsd: number): Promise<void>
   const adminDb = await getAdminDb();
   if (!adminDb) return;
 
-  await adminDb.collection("app_config").doc(PLAN_DOC).set(
+  await adminDb.collection("app_config").doc(getPlanDocId()).set(
     {
       planId,
       priceUsd,
+      mode: getPayPalMode(),
       updatedAt: new Date().toISOString(),
     },
     { merge: true },

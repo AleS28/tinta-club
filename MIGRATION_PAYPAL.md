@@ -93,7 +93,7 @@ Tras aprobar en PayPal, el return activa la suscripción o captura la compra. El
 
 ## Plan de suscripción
 
-Si no defines `PAYPAL_SUBSCRIPTION_PLAN_ID`, la app crea automáticamente producto + plan en PayPal y lo guarda en Firestore (`app_config/paypal_subscription_plan`).
+Si no defines `PAYPAL_SUBSCRIPTION_PLAN_ID`, la app crea automáticamente producto + plan en PayPal y lo guarda en Firestore (`app_config/paypal_subscription_plan_live` o `_sandbox` según el modo).
 
 Precio por defecto: **$6.49 USD/mes** (`DEFAULT_SUBSCRIPTION_PRICE`).
 

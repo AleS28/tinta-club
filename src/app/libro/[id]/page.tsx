@@ -14,6 +14,7 @@ import { BookLikeButton } from "@/components/social/BookLikeButton";
 import { SupportAuthorButton } from "@/components/social/SupportAuthorButton";
 import { FollowAuthorButton } from "@/components/perfil/FollowAuthorButton";
 import { getBookGenreDisplay } from "@/data/mock";
+import { BRAND_NAME } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 

@@ -11,7 +11,7 @@ export function CategoryButton({ category }: CategoryButtonProps) {
 
   return (
     <Link
-      href={`/biblioteca?categoria=${category.slug}`}
+      href={`/buscar?categoria=${category.slug}`}
       className="group relative flex min-h-[88px] items-center justify-center overflow-hidden rounded-xl border border-[#8B6914]/25 bg-parchment-texture px-4 py-5 shadow-editorial transition-all duration-300 hover:-translate-y-0.5 hover:border-home-gold/50 hover:shadow-editorial-lg"
     >
       <LeftIcon

@@ -66,11 +66,20 @@ export function canAuthorPublish(profile: UserProfile | null | undefined): boole
 export function isPremiumUser(profile: UserProfile | null | undefined): boolean {
   if (!profile) return false;
   if (isAdminUser(profile)) return true;
+  if (hasAuthorPanelAccess(profile)) return true;
   return (
     profile.isPremium === true ||
     profile.isSubscriber === true ||
     profile.subscriptionStatus === "premium"
   );
+}
+
+/** Premium incluido por rol (autor/admin), no por suscripción de pago. */
+export function hasComplimentaryPremiumAccess(
+  profile: UserProfile | null | undefined,
+): boolean {
+  if (!profile) return false;
+  return isAdminUser(profile) || hasAuthorPanelAccess(profile);
 }
 
 export function normalizeUserProfile(profile: UserProfile): UserProfile {

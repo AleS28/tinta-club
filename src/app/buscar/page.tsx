@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
@@ -17,7 +18,9 @@ export default async function BuscarPage() {
     <>
       <AnnouncementBar />
       <Navbar />
-      <SearchExplorer books={books} />
+      <Suspense fallback={<p className="py-12 text-center text-sm text-muted">Cargando catálogo…</p>}>
+        <SearchExplorer books={books} />
+      </Suspense>
       <Footer />
     </>
   );

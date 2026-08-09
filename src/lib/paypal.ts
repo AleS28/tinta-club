@@ -7,8 +7,80 @@ export function isPayPalConfigured(): boolean {
   return Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET);
 }
 
+export function isPayPalClientEnabled(): boolean {
+  return Boolean(getPayPalClientId());
+}
+
 export function getPayPalClientId(): string | undefined {
   return process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || process.env.PAYPAL_CLIENT_ID;
+}
+
+export function getPayPalMode(): "sandbox" | "live" {
+  return (process.env.PAYPAL_MODE || "sandbox").toLowerCase() === "live" ? "live" : "sandbox";
+}
+
+export interface PayPalConfigStatus {
+  configured: boolean;
+  clientEnabled: boolean;
+  mode: "sandbox" | "live";
+  hasWebhookId: boolean;
+  hasAppUrl: boolean;
+  appBaseUrl: string;
+  readyForProduction: boolean;
+  missing: string[];
+}
+
+export function getPayPalConfigStatus(): PayPalConfigStatus {
+  const configured = isPayPalConfigured();
+  const clientEnabled = isPayPalClientEnabled();
+  const mode = getPayPalMode();
+  const hasWebhookId = Boolean(process.env.PAYPAL_WEBHOOK_ID?.trim());
+  const appBaseUrl = getAppBaseUrl();
+  const hasAppUrl = Boolean(process.env.NEXT_PUBLIC_APP_URL?.trim());
+
+  const missing: string[] = [];
+  if (!process.env.PAYPAL_CLIENT_ID) missing.push("PAYPAL_CLIENT_ID");
+  if (!process.env.PAYPAL_CLIENT_SECRET) missing.push("PAYPAL_CLIENT_SECRET");
+  if (!clientEnabled) missing.push("NEXT_PUBLIC_PAYPAL_CLIENT_ID");
+  if (!hasWebhookId) missing.push("PAYPAL_WEBHOOK_ID");
+  if (!hasAppUrl) missing.push("NEXT_PUBLIC_APP_URL");
+
+  const readyForProduction =
+    configured &&
+    clientEnabled &&
+    hasWebhookId &&
+    hasAppUrl &&
+    mode === "live";
+
+  return {
+    configured,
+    clientEnabled,
+    mode,
+    hasWebhookId,
+    hasAppUrl,
+    appBaseUrl,
+    readyForProduction,
+    missing,
+  };
+}
+
+export async function testPayPalConnection(): Promise<{
+  ok: boolean;
+  error?: string;
+}> {
+  if (!isPayPalConfigured()) {
+    return { ok: false, error: "Credenciales de PayPal no configuradas" };
+  }
+
+  try {
+    await getPayPalAccessToken();
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Error de conexión con PayPal",
+    };
+  }
 }
 
 export function getAppBaseUrl(): string {

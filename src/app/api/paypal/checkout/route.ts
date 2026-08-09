@@ -49,6 +49,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url: approveUrl });
   } catch (error) {
     console.error("[paypal/checkout]", error);
-    return NextResponse.json({ error: "Error al iniciar el pago" }, { status: 500 });
+    const message =
+      error instanceof Error ? error.message : "Error al iniciar el pago con PayPal";
+    const status = message.includes("no están configurados") ? 503 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

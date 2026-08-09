@@ -398,6 +398,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      if (process.env.NODE_ENV === "production") {
+        throw new Error(
+          "Los pagos con PayPal no están configurados en producción. Contacta al equipo del Imperio.",
+        );
+      }
+
       await activateSubscription(user.uid);
       setUserProfile((prev) =>
         prev

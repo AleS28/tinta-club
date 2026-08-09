@@ -19,6 +19,7 @@ export function enrichBookFromCatalog(book: Book): Book {
     author: book.author || mock.author,
     authorId: book.authorId || mock.authorId,
     genre: book.genre || mock.genre,
+    genres: book.genres?.length ? book.genres : mock.genres,
     rating: typeof book.rating === "number" ? book.rating : mock.rating,
     membershipPrice: DEFAULT_SUBSCRIPTION_PRICE,
   };

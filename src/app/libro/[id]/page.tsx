@@ -13,7 +13,7 @@ import { BookSynopsis } from "@/components/libro/BookSynopsis";
 import { BookLikeButton } from "@/components/social/BookLikeButton";
 import { SupportAuthorButton } from "@/components/social/SupportAuthorButton";
 import { FollowAuthorButton } from "@/components/perfil/FollowAuthorButton";
-import { BRAND_NAME } from "@/lib/brand";
+import { getBookGenreDisplay } from "@/data/mock";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +56,7 @@ export default async function BookPage({ params }: BookPageProps) {
 
           <div className="flex-1 text-center sm:text-left">
             <span className="inline-block rounded-full bg-sidebar px-3 py-1 text-xs font-medium text-muted">
-              {book.genre}
+              {getBookGenreDisplay(book)}
             </span>
 
             <h1 className="mt-3 font-serif text-3xl font-bold leading-tight text-ink sm:text-4xl">

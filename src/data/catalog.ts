@@ -3,6 +3,7 @@ import type { Book, Chapter } from "@/data/mock";
 /** Obras publicadas actualmente en la plataforma. */
 export const CATALOG_BOOK_IDS = [
   "pedro-amor-cafe",
+  "pedro-el-titere",
   "will-chica-cafe",
   "will-whisky-por-favor",
 ] as const;

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BookOpen, Clock, Star } from "lucide-react";
-import { Book } from "@/data/mock";
+import { Book, getBookGenreDisplay } from "@/data/mock";
 import { BookCover } from "@/components/ui/BookCover";
 import { getBookMeta, type BookMeta } from "@/lib/book-meta";
 
@@ -41,7 +41,7 @@ export function BookCard({ book, meta, variant = "default" }: BookCardProps) {
           </div>
 
           <span className="mt-2 inline-flex w-fit rounded-full border border-amber-900/10 bg-sidebar px-2 py-0.5 text-[10px] font-medium text-imperial-deep">
-            {book.genre}
+            {getBookGenreDisplay(book)}
           </span>
         </div>
       </Link>
@@ -82,7 +82,7 @@ export function BookCard({ book, meta, variant = "default" }: BookCardProps) {
 
         <div className="mt-2.5 flex items-center justify-between gap-2">
           <span className="rounded-full border border-amber-900/10 bg-sidebar px-2.5 py-0.5 text-[11px] font-medium text-imperial-deep">
-            {book.genre}
+            {getBookGenreDisplay(book)}
           </span>
           <span className="flex shrink-0 items-center gap-0.5 text-xs font-medium text-amber-700">
             <Star className="h-3 w-3 fill-amber-400 text-amber-400" />

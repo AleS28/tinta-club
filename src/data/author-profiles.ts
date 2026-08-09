@@ -23,7 +23,22 @@ export const authorProfiles: AuthorPublicProfile[] = [
       freeChaptersCount: 3,
       membershipPriceUsd: 6.49,
     },
-    upcomingWorks: [],
+    upcomingWorks: [
+      {
+        id: "pedro-el-titere",
+        title: "El Títere: La llamada de Nyarl'kthar",
+        genre: "Terror psicológico · Horror cósmico",
+        status: "published",
+        coverUrl: "/authors/pedro-garcia-martinez/el-titere-cover.png",
+        coverGradient: "from-slate-950 via-blue-950 to-stone-900",
+        coverAccent: "#1E3A5F",
+        bookId: "pedro-el-titere",
+        firstChapterId: "pedro-el-titere-cap-1",
+        freeChaptersCount: 3,
+        teaser:
+          "Una invitación inocente a una cabaña en la montaña se convierte en pesadilla cuando un títere de madera despierta una sombra antigua. Entre el lago, la medianoche y la llamada de Nyarl'kthar, el terror deja de ser leyenda.",
+      },
+    ],
   },
   {
     id: "author-will-flechas",

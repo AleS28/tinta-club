@@ -20,7 +20,7 @@ export const founderAuthors: FounderAuthorConfig[] = [
   {
     slug: "pedro-garcia-martinez",
     legacyAuthorId: "author-pedro-garcia",
-    bookIds: ["pedro-amor-cafe"],
+    bookIds: ["pedro-amor-cafe", "pedro-el-titere"],
     name: pedroProfile?.name ?? "Pedro García Martínez",
     bio: pedroProfile?.bio ?? "",
     photoUrl: pedroProfile?.photoUrl ?? "",

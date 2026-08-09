@@ -1,4 +1,5 @@
 import { pedroAmorCafeChapters } from "./pedro-amor-cafe-chapters";
+import { pedroElTitereChapters } from "./pedro-el-titere-chapters";
 import { willChicaCafeChapters } from "./will-chica-cafe-chapters";
 import { willWhiskyChapters } from "./will-whisky-chapters";
 
@@ -22,6 +23,8 @@ export interface Book {
   directChapterPriceUsd?: number;
   /** Modo de venta en tienda: libro completo o capítulo a capítulo */
   saleMode?: "book" | "chapter";
+  /** Etiquetas de género detalladas para mostrar en ficha y catálogo */
+  genres?: string[];
 }
 
 export interface Author {
@@ -54,6 +57,24 @@ export const pedroAmorCafeBook: Book = {
   coverUrl: "/authors/pedro-garcia-martinez/amor-aroma-cafe-cover.png",
   synopsis:
     "Pedro y Kaori intentan sostener una relación construida sobre pequeños gestos y la ternura de lo cotidiano. Sin embargo, su refugio doméstico se ve amenazado por la realidad: mientras él lidia con la precariedad laboral, ella enfrenta en secreto el acoso de un jefe depredador. Entre silencios y «cenas tregua», la pareja lucha por mantener a flote su amor antes de que el agotamiento y las verdades no dichas terminen por romper su equilibrio.",
+  membershipPrice: 6.49,
+  saleMode: "book",
+  directBookPriceUsd: 12.99,
+};
+
+export const pedroElTitereBook: Book = {
+  id: "pedro-el-titere",
+  title: "El Títere: La llamada de Nyarl'kthar",
+  author: "Pedro García Martínez",
+  authorId: "author-pedro-garcia",
+  genre: "Terror",
+  genres: ["Terror psicológico", "Horror cósmico"],
+  rating: 4.7,
+  coverGradient: "from-slate-950 via-blue-950 to-stone-900",
+  coverAccent: "#1E3A5F",
+  coverUrl: "/authors/pedro-garcia-martinez/el-titere-cover.png",
+  synopsis:
+    "Elena acepta una invitación inocente a pasar el fin de semana en una cabaña de montaña con Carlos y un grupo de amigos. Lo que empieza como risas junto al lago y confesiones nocturnas se convierte en pesadilla cuando un títere de madera despierta una sombra antigua. Entre la medianoche, el lago y la llamada de Nyarl'kthar, el terror deja de ser leyenda y se vuelve carne.",
   membershipPrice: 6.49,
   saleMode: "book",
   directBookPriceUsd: 12.99,
@@ -96,7 +117,7 @@ export const willWhiskyBook: Book = {
 /** Obra en primera plana del home */
 export const featuredBook = pedroAmorCafeBook;
 
-export const sideBooks: Book[] = [willChicaCafeBook, willWhiskyBook];
+export const sideBooks: Book[] = [pedroElTitereBook, willChicaCafeBook, willWhiskyBook];
 
 export const genres: { id: Genre; icon: string; color: string }[] = [
   { id: "Romance", icon: "heart", color: "bg-rose-100 text-rose-600 hover:bg-rose-200" },
@@ -105,7 +126,7 @@ export const genres: { id: Genre; icon: string; color: string }[] = [
   { id: "Ciencia Ficción", icon: "rocket", color: "bg-indigo-100 text-indigo-600 hover:bg-indigo-200" },
 ];
 
-export const books: Book[] = [willChicaCafeBook, willWhiskyBook];
+export const books: Book[] = [pedroElTitereBook, willChicaCafeBook, willWhiskyBook];
 
 export const topAuthors: Author[] = [
   {
@@ -113,7 +134,7 @@ export const topAuthors: Author[] = [
     name: "Pedro García Martínez",
     initials: "PG",
     avatarColor: "bg-amber-700",
-    bookCount: 1,
+    bookCount: 2,
     slug: "pedro-garcia-martinez",
   },
   {
@@ -128,11 +149,17 @@ export const topAuthors: Author[] = [
 
 export const chapters: Chapter[] = [
   ...pedroAmorCafeChapters,
+  ...pedroElTitereChapters,
   ...willChicaCafeChapters,
   ...willWhiskyChapters,
 ];
 
-export const allBooks: Book[] = [pedroAmorCafeBook, willChicaCafeBook, willWhiskyBook];
+export const allBooks: Book[] = [pedroAmorCafeBook, pedroElTitereBook, willChicaCafeBook, willWhiskyBook];
+
+export function getBookGenreDisplay(book: Book): string {
+  if (book.genres?.length) return book.genres.join(" · ");
+  return book.genre;
+}
 
 export function getBookById(id: string): Book | undefined {
   return allBooks.find((book) => book.id === id);

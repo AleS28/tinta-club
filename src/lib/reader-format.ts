@@ -83,6 +83,39 @@ function isBlockNote(text: string, prevText?: string): boolean {
   return !!prev && NOTE_PREV.test(prev);
 }
 
+function splitEmDashDialogue(text: string): ReaderSegment[] {
+  const trimmed = text.trim();
+  if (!trimmed) return [];
+
+  const hasDash = new RegExp(`[${DASH_CLASS}]`).test(trimmed);
+  if (!hasDash) {
+    return [{ kind: "narrative", text: trimmed }];
+  }
+
+  if (SPOKEN_DIALOGUE.test(trimmed)) {
+    return [{ kind: "dialogue", text: stripDialogueMark(trimmed) }];
+  }
+
+  const inlineMatch = trimmed.match(new RegExp(`^(.*?)\\s[${DASH_CLASS}]\\s*([\\s\\S]+)$`));
+  if (!inlineMatch) {
+    return [{ kind: "narrative", text: trimmed }];
+  }
+
+  const [, before, dialoguePart] = inlineMatch;
+  const segments: ReaderSegment[] = [];
+
+  if (before.trim()) {
+    segments.push({ kind: "narrative", text: before.trim() });
+  }
+
+  const dialogueText = stripDialogueMark(dialoguePart.trim());
+  if (dialogueText) {
+    segments.push({ kind: "dialogue", text: dialogueText });
+  }
+
+  return segments.length > 0 ? segments : [{ kind: "narrative", text: trimmed }];
+}
+
 function splitInlineSegments(text: string): ReaderSegment[] {
   const trimmed = text.trim();
   if (!trimmed) return [];
@@ -97,8 +130,12 @@ function splitInlineSegments(text: string): ReaderSegment[] {
     ].filter((segment): segment is ReaderSegment => Boolean(segment.text));
   }
 
-  // Citas cortas (“buena onda,”, “quizás.”) y rayas sueltas se quedan en el
-  // párrafo narrativo. Extraerlas como bloques deja palabras colgadas.
+  const dialogueSegments = splitEmDashDialogue(trimmed);
+  if (dialogueSegments.some((segment) => segment.kind === "dialogue")) {
+    return dialogueSegments;
+  }
+
+  // Citas cortas (“buena onda,”, “quizás.”) se quedan en el párrafo narrativo.
   return [{ kind: "narrative", text: trimmed }];
 }
 
@@ -118,10 +155,6 @@ export function parseReaderParagraph(text: string, prevText?: string): ReaderSeg
 
   if (isBlockMessage(current, prevText)) {
     return [{ kind: "message", text: stripQuotes(current) }];
-  }
-
-  if (SPOKEN_DIALOGUE.test(normalize(current))) {
-    return [{ kind: "dialogue", text: stripDialogueMark(current) }];
   }
 
   if (FULLY_QUOTED.test(normalize(current))) {

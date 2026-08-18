@@ -47,13 +47,13 @@ function renderSegment(segment: ReaderSegment, fontSize: number, key: number) {
 
     case "dialogue":
       return (
-        <p
+        <em
           key={key}
-          className="reader-dialogue font-sans text-ink/90"
-          style={{ fontSize: `${accentSize}px`, lineHeight: 1.65 }}
+          className="font-serif not-italic text-ink/90 [font-style:italic]"
+          style={{ fontSize: `${fontSize}px`, lineHeight: 1.8 }}
         >
           {segment.text}
-        </p>
+        </em>
       );
 
     case "quote":
@@ -106,9 +106,38 @@ export function ReaderParagraph({ text, prevText, fontSize }: ReaderParagraphPro
     return <div className={`${className} my-2`}>{renderSegment(segments[0], fontSize, 0)}</div>;
   }
 
-  if (primaryKind === "dialogue" && segments.length === 1) {
+  const isInlineDialogueFlow = segments.every(
+    (segment) => segment.kind === "narrative" || segment.kind === "dialogue",
+  );
+
+  if (isInlineDialogueFlow && segments.some((segment) => segment.kind === "dialogue")) {
     return (
-      <div className={`${className} my-1 pl-1`}>{renderSegment(segments[0], fontSize, 0)}</div>
+      <p
+        className="reader-paragraph-narrative font-serif leading-relaxed text-ink/90"
+        style={{ fontSize: `${fontSize}px`, lineHeight: 1.8 }}
+      >
+        {segments.map((segment, index) => {
+          const needsDash =
+            index > 0 && segment.kind === "dialogue" && segments[index - 1]?.kind === "narrative";
+
+          return (
+            <span key={index}>
+              {index > 0 && segments[index - 1]?.kind === "narrative" && segment.kind === "narrative"
+                ? " "
+                : null}
+              {needsDash ? " —" : index > 0 && segment.kind === "dialogue" ? " " : null}
+              {segment.kind === "dialogue" ? (
+                <>
+                  {index === 0 && segments[0].kind === "dialogue" ? "\u2014" : null}
+                  <em className="font-serif italic text-ink/90">{segment.text}</em>
+                </>
+              ) : (
+                segment.text
+              )}
+            </span>
+          );
+        })}
+      </p>
     );
   }
 

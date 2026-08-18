@@ -228,6 +228,7 @@
 
 .reader-paragraph-narrative {
   @apply font-serif;
+  text-wrap: pretty;
 }
 
 .reader-paragraph-scene-break {

@@ -6,6 +6,7 @@ export const CATALOG_BOOK_IDS = [
   "pedro-el-titere",
   "will-chica-cafe",
   "will-whisky-por-favor",
+  "jose-odisea-robot-guerra",
 ] as const;
 
 export type CatalogBookId = (typeof CATALOG_BOOK_IDS)[number];

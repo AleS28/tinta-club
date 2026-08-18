@@ -78,6 +78,29 @@ export const authorProfiles: AuthorPublicProfile[] = [
       },
     ],
   },
+  {
+    id: "author-jose-luis-grimaldo",
+    slug: "jose-luis-grimaldo",
+    name: "José Luis Grimaldo",
+    badge: "✨ Autor Fundador",
+    bio: "Escritor mexicano nacido en 1993, considerado así mismo como escritor de medio tiempo. Con una narrativa profunda y apasionada con la diversidad de pensamiento, concentra su narrativa en las decisiones individuales y en su efecto en el mundo real. Cada palabra es como una nota, un color y un sabor único.",
+    photoUrl: "/authors/jose-luis-grimaldo/profile.png",
+    social: {},
+    featuredWork: {
+      bookId: "jose-odisea-robot-guerra",
+      title: "Una odisea a través del tiempo: Un robot para la guerra",
+      genres: ["Ciencia ficción", "Drama", "Robótica"],
+      synopsis:
+        "Satoshi es un niño brillante que crece entre mudanzas, la ausencia de su padre soldado y una amistad con Robert que parece no tener fin. Años después, su genio lo lleva a diseñar Artur, un robot humanoide capaz de rescatar vidas con una precisión casi humana. Pero cuando el gobierno quiere convertir su invento en herramienta de guerra, Satoshi deberá elegir entre el éxito, la seguridad de quienes ama y la convicción de que sus creaciones no deben servir para destruir. Una historia que cruza países, décadas y el límite entre lo que somos y lo que construimos.",
+      coverUrl: "/authors/jose-luis-grimaldo/odisea-robot-guerra-cover.png",
+      coverGradient: "from-slate-900 via-cyan-950 to-stone-950",
+      coverAccent: "#22D3EE",
+      firstChapterId: "jose-odisea-robot-guerra-cap-1",
+      freeChaptersCount: 3,
+      membershipPriceUsd: 6.49,
+    },
+    upcomingWorks: [],
+  },
 ];
 
 export function getAuthorProfileBySlug(slug: string): AuthorPublicProfile | undefined {

@@ -39,10 +39,6 @@ const INLINE_MESSAGE = new RegExp(
   `^([\\s\\S]*?)(?:te mandar[éé]|mandar[éé]|enviar[éé])\\s+un mensaje:\\s*([${QUOTE_OPEN_CLASS}][\\s\\S]+?[${QUOTE_CLOSE_CLASS}])([\\s\\S]*)$`,
   "i",
 );
-const INLINE_HIGHLIGHT = new RegExp(
-  `[${QUOTE_OPEN_CLASS}][^${QUOTE_CLOSE_CLASS}]+[${QUOTE_CLOSE_CLASS}]|[${DASH_CLASS}][^${DASH_CLASS}\\n]+?(?=(?:[${DASH_CLASS}${QUOTE_OPEN_CLASS}]|$))`,
-  "g",
-);
 
 function normalize(text: string): string {
   return text.replace(/\u00a0/g, " ").trim();
@@ -101,35 +97,9 @@ function splitInlineSegments(text: string): ReaderSegment[] {
     ].filter((segment): segment is ReaderSegment => Boolean(segment.text));
   }
 
-  const segments: ReaderSegment[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  INLINE_HIGHLIGHT.lastIndex = 0;
-  while ((match = INLINE_HIGHLIGHT.exec(trimmed)) !== null) {
-    if (match.index > lastIndex) {
-      const narrative = trimmed.slice(lastIndex, match.index).trim();
-      if (narrative) segments.push({ kind: "narrative", text: narrative });
-    }
-
-    const raw = match[0].trim();
-    if (SPOKEN_DIALOGUE.test(raw)) {
-      segments.push({ kind: "dialogue", text: stripDialogueMark(raw) });
-    } else {
-      segments.push({ kind: "quote", text: stripQuotes(raw) });
-    }
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  const tail = trimmed.slice(lastIndex).trim();
-  if (tail) segments.push({ kind: "narrative", text: tail });
-
-  if (segments.length === 0) {
-    return [{ kind: "narrative", text: trimmed }];
-  }
-
-  return segments;
+  // Citas cortas (“buena onda,”, “quizás.”) y rayas sueltas se quedan en el
+  // párrafo narrativo. Extraerlas como bloques deja palabras colgadas.
+  return [{ kind: "narrative", text: trimmed }];
 }
 
 export function parseReaderParagraph(text: string, prevText?: string): ReaderSegment[] {

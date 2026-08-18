@@ -15,6 +15,7 @@ export interface FounderAuthorConfig {
 
 const pedroProfile = getAuthorProfileBySlug("pedro-garcia-martinez");
 const willProfile = getAuthorProfileBySlug("will-flechas");
+const joseProfile = getAuthorProfileBySlug("jose-luis-grimaldo");
 
 export const founderAuthors: FounderAuthorConfig[] = [
   {
@@ -36,6 +37,16 @@ export const founderAuthors: FounderAuthorConfig[] = [
     photoUrl: willProfile?.photoUrl ?? "",
     envEmailKey: "FOUNDER_AUTHOR_WILL_EMAIL",
     knownEmails: ["willflechas77@gmail.com"],
+  },
+  {
+    slug: "jose-luis-grimaldo",
+    legacyAuthorId: "author-jose-luis-grimaldo",
+    bookIds: ["jose-odisea-robot-guerra"],
+    name: joseProfile?.name ?? "José Luis Grimaldo",
+    bio: joseProfile?.bio ?? "",
+    photoUrl: joseProfile?.photoUrl ?? "",
+    envEmailKey: "FOUNDER_AUTHOR_JOSE_EMAIL",
+    knownEmails: ["jose.luis.gri.gon@gmail.com"],
   },
 ];
 

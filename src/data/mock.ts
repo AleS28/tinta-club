@@ -1,3 +1,4 @@
+import { joseOdiseaRobotChapters } from "./jose-odisea-robot-chapters";
 import { pedroAmorCafeChapters } from "./pedro-amor-cafe-chapters";
 import { pedroElTitereChapters } from "./pedro-el-titere-chapters";
 import { willChicaCafeChapters } from "./will-chica-cafe-chapters";
@@ -97,6 +98,24 @@ export const willChicaCafeBook: Book = {
   directChapterPriceUsd: 1.49,
 };
 
+export const joseOdiseaRobotBook: Book = {
+  id: "jose-odisea-robot-guerra",
+  title: "Una odisea a través del tiempo: Un robot para la guerra",
+  author: "José Luis Grimaldo",
+  authorId: "author-jose-luis-grimaldo",
+  genre: "Ciencia Ficción",
+  genres: ["Ciencia ficción", "Drama", "Robótica"],
+  rating: 4.6,
+  coverGradient: "from-slate-900 via-cyan-950 to-stone-950",
+  coverAccent: "#22D3EE",
+  coverUrl: "/authors/jose-luis-grimaldo/odisea-robot-guerra-cover.png",
+  synopsis:
+    "Satoshi es un niño brillante que crece entre mudanzas, la ausencia de su padre soldado y una amistad con Robert que parece no tener fin. Años después, su genio lo lleva a diseñar Artur, un robot humanoide capaz de rescatar vidas con una precisión casi humana. Pero cuando el gobierno quiere convertir su invento en herramienta de guerra, Satoshi deberá elegir entre el éxito, la seguridad de quienes ama y la convicción de que sus creaciones no deben servir para destruir.",
+  membershipPrice: 6.49,
+  saleMode: "chapter",
+  directChapterPriceUsd: 1.49,
+};
+
 export const willWhiskyBook: Book = {
   id: "will-whisky-por-favor",
   title: "Un whisky, por favor",
@@ -117,7 +136,12 @@ export const willWhiskyBook: Book = {
 /** Obra en primera plana del home */
 export const featuredBook = pedroAmorCafeBook;
 
-export const sideBooks: Book[] = [pedroElTitereBook, willChicaCafeBook, willWhiskyBook];
+export const sideBooks: Book[] = [
+  pedroElTitereBook,
+  willChicaCafeBook,
+  willWhiskyBook,
+  joseOdiseaRobotBook,
+];
 
 export const genres: { id: Genre; icon: string; color: string }[] = [
   { id: "Romance", icon: "heart", color: "bg-rose-100 text-rose-600 hover:bg-rose-200" },
@@ -126,7 +150,12 @@ export const genres: { id: Genre; icon: string; color: string }[] = [
   { id: "Ciencia Ficción", icon: "rocket", color: "bg-indigo-100 text-indigo-600 hover:bg-indigo-200" },
 ];
 
-export const books: Book[] = [pedroElTitereBook, willChicaCafeBook, willWhiskyBook];
+export const books: Book[] = [
+  pedroElTitereBook,
+  willChicaCafeBook,
+  willWhiskyBook,
+  joseOdiseaRobotBook,
+];
 
 export const topAuthors: Author[] = [
   {
@@ -145,6 +174,14 @@ export const topAuthors: Author[] = [
     bookCount: 2,
     slug: "will-flechas",
   },
+  {
+    id: "author-jose-luis-grimaldo",
+    name: "José Luis Grimaldo",
+    initials: "JG",
+    avatarColor: "bg-cyan-900",
+    bookCount: 1,
+    slug: "jose-luis-grimaldo",
+  },
 ];
 
 export const chapters: Chapter[] = [
@@ -152,9 +189,16 @@ export const chapters: Chapter[] = [
   ...pedroElTitereChapters,
   ...willChicaCafeChapters,
   ...willWhiskyChapters,
+  ...joseOdiseaRobotChapters,
 ];
 
-export const allBooks: Book[] = [pedroAmorCafeBook, pedroElTitereBook, willChicaCafeBook, willWhiskyBook];
+export const allBooks: Book[] = [
+  pedroAmorCafeBook,
+  pedroElTitereBook,
+  willChicaCafeBook,
+  willWhiskyBook,
+  joseOdiseaRobotBook,
+];
 
 export function getBookGenreDisplay(book: Book): string {
   if (book.genres?.length) return book.genres.join(" · ");

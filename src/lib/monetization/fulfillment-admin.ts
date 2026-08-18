@@ -26,6 +26,7 @@ import {
   recordDirectChapterSale,
 } from "@/lib/monetization/direct-sales-admin";
 import { recordAuthorDonation } from "@/lib/monetization/donations-admin";
+import { recordPlatformDonation } from "@/lib/monetization/platform-donations-admin";
 import { addSubscriptionRevenueToPool } from "@/lib/monetization/monthly-pool-admin";
 import { getCurrentMonthYear, getMonthYearFromUnixSeconds } from "@/lib/monetization/month-year";
 
@@ -120,6 +121,14 @@ export async function fulfillOneTimePayment(input: {
       userId: pending.firebaseUid,
       donorDisplayName: pending.donorDisplayName ?? "Lector",
       authorId: pending.authorId,
+      amounts,
+      checkoutId: orderId,
+      paymentId: captureId,
+    });
+  } else if (pending.type === "platform_donation") {
+    await recordPlatformDonation({
+      userId: pending.firebaseUid,
+      donorDisplayName: pending.donorDisplayName ?? "Lector",
       amounts,
       checkoutId: orderId,
       paymentId: captureId,

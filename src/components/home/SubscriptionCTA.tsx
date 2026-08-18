@@ -41,7 +41,7 @@ export function SubscriptionCTA() {
           Únete a {BRAND_NAME}
         </h2>
         <p className="mt-2 text-sm text-white/85">
-          Acceso ilimitado a toda la biblioteca, invita un café al Imperio y descubre nuevos
+          Acceso ilimitado a toda la biblioteca, apoya a autores independientes y descubre nuevos
           capítulos cada semana.
         </p>
 
@@ -56,7 +56,7 @@ export function SubscriptionCTA() {
           </li>
           <li className="flex items-center gap-2 rounded-lg border border-gold/10 bg-white/5 px-3 py-2">
             <BookOpen className="h-4 w-4 shrink-0 text-gold-light" />
-            Invita un café al Imperio
+            Apoya directamente a los autores
           </li>
         </ul>
 
@@ -72,7 +72,7 @@ export function SubscriptionCTA() {
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-gold-cream py-2.5 text-sm font-bold uppercase tracking-wide text-imperial-dark shadow-md transition-all duration-300 hover:scale-105 hover:bg-white hover:shadow-lg active:scale-[0.98] disabled:opacity-60"
           >
             {checkoutLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Invita un café al Imperio — ${DEFAULT_SUBSCRIPTION_PRICE.toFixed(2)}/mes
+            Comenzar por ${DEFAULT_SUBSCRIPTION_PRICE.toFixed(2)}/mes
           </button>
         )}
       </div>

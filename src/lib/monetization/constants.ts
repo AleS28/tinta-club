@@ -62,6 +62,7 @@ export const COLLECTIONS = {
   chapterComments: "chapter_comments",
   authorFollowers: "author_followers",
   authorDonations: "author_donations",
+  platformDonations: "platform_donations",
   /** @deprecated Usar statisticalViewWindows */
   premiumViewWindows: "statistical_view_windows",
 } as const;

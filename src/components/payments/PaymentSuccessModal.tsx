@@ -32,6 +32,16 @@ function resolveFeedback(searchParams: URLSearchParams): FeedbackCopy | null {
     };
   }
 
+  if (searchParams.get("platform_donated") === "true") {
+    return {
+      kind: "donation",
+      title: "¡Gracias por el café!",
+      body: "Tu aporte ayuda a mantener viva la plataforma. El Imperio de la Tinta te lo agradece.",
+      tone: "success",
+      icon: "heart",
+    };
+  }
+
   if (
     searchParams.get("purchased") === "true" ||
     searchParams.get("purchase") === "success"
@@ -58,7 +68,8 @@ function resolveFeedback(searchParams: URLSearchParams): FeedbackCopy | null {
   if (
     searchParams.get("subscription") === "canceled" ||
     searchParams.get("purchase") === "canceled" ||
-    searchParams.get("donate") === "canceled"
+    searchParams.get("donate") === "canceled" ||
+    searchParams.get("platform_donate") === "canceled"
   ) {
     return {
       kind: "canceled",
@@ -84,10 +95,12 @@ function resolveFeedback(searchParams: URLSearchParams): FeedbackCopy | null {
 
 const CLEAR_KEYS = [
   "donated",
+  "platform_donated",
   "purchased",
   "purchase",
   "subscription",
   "donate",
+  "platform_donate",
   "payment",
 ] as const;
 

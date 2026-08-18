@@ -1,6 +1,8 @@
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
+import { PlatformCoffeeCTA } from "@/components/home/PlatformCoffeeCTA";
+import { SubscriptionCTA } from "@/components/home/SubscriptionCTA";
 import { TopObrasGrid } from "@/components/home/TopObrasGrid";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { LatestNewsSection } from "@/components/home/LatestNewsSection";
@@ -18,6 +20,13 @@ export default async function HomePage() {
 
       <main>
         <TopObrasGrid books={books} metaByBookId={metaByBookId} />
+
+        <section className="bg-home-dark px-4 py-8 sm:px-6">
+          <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2">
+            <SubscriptionCTA />
+            <PlatformCoffeeCTA />
+          </div>
+        </section>
 
         <div className="relative bg-home-cream">
           <div

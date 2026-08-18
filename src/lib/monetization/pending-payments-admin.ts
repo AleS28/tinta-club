@@ -4,7 +4,8 @@ export type PendingPaymentType =
   | "subscription"
   | "chapter_purchase"
   | "book_purchase"
-  | "author_donation";
+  | "author_donation"
+  | "platform_donation";
 
 export interface PendingPayment {
   id: string;

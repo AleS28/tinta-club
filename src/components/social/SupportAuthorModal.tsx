@@ -78,12 +78,12 @@ export function SupportAuthorModal({
 
         <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
           <Gift className="h-3.5 w-3.5" />
-          Apoyar autor
+          Invita un café al autor
         </div>
 
-        <h2 className="font-serif text-2xl font-bold text-ink">Apoyar a {authorName}</h2>
+        <h2 className="font-serif text-2xl font-bold text-ink">Invita un café a {authorName}</h2>
         <p className="mt-2 text-sm text-muted">
-          Donación directa en USD. El autor recibe el 70% neto; el resto cubre comisiones y la
+          Un gesto directo en USD. El autor recibe el 70% neto; el resto cubre comisiones y la
           plataforma.
         </p>
 
@@ -128,7 +128,7 @@ export function SupportAuthorModal({
           className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-terracotta px-5 py-3 text-sm font-bold text-white hover:bg-orange-700 disabled:opacity-50"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Coffee className="h-4 w-4" />}
-          Donar ${Number(amount || 0).toFixed(2)} USD
+          Invitar café — ${Number(amount || 0).toFixed(2)} USD
         </button>
       </div>
     </div>

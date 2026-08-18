@@ -33,7 +33,7 @@ export function SupportAuthorButton({
         }
       >
         <Coffee className="h-4 w-4" />
-        Apoyar Autor ☕
+        Invita un café al autor
       </button>
 
       {open && (

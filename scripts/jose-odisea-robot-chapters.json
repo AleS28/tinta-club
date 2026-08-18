@@ -1,14 +1,8 @@
-import type { Chapter } from "./mock";
-
-/** Una odisea a través del tiempo: Un robot para la guerra — José Luis Grimaldo */
-export const joseOdiseaRobotChapters: Chapter[] = [
+[
   {
-    id: "jose-odisea-robot-guerra-cap-1",
-    bookId: "jose-odisea-robot-guerra",
-    number: 1,
-    title: "Capítulo 1",
-    isPremium: false,
-    content: [
+    "number": 1,
+    "title": "Capítulo 1",
+    "content": [
       "Vamos Satoshi, pasa el balón…",
       "Satoshi un niño de apenas unos 12 años, corre detrás del balón y grita - ¡Allí va! -  entonces patea el balón con fuerza.",
       "Su amigo Robert, que ya tendría unos 13 años recibe el balón y con el pecho lo baja, esquiva a la defensa y patea con fuerza. Todo el mundo queda en silencio mientras el balón se dirige con fuerza a la portería. El portero sigue el balón con la mirada, pero es demasiado tarde, y aunque intenta atajar el balón no lo logra alcanzarlo. Entonces todos gritan – ¡Goooool!",
@@ -150,16 +144,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Claro que sí Satoshi, no seas demasiado bueno amigo, o las personas te usarán y te desecharán.",
       "Sí, amigo gracias.",
       "Bueno vamos antes de que se termine la comida de la cafetería.",
-      "Luego de eso los dos fueron rápidamente a la cafetería y el día continúo con normalidad.",
+      "Luego de eso los dos fueron rápidamente a la cafetería y el día continúo con normalidad."
     ],
+    "paragraphCount": 143
   },
   {
-    id: "jose-odisea-robot-guerra-cap-2",
-    bookId: "jose-odisea-robot-guerra",
-    number: 2,
-    title: "Capítulo 2",
-    isPremium: false,
-    content: [
+    "number": 2,
+    "title": "Capítulo 2",
+    "content": [
       "Al día siguiente mientras aún era temprano, Robert se hallaba sentado su asiento, leyendo unas notas en su cuaderno. ",
       "Al entrar al salón, Satoshi se miraba tan triste que no podía ni mirar al rostro a Robert. Robert, al mirar a Satoshi entrar al salón, notó que su amigo se hallaba muy triste.",
       "Satoshi iba pasando a su lado. Entonces Robert lo detuvo – ¡Satoshi! ¿Estás bien? ¿Qué tienes amigo?",
@@ -314,16 +306,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Los dos entraron a la cafetería y tal como hacía con Satoshi él fue a comprar los lonches y le pidió a Sophia que fuera por algo para tomar. ",
       "Aún que su amigo se había ido, la vida le había regalado una buena compañía. Sophia era amable atenta y siempre quería pasar tiempo con Robert. Ella estaba enamorada de él. Y Robert poco a poco fue cediendo ante los nuevos sentimientos que estaba experimentando por Sophia. Cada almuerzo y cada comida, Sophia buscaba a Robert. Con el tiempo se les unieron más. Melany la amiga de Sophia y Víctor. Quienes se sentaban con Robert a pasar el rato en los horarios del almuerzo y la comida. ",
       "Luca seguía buscando a Robert para que jugara como delantero en las prácticas de fútbol y Sophia siempre lo animaba desde las gradas. ",
-      "Con el tiempo se hicieron muy bueno amigos. Y Robert ya no podía esperar para mirar nuevamente a Sophia. Se había vuelto una persona muy importante en su vida.",
+      "Con el tiempo se hicieron muy bueno amigos. Y Robert ya no podía esperar para mirar nuevamente a Sophia. Se había vuelto una persona muy importante en su vida."
     ],
+    "paragraphCount": 156
   },
   {
-    id: "jose-odisea-robot-guerra-cap-3",
-    bookId: "jose-odisea-robot-guerra",
-    number: 3,
-    title: "Capítulo 3",
-    isPremium: false,
-    content: [
+    "number": 3,
+    "title": "Capítulo 3",
+    "content": [
       "Frank Envidiaba todo lo que tuviera que ver con Robert. Siempre buscaba la manera de perjudicarlo. Pero después de la lección que le dio cuando se burló de Satoshi, se calmó por un tiempo. ",
       "Cuando se dio cuenta que Sophia comía el almuerzo y la comida con Robert, él sintió mucha envidia, ya que Sophia era con mucho, la chica más bonita del colegio. Además de ser una persona encantadora.",
       "¿Por qué tuvo que fijarse en Robert? ¿Qué tiene el que no tenga yo? – Pensaba Frank.",
@@ -497,16 +487,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Había cosas que Satoshi sentía que compartía con su abuelo, eso lo hacía sentir en casa. ",
       "Después de escuchar a su abuelo por horas. A Yuto le dio sueño y se fue a dormir. Su abuelita le dio el control de la televisión a Satoshi y acompañó a Yuto a descansar un poco.",
       "Entonces por fin se despertó su madre y después de ir con Satoshi y abrazarlo, lo besó en la frente – estaremos bien hijo – dijo con una sonrisa. ",
-      "Los días siguientes fueron pesados para Satoshi. Después de la pérdida de su padre, no fue posible hacerle un funeral de forma digna. Así que parecía que Jun entraría por la puerta en cualquier momento. Ese sentimiento se extendió por días mientras la tristeza poco a poco se iba disipando en el ambiente amoroso de los abuelitos de Satoshi. ",
+      "Los días siguientes fueron pesados para Satoshi. Después de la pérdida de su padre, no fue posible hacerle un funeral de forma digna. Así que parecía que Jun entraría por la puerta en cualquier momento. Ese sentimiento se extendió por días mientras la tristeza poco a poco se iba disipando en el ambiente amoroso de los abuelitos de Satoshi. "
     ],
+    "paragraphCount": 175
   },
   {
-    id: "jose-odisea-robot-guerra-cap-4",
-    bookId: "jose-odisea-robot-guerra",
-    number: 4,
-    title: "Capítulo 4",
-    isPremium: true,
-    content: [
+    "number": 4,
+    "title": "Capítulo 4",
+    "content": [
       "Después de una semana, por fin Satoshi volvió a ir al colegio. Su rostro serio fue cambiado por un rostro de tristeza. ",
       "Las clases continuaban como de costumbre, aunque ya se podía comunicar de forma fluida con sus compañeros de clase, Satoshi prefería mantenerse distante.",
       "Durante las clases, Satoshi se la pasaba mirando por la ventana. Su mente no podía concentrarse en los estudios. Era como si hubiera perdido toda motivación. ",
@@ -666,16 +654,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Claro Izumi quedamos – Izumi levanta su puño y Satoshi choca su puño con el de Izumi. ",
       "Bien hermano que descanses.",
       "Satoshi se retiró e Izumi entro en su casa. ",
-      "Al entrar en su casa y mirar todo solo, Izumi sintió un escalofrío que recorrió todo su cuerpo. Aunque estaba en su hogar no se sentía como el hogar de Satoshi donde todo era calidez. ",
+      "Al entrar en su casa y mirar todo solo, Izumi sintió un escalofrío que recorrió todo su cuerpo. Aunque estaba en su hogar no se sentía como el hogar de Satoshi donde todo era calidez. "
     ],
+    "paragraphCount": 161
   },
   {
-    id: "jose-odisea-robot-guerra-cap-5",
-    bookId: "jose-odisea-robot-guerra",
-    number: 5,
-    title: "Capítulo 5",
-    isPremium: true,
-    content: [
+    "number": 5,
+    "title": "Capítulo 5",
+    "content": [
       "Al llegar el día para presentarse a su entrevista, ambos se habían puesto de acuerdo para llegar a la misma hora. Esto para darse apoyo moral mutuo. ",
       "El centro de investigación era la casa de la tecnología y la innovación del país, el referente en desarrollo tecnológico. Tanto el gobierno como otras empresas privadas patrocinaban los proyectos dentro del centro. En esencia era un lugar donde se realizaban no solo pruebas de las nuevas tecnologías si no también donde las mejores ideas eran recibidas y elegidas para patrocinio.",
       "Satoshi que llevaba un proyecto preparado, había diseñado un robot humanoide diseñado para misiones de rescate y habilidades para manejo de herramientas, con articulaciones de manos casi humanas. El robot podía moverse casi en cualquier terreno y a diferencia de los robots convencionales tenía la capacidad de mantener el equilibro aún a pesar de ser envestido y con capacidad de cargar hasta 70 kilogramos por cada pierna. Además, su fuente de energía era una completa innovación, se cargaba en 4 horas y podía durar meses en operaciones. Algo completamente innovador y que se creía imposible. ",
@@ -854,16 +840,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Claro Satoshi que estes bien. ",
       "Hasta luego – cuelga. ",
       "Satoshi… - dijo Robert mientras aún cargaba el celular en su oído. ",
-      "En el rostro de Robert se dibujaba una sonrisa cargada de orgullo y algo de melancolía. Su amigo, al que tanto había cuidado, se había acordado de él después de tantos años, y le estaba yendo muy bien. No hay nada mejor que saber que a tus amigos les está yendo tan bien como a ti. ",
+      "En el rostro de Robert se dibujaba una sonrisa cargada de orgullo y algo de melancolía. Su amigo, al que tanto había cuidado, se había acordado de él después de tantos años, y le estaba yendo muy bien. No hay nada mejor que saber que a tus amigos les está yendo tan bien como a ti. "
     ],
+    "paragraphCount": 180
   },
   {
-    id: "jose-odisea-robot-guerra-cap-6",
-    bookId: "jose-odisea-robot-guerra",
-    number: 6,
-    title: "Capítulo 6",
-    isPremium: true,
-    content: [
+    "number": 6,
+    "title": "Capítulo 6",
+    "content": [
       "Robert había planeado todo para pedirle a su Sophia que fuera su esposa. Todo estaba listo. Durante el aniversario de su noviazgo había repartido invitaciones porque se suponía iban a celebrar el tiempo que tenían de conocerse. Entre los invitados estaban familiares de Sophia y Robert. Además de algunas amigas de Sophia y empleados de la empresa de Robert. ",
       "Los preparativos se hicieron en un hermoso jardín, lleno de flores. Las mesas estaban colocadas y Robert había mandado hacer una decoración que decía aniversario de novios. ",
       "Todos los invitados sabían que no era una simple comida o aniversario de novios. En realidad, sabían que Robert podría intentar algo más, como pedirle su mano a Sophia. ",
@@ -1097,16 +1081,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Miko no pudo responder, así que permitió que Satoshi continuara. ",
       "Así es mi tío. El mismo que ofreció a mi padre el puesto para soldado, el mismo que pagó el 50% de mis estudios. El mismo que pagó mis vacaciones y cada cosa que yo necesité – Satoshi comenzó a llorar – El verdadero problema es que ahora ya no sé cómo odiarlo.",
       "Entonces Miko, se levantó de la silla y abrazó a Satoshi, quien se derrumbó en llanto. ",
-      "Perdóname hijo – fue todo lo que pudo decir Miko a Satoshi mientras el lloraba profundamente. ",
+      "Perdóname hijo – fue todo lo que pudo decir Miko a Satoshi mientras el lloraba profundamente. "
     ],
+    "paragraphCount": 235
   },
   {
-    id: "jose-odisea-robot-guerra-cap-7",
-    bookId: "jose-odisea-robot-guerra",
-    number: 7,
-    title: "Capítulo 7",
-    isPremium: true,
-    content: [
+    "number": 7,
+    "title": "Capítulo 7",
+    "content": [
       "Al otro lado del mundo, Robert continuaba con los preparativos para su Boda. ",
       "La lista de invitados es importante Robert – le decía Sophia mientras se perdía en sus ojos. Los ojos de Robert solo estaban para Sophia. ",
       "No quisiera interrumpirlos, pero yo tengo algunas personas que quisiera que fueran – interrumpió su hermano menor Artur. ",
@@ -1271,16 +1253,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Satoshi lo presentía, al final la profesora había entregado su diseño al ejército. ",
       "En el fondo él sabía que no había nada que hacer, ellos harían todo lo que fuera posible para obtener el diseño y el software. ",
       "Entonces Sonrió para sí mismo. Aunque se habían llevado sus diseños, el podía tener acceso remoto de los robots además del protocolo que estaba listo para freír los circuitos de los robots esperando una señal para comenzar a el sabotaje. ",
-      "Entonces él se soltó sobre su silla y miró al cielo de la habitación, mientras sentía la paz de saber que podía freír los circuitos de los Robots en cualquier momento. ",
+      "Entonces él se soltó sobre su silla y miró al cielo de la habitación, mientras sentía la paz de saber que podía freír los circuitos de los Robots en cualquier momento. "
     ],
+    "paragraphCount": 166
   },
   {
-    id: "jose-odisea-robot-guerra-cap-8",
-    bookId: "jose-odisea-robot-guerra",
-    number: 8,
-    title: "Capítulo 8",
-    isPremium: true,
-    content: [
+    "number": 8,
+    "title": "Capítulo 8",
+    "content": [
       "Mientras llegaba el día de lo boda de Robert. La profesora, hacía pedidos a Satoshi. En esencia eran mejoras para otros proyectos que sus patrocinadores habían adquirido, de los cuales habían dejado cuantiosas aportaciones. ",
       "El centro de investigación era el lugar donde la innovación llegaba primero. Por eso era tan visitado y tan redituable económicamente. ",
       "Por supuesto por ser el desarrollador de uno de los mejores robots creados hasta la fecha, Satoshi recibió una cuantiosa suma de dinero. Y por cada mejora que implementaba en algún proyecto recibía recompensas monetarias. Su nombre se había vuelto muy popular y había adquirido cierto renombre dentro del instituto, pues era brillante. Todo el mundo sabía que si Satoshi tocaba un proyecto de seguro hallaría la forma de mejorarlo.",
@@ -1442,16 +1422,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Satoshi, solo sonrió – No te preocupes Yui – son sonrisa se tornó amable y sus ojos brillaban. ",
       "Yui solo sintió como su corazón se unía al de Satoshi. ",
       "Ya quiero que sea la hora de salir Yui – dijo Satoshi con una sonrisa brillante.",
-      "Sí – sonrió junto a él. ",
+      "Sí – sonrió junto a él. "
     ],
+    "paragraphCount": 163
   },
   {
-    id: "jose-odisea-robot-guerra-cap-9",
-    bookId: "jose-odisea-robot-guerra",
-    number: 9,
-    title: "Capítulo 9",
-    isPremium: true,
-    content: [
+    "number": 9,
+    "title": "Capítulo 9",
+    "content": [
       "Al llegar la hora de la salida, Satoshi se hallaba listo, esperando a Yui en la puerta. Se miraba un poco nervioso. ",
       "Entonces Satoshi la alcanzó a ver. Su rostro era como el de un ángel, sus ojos brillaban. Y al ver a Satoshi su rostro parecía brillar aún más. Satoshi solo quedó cautivado mientras ella se acercaba a él.",
       "Entonces cuando estuvo frente a él se detuvo y mirándolo con los ojos bien abiertos, dijo – ¿Estas listo?",
@@ -1700,16 +1678,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Solo por favor Izumi, lleva las cosas con calma, ¿puedes?",
       "Claro Satoshi, calmado es mi segundo nombre. ",
       "Bien. Entonces hablamos al salir. Por cierto, esperaremos a Yui en la salida. Llegando la hora nos vamos, no quiero hacer esperar a yui. ",
-      "Cuanta conmigo Satoshi – Guiño.",
+      "Cuanta conmigo Satoshi – Guiño."
     ],
+    "paragraphCount": 250
   },
   {
-    id: "jose-odisea-robot-guerra-cap-10",
-    bookId: "jose-odisea-robot-guerra",
-    number: 10,
-    title: "Capítulo 10",
-    isPremium: true,
-    content: [
+    "number": 10,
+    "title": "Capítulo 10",
+    "content": [
       "Al llegar la hora de salir, Satoshi se hallaba algo nervioso. Entonces llegó Izumi y golpeó su brazo.",
       "¿Nervioso? – Lo miró con burla.",
       "Sí, un poco, ¿tú no?",
@@ -1896,16 +1872,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Es cierto ¡Yui!",
       "Claro amigo, ya sabes quién te puede ayudar – sonrió y golpeó su hombro. ",
       "Cierto le preguntaré hoy.",
-      "Bien amigo, muy bien.",
+      "Bien amigo, muy bien."
     ],
+    "paragraphCount": 188
   },
   {
-    id: "jose-odisea-robot-guerra-cap-11",
-    bookId: "jose-odisea-robot-guerra",
-    number: 11,
-    title: "Capítulo 11",
-    isPremium: true,
-    content: [
+    "number": 11,
+    "title": "Capítulo 11",
+    "content": [
       "Al llegar el día Satoshi e Izumi salieron de Shinpo en dirección a Wealth en la ciudad de Amity.",
       "Los preparativos de la boda ya estaban listos. Sería en un castillo que el padre de Robert había rentado para la ocasión.",
       "Sophia estaba muy emocionada, pues era el día en que por fin se harían los votos matrimoniales. ",
@@ -2073,16 +2047,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Satoshi, es tu decisión, solo no te vayas a meter en problemas. Yo no podré salvarte todo el tiempo. Y no creo que Izumi pueda hacerlo tampoco, si te metes el problema con tu gobierno, habrá consecuencias. ",
       "Después de sus palabras el día parecía más fresco. Como si la sola presencia de Robert provocara cierta frialdad en el clima.",
       "Amigo, que no se te olvide que estamos aquí por tu boda – Satoshi sonrió. ",
-      "Pero Satoshi – la inquietud de Robert no se había disipado. Pero al mirar el rostro confiado de Satoshi, Roberth decidió dejar pasar el asunto por ahora.",
+      "Pero Satoshi – la inquietud de Robert no se había disipado. Pero al mirar el rostro confiado de Satoshi, Roberth decidió dejar pasar el asunto por ahora."
     ],
+    "paragraphCount": 169
   },
   {
-    id: "jose-odisea-robot-guerra-cap-12",
-    bookId: "jose-odisea-robot-guerra",
-    number: 12,
-    title: "Capítulo 12",
-    isPremium: true,
-    content: [
+    "number": 12,
+    "title": "Capítulo 12",
+    "content": [
       "Conforme avanzaba la plática, Robert miraba de vez en cuando su reloj. Lugo que hubieron terminado el postre, por fin dijo – Amigo, creo que ya va siendo hora de que me retire. Tengo que revisar unos asuntos del banquete que se llevará en el castillo. Por cierto, James los llevará cuando ustedes se lo pidan. Pueden llegar cuando se sientan listos. Sus lugares ya están apartados. Lamento que no nos puedas acompañar en la ceremonia, es solo que ya estamos llenos y aunque desearía que estuvieras presente, mis padres han invitado a personas muy importantes para la ceremonia. En banquete es diferente, todos mis amigos y familiares más cercanos estarán allí. Nos veremos en unas horas.",
       "Ambos Satoshi e Izumi respondieron a la vez – Claro Robert, gracias, estaremos allí. ",
       "Bien entonces me retiró – Luego de lo cual Robert se retiró. ",
@@ -2295,16 +2267,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Si le dices a Riko, me matará.",
       "No creo que se haga muchas ilusiones en que le serás fiel – Satoshi soltó una carcajada. ",
       "Si búrlate todo lo que quieras.",
-      "Es broma amigo. Solo vayamos a descansar. ",
+      "Es broma amigo. Solo vayamos a descansar. "
     ],
+    "paragraphCount": 213
   },
   {
-    id: "jose-odisea-robot-guerra-cap-13",
-    bookId: "jose-odisea-robot-guerra",
-    number: 13,
-    title: "Capítulo 13",
-    isPremium: true,
-    content: [
+    "number": 13,
+    "title": "Capítulo 13",
+    "content": [
       "[Sueño]",
       "Satoshi se hallaba profundamente dormido. Sus sueños eran dulces, pero su corazón estaba agitado por todas las cosas que estaban pasando a su alrededor. Por fin su mente se había calmado, y en ese momento de paz. Comenzó a sentir una profunda presión en su pecho, mientras dormía.",
       "¡Hijo! Estoy orgullosa de ti – Esa voz provenía de su madre, voltear su mirada, venía un globo gigante con el rostro de su madre, la voz parecía venir de este globo, que, con una sonrisa, seguía diciendo - ¡Hijo estoy orgullosa de ti! Luego de eso salieron más globos. Los globos con los rostros de sus abuelos, que también decían – Satoshi eres un buen niño – Los rostros de sus abuelos dibujados en los globos parecían más honestos que el rostro de su madre en aquel globo. Luego los globos se alejaron.",
@@ -2498,16 +2468,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Bien. Se lo diré en cuanto este de regreso. ",
       "Bien. Pero por ahora que te parece si celebramos. ",
       "Claro.",
-      "Bien, cerca de aquí hay un lugar espectacular que sé que te encantará. Voy con Sophia, seguido…",
+      "Bien, cerca de aquí hay un lugar espectacular que sé que te encantará. Voy con Sophia, seguido…"
     ],
+    "paragraphCount": 195
   },
   {
-    id: "jose-odisea-robot-guerra-cap-14",
-    bookId: "jose-odisea-robot-guerra",
-    number: 14,
-    title: "Capítulo 14",
-    isPremium: true,
-    content: [
+    "number": 14,
+    "title": "Capítulo 14",
+    "content": [
       "Y por cierto Satoshi. ¿Cuánto tiempo más te quedaras? Me gustaría saber si te puedo mostrar algunos lugares de la ciudad.",
       "Pedí toda la semana, pensaba llegar en uno o dos días y llevar a mis abuelos y a mi madre a pasear. ",
       "O, eso suena bien. Me da gusto que te quedes unos días más. Por cierto, ¿recuerdas a Frank?",
@@ -2732,16 +2700,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Si es una chica bastante amable, creo que es la chica que Robert se merece.",
       "Y, por cierto, ¿le entregaste el regalo que le mandé?",
       "Claro.",
-      "Muy bien hijo, siéntate te voy a servir algo de lo que preparamos, debes estar cansado por el viaje. ",
+      "Muy bien hijo, siéntate te voy a servir algo de lo que preparamos, debes estar cansado por el viaje. "
     ],
+    "paragraphCount": 225
   },
   {
-    id: "jose-odisea-robot-guerra-cap-15",
-    bookId: "jose-odisea-robot-guerra",
-    number: 15,
-    title: "Capítulo 15",
-    isPremium: true,
-    content: [
+    "number": 15,
+    "title": "Capítulo 15",
+    "content": [
       "Por fin estoy con mi familia. Creo que tomaré el teléfono, tal vez Izumi ya esté en camino.",
       "Al mirar el teléfono, Satoshi notó que tenía algunos mensajes de Izumi. Al abrir el chat resultaron ser fotografías. Todas con sus nuevos amigos.",
       "Todas son fotografías de Izumi con sus nuevos amigos… O bueno creo que Izumi se la está pasando bien – Al final de las fotos Izumi escribe “Las mejores vacaciones de mi vida”.  – Lo bueno que las está disfrutando.",
@@ -2792,16 +2758,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Por un momento cobró la conciencia. Satoshi sentía un dolor muy agudo en las piernas – Creo que me fracturé vario huesos. Estoy muy grave – entonces se desmayó.",
       "Unas voces se escuchaban a la distancia -Está en estado crítico, el carro lo embistió con mucha fuerza... Está inconsciente. Rápido, métanlo al quirófano... Está perdiendo mucha sangre, necesitamos hacer algo o morirá... Su cráneo sufrió un fuerte impacto en su cráneo. Es posible que tenga daño cerebral...",
       "Luego de eso todo fue oscuridad.",
-      "Libro 2",
+      "Libro 2"
     ],
+    "paragraphCount": 51
   },
   {
-    id: "jose-odisea-robot-guerra-cap-16",
-    bookId: "jose-odisea-robot-guerra",
-    number: 16,
-    title: "Capítulo 16",
-    isPremium: true,
-    content: [
+    "number": 16,
+    "title": "Capítulo 16",
+    "content": [
       "-Sonido- Beep, beep, beep.",
       "Satoshi abrió los ojos – Estos… -",
       "Una voz comenzó a escucharse cada vez más cerca, y decía – Satoshi… Satoshi…",
@@ -2931,16 +2895,14 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "En eso todo comenzaron a aplaudir. La profesora Suzu, sonrió levemente y agregó en voz alta mirando a todo el grupo – Aquí también necesitamos mentes brillantes. Todos sus trabajos son bien valorados y recompensados. Todos aquí poseen mentes privilegiadas. El centro les ha dado la oportunidad de desarrollar sus proyectos en benefició de esta hermosa nación. Son privilegiados. Así que sean agradecidos – luego, miró a Satoshi y continuó – Satoshi, nos alegra saber que contaremos contigo por mucho tiempo.",
       "Satoshi se quedó serio – mirando atentamente a la profesora Suzu. Solo entonces comprendió que la profesora era realmente muy nacionalista. Sabía que ella trabajaba en el centro de investigación, pero no sabía que tuviera fuerte apego nacionalista. Entonces entendió que si continuaba trabajando en el centro de investigación. En algún momento, su integridad moral se vería puesta a prueba. No podía permitir que su conciencia se pusiera en juego.",
       "¿Qué era más importante que apoyar a su nación? Su conciencia. Esa era la forma de pensar de Satoshi, quien sin darse cuenta ya había iniciado su guerra en contra de los proyectos bélicos de su propia nación. El no permitiría por ningún medio que sus inventos fueran usados para herir a otros. ",
-      "Mientras todos aplaudían, Satoshi miraba a la profesora Suzu - ¿Pero que haré ahora? – Se preguntó Satoshi – No quiero dejar a Yui, pero tampoco quiero que mis inventos queden en manos de personas que solo piensan en hacer la guerra.",
+      "Mientras todos aplaudían, Satoshi miraba a la profesora Suzu - ¿Pero que haré ahora? – Se preguntó Satoshi – No quiero dejar a Yui, pero tampoco quiero que mis inventos queden en manos de personas que solo piensan en hacer la guerra."
     ],
+    "paragraphCount": 130
   },
   {
-    id: "jose-odisea-robot-guerra-cap-17",
-    bookId: "jose-odisea-robot-guerra",
-    number: 17,
-    title: "Capítulo 17",
-    isPremium: true,
-    content: [
+    "number": 17,
+    "title": "Capítulo 17",
+    "content": [
       "-Sueño-",
       "Satoshi camina hacia Yui. Ella está hermosamente vestida con un vestido blanco con bordado de flores.",
       "Satoshi se acera – Hola Yui, ¿estás lista para nuestra cita? – Satoshi sonríe.",
@@ -3109,7 +3071,8 @@ export const joseOdiseaRobotChapters: Chapter[] = [
       "Sí, eso fue hace bastante tiempo.",
       "Aunque Satoshi ya conocía la historia, quiso escucharla una vez más – Bueno mientras ceno me puedes platicar.",
       "Miko contó la historia de como conoció al papa de Satoshi, y como se enamoraron. Luego de unos minutos se acercó la abuela y el abuelo. Quienes compartieron sus impresiones del día en que conocieron a Jun. La cena se volvió muy amena pues la abuela Ying, sacó galletas y preparó té para tomar juntos.",
-      "Al final Satoshi se fue a la cama con un buen recuerdo del día en que renunció a su trabajo en el centro de investigación.",
+      "Al final Satoshi se fue a la cama con un buen recuerdo del día en que renunció a su trabajo en el centro de investigación."
     ],
-  },
-];
+    "paragraphCount": 169
+  }
+]

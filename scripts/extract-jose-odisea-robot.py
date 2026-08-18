@@ -11,6 +11,10 @@ OUT_TS = Path(__file__).parent.parent / "src" / "data" / "jose-odisea-robot-chap
 BOOK_ID = "jose-odisea-robot-guerra"
 
 CHAPTER_PATTERN = re.compile(r"^cap[ií]tulo\s+(\d+)\s*\.?\s*(.*)$", re.IGNORECASE)
+REVISION_LINE = re.compile(
+    r"^(ultima|última)\s+revisi[oó]n|^revisado\s+el\s+",
+    re.IGNORECASE,
+)
 
 
 def read_paragraphs(docx_path: Path) -> list[str]:
@@ -60,6 +64,8 @@ def split_into_chapters(paragraphs: list[str]) -> list[dict]:
             continue
 
         if started and current is not None:
+            if REVISION_LINE.match(para.strip()):
+                continue
             current["content"].append(para)
 
     flush()

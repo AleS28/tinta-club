@@ -82,10 +82,6 @@ export function SupportAuthorModal({
         </div>
 
         <h2 className="font-serif text-2xl font-bold text-ink">Invita un café a {authorName}</h2>
-        <p className="mt-2 text-sm text-muted">
-          Un gesto directo en USD. El autor recibe el 70% neto; el resto cubre comisiones y la
-          plataforma.
-        </p>
 
         <div className="mt-5 grid grid-cols-4 gap-2">
           {PRESET_AMOUNTS.map((preset) => (

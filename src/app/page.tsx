@@ -49,7 +49,7 @@ export default async function HomePage() {
         <HomeJoinBanner />
       </main>
 
-      <Footer variant="imperial" />
+      <Footer />
     </div>
   );
 }

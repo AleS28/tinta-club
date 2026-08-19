@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ShoppingBag } from "lucide-react";
+import Link from "next/link";
 import type { StoreBookListing } from "@/types/monetization";
 import { useAuth } from "@/context/AuthContext";
+import { isLaunchMode, LAUNCH_READING_LABEL } from "@/lib/launch";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { StoreBookCard } from "@/components/tienda/StoreBookCard";
 
@@ -14,6 +16,8 @@ export function StoreCatalog() {
   const [loading, setLoading] = useState(true);
   const [purchaseLoadingId, setPurchaseLoadingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+
+  const launchMode = isLaunchMode();
 
   const loadCatalog = useCallback(async () => {
     setLoading(true);
@@ -57,7 +61,7 @@ export function StoreCatalog() {
 
   const handlePurchase = async (bookId: string) => {
     if (!user) {
-      openAuthModal("/tienda", { intent: "subscribe" });
+      openAuthModal("/tienda", launchMode ? undefined : { intent: "subscribe" });
       return;
     }
 
@@ -113,10 +117,25 @@ export function StoreCatalog() {
         </div>
         <h1 className="font-serif text-3xl font-bold text-ink">Catálogo de compra directa</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Compra obras completas o capítulos premium. Todo el contenizado se lee aquí, en nuestro
-          visor — licencia digital de por vida, sin descargas.
+          {launchMode
+            ? `${LAUNCH_READING_LABEL}. Puedes leer en la biblioteca sin comprar. La tienda queda disponible para quien prefiera compra directa.`
+            : "Compra obras completas o capítulos premium. Todo el contenizado se lee aquí, en nuestro visor — licencia digital de por vida, sin descargas."}
         </p>
       </header>
+
+      {launchMode && (
+        <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
+          <p className="text-sm font-medium text-emerald-900">
+            {LAUNCH_READING_LABEL} — no necesitas comprar para leer.
+          </p>
+          <Link
+            href="/buscar"
+            className="mt-2 inline-flex text-sm font-semibold text-terracotta hover:text-orange-700"
+          >
+            Ir a explorar obras gratis →
+          </Link>
+        </div>
+      )}
 
       {error && (
         <p className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">

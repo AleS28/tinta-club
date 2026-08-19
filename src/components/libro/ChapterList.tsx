@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Lock, BookOpen } from "lucide-react";
+import { BookOpen, Sparkles } from "lucide-react";
 import { Chapter } from "@/data/mock";
+import { isLaunchMode } from "@/lib/launch";
 
 interface ChapterListProps {
   chapters: Chapter[];
@@ -10,6 +11,7 @@ interface ChapterListProps {
 
 export function ChapterList({ chapters }: ChapterListProps) {
   const router = useRouter();
+  const launchMode = isLaunchMode();
 
   const handleRead = (chapter: Chapter) => {
     router.push(`/leer/${chapter.id}`);
@@ -18,6 +20,12 @@ export function ChapterList({ chapters }: ChapterListProps) {
   return (
     <section>
       <h2 className="font-serif text-xl font-bold text-ink">Capítulos</h2>
+      {launchMode && (
+        <p className="mt-2 text-sm text-muted">
+          Lectura abierta durante el lanzamiento — regístrate gratis para acceder a todos los
+          capítulos.
+        </p>
+      )}
       <ul className="mt-4 divide-y divide-sidebar rounded-2xl border border-sidebar bg-white/60">
         {chapters.map((chapter) => (
           <li
@@ -29,9 +37,13 @@ export function ChapterList({ chapters }: ChapterListProps) {
                 <span className="text-xs font-bold uppercase tracking-wide text-muted">
                   Cap. {chapter.number}
                 </span>
-                {chapter.isPremium ? (
+                {launchMode ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                    <Sparkles className="h-3 w-3" />
+                    Gratis en lanzamiento
+                  </span>
+                ) : chapter.isPremium ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                    <Lock className="h-3 w-3" />
                     Premium
                   </span>
                 ) : (
@@ -46,11 +58,7 @@ export function ChapterList({ chapters }: ChapterListProps) {
             <button
               type="button"
               onClick={() => handleRead(chapter)}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wide transition-colors ${
-                chapter.isPremium
-                  ? "border border-muted/30 text-muted hover:border-terracotta hover:text-terracotta"
-                  : "bg-terracotta text-white hover:bg-orange-700"
-              }`}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-terracotta px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-orange-700"
             >
               <BookOpen className="h-3.5 w-3.5" />
               Leer

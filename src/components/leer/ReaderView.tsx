@@ -8,6 +8,7 @@ import { Book, Chapter } from "@/data/mock";
 import { getPremiumPreviewContent } from "@/lib/chapter-access";
 import { DEFAULT_SUBSCRIPTION_PRICE } from "@/lib/subscription";
 import { DEFAULT_DIRECT_CHAPTER_PRICE_USD } from "@/lib/monetization/constants";
+import { isLaunchMode } from "@/lib/launch";
 import type { StoreBookListing } from "@/types/monetization";
 import { useAuth } from "@/context/AuthContext";
 import { isPremiumUser } from "@/types/user";
@@ -15,6 +16,7 @@ import { ReaderTopbar } from "@/components/leer/ReaderTopbar";
 import { ReaderParagraph } from "@/components/leer/ReaderParagraph";
 import { ReaderWatermark } from "@/components/leer/ReaderWatermark";
 import { PaywallBanner } from "@/components/leer/PaywallBanner";
+import { LaunchRegisterBanner } from "@/components/leer/LaunchRegisterBanner";
 import { TermsAcceptanceModal } from "@/components/legal/TermsAcceptanceModal";
 import { ProtectedContent } from "@/components/ui/ProtectedContent";
 import { useReadingTimeTracker } from "@/hooks/useReadingTimeTracker";
@@ -29,7 +31,7 @@ interface ReaderViewProps {
   nextChapter: Chapter | null;
 }
 
-type ContentAccess = "premium" | "purchase" | "book_purchase" | null;
+type ContentAccess = "premium" | "purchase" | "book_purchase" | "launch" | null;
 
 export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderViewProps) {
   const searchParams = useSearchParams();
@@ -47,6 +49,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
   const [storeListing, setStoreListing] = useState<StoreBookListing | null>(null);
 
   const subscriptionPrice = DEFAULT_SUBSCRIPTION_PRICE;
+  const launchMode = isLaunchMode();
   const hasActiveSubscription = isSubscriber && isPremiumUser(userProfile);
   const hasDirectPurchase = accessType === "purchase" || accessType === "book_purchase";
 
@@ -157,7 +160,13 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
   const hasFullAccess =
     !chapter.isPremium || (premiumContent !== null && premiumContent.length > 0);
 
-  const isPremiumLocked = chapter.isPremium && !hasFullAccess;
+  const isPremiumLocked = launchMode
+    ? chapter.isPremium && !user
+    : chapter.isPremium && !hasFullAccess;
+
+  const openReaderAuth = () => {
+    openAuthModal(`/leer/${chapter.id}`);
+  };
 
   useReadingTimeTracker({
     user,
@@ -174,6 +183,13 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
   }, [chapter.content, chapter.isPremium, hasFullAccess, premiumContent]);
 
   const handleSubscribeClick = () => {
+    if (launchMode) {
+      if (!user) {
+        openReaderAuth();
+      }
+      return;
+    }
+
     if (!user) {
       openAuthModal(`/leer/${chapter.id}`, { intent: "subscribe" });
       return;
@@ -268,8 +284,14 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
           </h1>
 
           {chapter.isPremium && (
-            <span className="mt-3 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
-              Premium
+            <span
+              className={`mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                launchMode
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-amber-100 text-amber-700"
+              }`}
+            >
+              {launchMode ? "Gratis en lanzamiento" : "Premium"}
             </span>
           )}
 
@@ -292,7 +314,13 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
             </p>
           )}
 
-          {hasFullAccess && hasActiveSubscription && !hasDirectPurchase && (
+          {hasFullAccess && accessType === "launch" && (
+            <p className="mt-4 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+              Lectura abierta — lanzamiento
+            </p>
+          )}
+
+          {hasFullAccess && hasActiveSubscription && !hasDirectPurchase && accessType !== "launch" && (
             <p className="mt-4 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
               Socio del Imperio ✦ — Acceso premium verificado
             </p>
@@ -331,7 +359,11 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
             </div>
           )}
 
-          {isPremiumLocked && !contentLoading && (
+          {isPremiumLocked && !contentLoading && launchMode && (
+            <LaunchRegisterBanner onRegister={openReaderAuth} />
+          )}
+
+          {isPremiumLocked && !contentLoading && !launchMode && (
             <PaywallBanner
               price={subscriptionPrice}
               chapterPrice={storeListing?.saleMode === "chapter" ? chapterPrice : undefined}
@@ -382,7 +414,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
             ) : nextChapter && isPremiumLocked ? (
               <button
                 type="button"
-                onClick={handleSubscribeClick}
+                onClick={launchMode ? openReaderAuth : handleSubscribeClick}
                 className="inline-flex items-center gap-1.5 rounded-full bg-terracotta px-4 py-2.5 text-sm font-medium text-white transition-all duration-300 hover:scale-105 hover:bg-orange-700"
               >
                 Siguiente Capítulo

@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { Coffee } from "lucide-react";
 import { BRAND_NAME } from "@/lib/brand";
+import { isLaunchMode } from "@/lib/launch";
 import { SupportPlatformModal } from "@/components/social/SupportPlatformModal";
 
 export function PlatformCoffeeCTA() {
   const [open, setOpen] = useState(false);
+  const launchMode = isLaunchMode();
 
   return (
     <>
@@ -20,9 +22,9 @@ export function PlatformCoffeeCTA() {
             Invita un café al Imperio
           </h2>
           <p className="mt-2 text-sm text-white/85">
-            Si quieres apoyar a {BRAND_NAME} directamente —sin suscripción— puedes invitarnos un café.
-            Ese aporte nos ayuda a mantener la plataforma y seguir apostando por autores
-            independientes.
+            {launchMode
+              ? `La lectura es gratis durante el lanzamiento. Si ${BRAND_NAME} te está gustando, puedes invitarnos un café —sin suscripción obligatoria— y ayudarnos a mantener la plataforma y seguir apostando por autores independientes.`
+              : `Si quieres apoyar a ${BRAND_NAME} directamente —sin suscripción— puedes invitarnos un café. Ese aporte nos ayuda a mantener la plataforma y seguir apostando por autores independientes.`}
           </p>
 
           <button

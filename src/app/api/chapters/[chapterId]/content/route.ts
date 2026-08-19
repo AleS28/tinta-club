@@ -8,6 +8,7 @@ import {
   sanitizeChapterContent,
 } from "@/lib/firestore-admin";
 import { isAdminConfigured, verifyFirebaseIdToken } from "@/lib/firebase-admin";
+import { isLaunchMode } from "@/lib/launch";
 import { isPremiumUser } from "@/types/user";
 
 export const runtime = "nodejs";
@@ -60,6 +61,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const decoded = await verifyFirebaseIdToken(idToken);
     if (!decoded) {
       return NextResponse.json({ error: "Token inválido o expirado" }, { status: 401 });
+    }
+
+    if (isLaunchMode()) {
+      return NextResponse.json({
+        content,
+        access: "launch",
+      });
     }
 
     const profile = await getUserProfileFromFirestore(decoded.uid, decoded.email);

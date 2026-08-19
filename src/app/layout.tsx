@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Merriweather, Playfair_Display } from "next/font/google";
 import { Providers } from "@/components/providers/Providers";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { isLaunchMode } from "@/lib/launch";
 import "./globals.css";
 
 const inter = Inter({
@@ -23,8 +24,9 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: "El Imperio de la Tinta — Plataforma de Narrativa Independiente",
-  description:
-    "Lee historias únicas y apoya a autores independientes. Plataforma de lectura por suscripción para narrativa en español.",
+  description: isLaunchMode()
+    ? "Lee historias independientes en español gratis durante el lanzamiento. Romance, fantasía y más. Apoya con un café si quieres."
+    : "Lee historias únicas y apoya a autores independientes. Plataforma de lectura por suscripción para narrativa en español.",
 };
 
 export default function RootLayout({

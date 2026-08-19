@@ -17,6 +17,10 @@ const config: Config = {
         imperial: {
           dark: "#2C1810",
           deep: "#8B3A2B",
+          canvas: "#12100E",
+          surface: "#1E1814",
+          border: "#8B6914",
+          gold: "#D4AF37",
         },
         gold: {
           DEFAULT: "#C9A961",

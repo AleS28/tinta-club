@@ -235,6 +235,66 @@
   @apply select-none;
 }
 
+/* Superficies del visor de lectura */
+.reader-surface-light {
+  background-color: #fcf9f5;
+  color: #2a1810;
+}
+
+.reader-surface-dark {
+  background-color: #1c1917;
+  color: #f5f0e8;
+}
+
+.reader-surface-night {
+  background-color: #2a1f14;
+  color: #f5e6c8;
+}
+
+.reader-surface-light .reader-text {
+  color: #2a1810;
+}
+
+.reader-surface-dark .reader-text,
+.reader-surface-night .reader-text {
+  color: inherit;
+}
+
+.reader-surface-light .reader-muted {
+  color: #6b5c52;
+}
+
+.reader-surface-dark .reader-muted {
+  color: #a8a29e;
+}
+
+.reader-surface-night .reader-muted {
+  color: #c4a574;
+}
+
+.reader-surface-dark .reader-message-bubble {
+  @apply border-stone-600/50 bg-stone-800/80 text-stone-100;
+}
+
+.reader-surface-night .reader-message-bubble {
+  @apply border-amber-900/40 bg-amber-950/50 text-amber-50;
+}
+
+.reader-surface-dark .reader-note-bubble,
+.reader-surface-night .reader-note-bubble {
+  @apply border-red-900/40 bg-red-950/30 text-red-100;
+}
+
+.reader-surface-dark .reader-dialogue,
+.reader-surface-night .reader-dialogue {
+  @apply border-terracotta/50 bg-black/20 text-inherit;
+}
+
+.reader-surface-dark .reader-quote,
+.reader-surface-night .reader-quote {
+  @apply border-stone-500/40 bg-stone-800/40 text-inherit;
+}
+
 @media print {
   .no-print {
     display: none !important;

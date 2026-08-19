@@ -1,6 +1,6 @@
 export type RegistrationAccountType = "reader" | "author";
 
-export type AuthModalIntent = "default" | "author" | "subscribe";
+export type AuthModalIntent = "default" | "author" | "subscribe" | "reader";
 
 export interface OpenAuthModalOptions {
   intent?: AuthModalIntent;

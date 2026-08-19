@@ -32,6 +32,7 @@ export function AuthModal() {
 
   const isAuthorIntent = authModalIntent === "author";
   const isSubscribeIntent = authModalIntent === "subscribe";
+  const isReaderRegisterIntent = authModalIntent === "reader";
 
   useEffect(() => {
     if (!authModalOpen) return;
@@ -41,6 +42,11 @@ export function AuthModal() {
       return;
     }
     if (authModalIntent === "subscribe") {
+      setMode("register");
+      setAccountType("reader");
+      return;
+    }
+    if (authModalIntent === "reader") {
       setMode("register");
       setAccountType("reader");
       return;
@@ -281,6 +287,12 @@ export function AuthModal() {
               {isLaunchMode()
                 ? "Crea tu cuenta gratis para leer todos los capítulos durante el lanzamiento abierto."
                 : "Crea tu cuenta de lector para suscribirte y desbloquear todos los capítulos premium."}
+            </p>
+          )}
+
+          {isRegister && isReaderRegisterIntent && (
+            <p className="mb-5 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+              Crea tu cuenta gratis y empieza a leer en El Imperio de la Tinta.
             </p>
           )}
 

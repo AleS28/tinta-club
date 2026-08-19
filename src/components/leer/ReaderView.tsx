@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
@@ -12,7 +12,10 @@ import { isLaunchMode } from "@/lib/launch";
 import type { StoreBookListing } from "@/types/monetization";
 import { useAuth } from "@/context/AuthContext";
 import { isPremiumUser } from "@/types/user";
-import { ReaderTopbar } from "@/components/leer/ReaderTopbar";
+import { ReaderTopbar, ReaderSettingsPanel } from "@/components/leer/ReaderTopbar";
+import { ReaderChapterIndex } from "@/components/leer/ReaderChapterIndex";
+import { useReaderPreferences } from "@/hooks/useReaderPreferences";
+import { getReaderSurfaceClass } from "@/lib/reader-preferences";
 import { ReaderParagraph } from "@/components/leer/ReaderParagraph";
 import { ReaderWatermark } from "@/components/leer/ReaderWatermark";
 import { PaywallBanner } from "@/components/leer/PaywallBanner";
@@ -27,6 +30,7 @@ import { SupportAuthorButton } from "@/components/social/SupportAuthorButton";
 interface ReaderViewProps {
   chapter: Chapter;
   book: Book;
+  chapters: Chapter[];
   prevChapter: Chapter | null;
   nextChapter: Chapter | null;
 }
@@ -37,7 +41,13 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
   const searchParams = useSearchParams();
   const { user, userProfile, isSubscriber, loading, openAuthModal, refreshUserProfile } =
     useAuth();
-  const [fontSize, setFontSize] = useState(18);
+  const { fontPreset, fontSize, theme, resolvedTheme, setFontPreset, setTheme } =
+    useReaderPreferences();
+  const surfaceClass = getReaderSurfaceClass(resolvedTheme);
+  const readerRootRef = useRef<HTMLDivElement>(null);
+  const [indexOpen, setIndexOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
   const [premiumContent, setPremiumContent] = useState<string[] | null>(null);
   const [contentLoading, setContentLoading] = useState(false);
@@ -168,6 +178,21 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
     openAuthModal(`/leer/${chapter.id}`);
   };
 
+  useEffect(() => {
+    const onFullscreenChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!readerRootRef.current) return;
+    if (!document.fullscreenElement) {
+      void readerRootRef.current.requestFullscreen?.();
+    } else {
+      void document.exitFullscreen?.();
+    }
+  };
+
   useReadingTimeTracker({
     user,
     bookId: book.id,
@@ -260,14 +285,39 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
   };
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div ref={readerRootRef} className={`min-h-screen ${surfaceClass}`}>
       <ReaderTopbar
         bookId={book.id}
+        bookTitle={book.title}
+        authorName={book.author}
         chapterTitle={chapter.title}
         chapterNumber={chapter.number}
-        fontSize={fontSize}
-        onFontSizeChange={setFontSize}
+        isFullscreen={isFullscreen}
+        surfaceClass={surfaceClass}
+        onOpenIndex={() => setIndexOpen(true)}
+        onOpenSettings={() => setSettingsOpen(true)}
+        onToggleFullscreen={toggleFullscreen}
       />
+
+      {indexOpen && (
+        <ReaderChapterIndex
+          bookId={book.id}
+          chapters={chapters}
+          currentChapterId={chapter.id}
+          onClose={() => setIndexOpen(false)}
+        />
+      )}
+
+      {settingsOpen && (
+        <ReaderSettingsPanel
+          fontPreset={fontPreset}
+          theme={theme}
+          resolvedTheme={resolvedTheme}
+          onFontPresetChange={setFontPreset}
+          onThemeChange={setTheme}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
 
       <ProtectedContent
         blockKeyboard
@@ -277,7 +327,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
 
         <div className="relative z-10">
           <h1
-            className="font-serif font-bold leading-tight text-ink"
+            className="reader-text font-serif font-bold leading-tight"
             style={{ fontSize: `${fontSize + 6}px` }}
           >
             {chapter.title}
@@ -296,7 +346,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
           )}
 
           {contentLoading && (
-            <div className="mt-8 flex items-center justify-center gap-2 text-sm text-muted">
+            <div className="mt-8 flex items-center justify-center gap-2 text-sm reader-muted">
               <Loader2 className="h-4 w-4 animate-spin text-terracotta" />
               Verificando acceso al capítulo…
             </div>
@@ -352,7 +402,8 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
               </div>
               {isPremiumLocked && (
                 <div
-                  className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-paper via-paper/90 to-transparent"
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--reader-fade)] via-[color-mix(in_srgb,var(--reader-fade)_90%,transparent)] to-transparent"
+                  style={{ "--reader-fade": resolvedTheme === "light" ? "#fcf9f5" : "#1c1917" } as CSSProperties}
                   aria-hidden
                 />
               )}
@@ -394,7 +445,7 @@ export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderVi
             {prevChapter ? (
               <Link
                 href={`/leer/${prevChapter.id}`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-sidebar bg-white/70 px-4 py-2.5 text-sm font-medium text-ink transition-all duration-300 hover:scale-105 hover:border-terracotta hover:text-terracotta"
+                className="inline-flex items-center gap-1.5 rounded-full border border-sidebar bg-white/70 px-4 py-2.5 text-sm font-medium reader-text transition-all duration-300 hover:scale-105 hover:border-terracotta hover:text-terracotta"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Capítulo Anterior

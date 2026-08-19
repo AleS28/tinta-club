@@ -3,6 +3,9 @@ import { Inter, Merriweather, Playfair_Display } from "next/font/google";
 import { Providers } from "@/components/providers/Providers";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { isLaunchMode } from "@/lib/launch";
+import { FACEBOOK_PAGE_URL, isFacebookConfigured } from "@/lib/facebook";
+import { buildSiteOpenGraph } from "@/lib/metadata-og";
+import { getAppUrl } from "@/lib/app-url";
 import "./globals.css";
 
 const inter = Inter({
@@ -27,6 +30,11 @@ export const metadata: Metadata = {
   description: isLaunchMode()
     ? "Lee historias independientes en español gratis durante el lanzamiento. Romance, fantasía y más. Apoya con un café si quieres."
     : "Lee historias únicas y apoya a autores independientes. Plataforma de lectura por suscripción para narrativa en español.",
+  metadataBase: new URL(getAppUrl()),
+  openGraph: {
+    ...buildSiteOpenGraph(),
+    sameAs: isFacebookConfigured() ? [FACEBOOK_PAGE_URL] : undefined,
+  },
 };
 
 export default function RootLayout({

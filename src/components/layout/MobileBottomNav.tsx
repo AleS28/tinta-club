@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import { BookOpen, Heart, Home, Search, ShoppingBag, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { resolveAccountAvatar } from "@/lib/account-avatar";
+import { isLaunchMode } from "@/lib/launch";
 
-const tabs = [
+const allTabs = [
   { id: "home", label: "Inicio", href: "/", icon: Home, match: (path: string) => path === "/" },
   {
     id: "store",
@@ -14,6 +15,7 @@ const tabs = [
     href: "/tienda",
     icon: ShoppingBag,
     match: (path: string) => path.startsWith("/tienda"),
+    hideDuringLaunch: true,
   },
   {
     id: "library",
@@ -47,6 +49,8 @@ function isProfileActive(path: string, uid?: string): boolean {
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { user, userProfile, openAuthModal } = useAuth();
+  const launchMode = isLaunchMode();
+  const tabs = allTabs.filter((tab) => !launchMode || !("hideDuringLaunch" in tab && tab.hideDuringLaunch));
 
   if (pathname.startsWith("/leer/")) return null;
 

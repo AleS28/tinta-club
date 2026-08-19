@@ -20,6 +20,18 @@ export async function listChapterComments(chapterId: string): Promise<ChapterCom
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
+export async function getBookCommentCount(bookId: string): Promise<number> {
+  const adminDb = await getAdminDb();
+  if (!adminDb) return 0;
+
+  const snap = await adminDb
+    .collection(COLLECTIONS.chapterComments)
+    .where("bookId", "==", bookId)
+    .get();
+
+  return snap.size;
+}
+
 export async function createChapterComment(input: {
   chapterId: string;
   bookId: string;

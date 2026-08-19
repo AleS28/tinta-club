@@ -3,6 +3,10 @@ import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { PlatformCoffeeCTA } from "@/components/home/PlatformCoffeeCTA";
 import { HomePrimaryCTA } from "@/components/home/HomePrimaryCTA";
+import { HomeWelcomeHero } from "@/components/home/HomeWelcomeHero";
+import { CommunityLinksBar } from "@/components/home/CommunityLinksBar";
+import { StartHereSection } from "@/components/home/StartHereSection";
+import { HomeAuthorsSpotlight } from "@/components/home/HomeAuthorsSpotlight";
 import { TopObrasGrid } from "@/components/home/TopObrasGrid";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { LatestNewsSection } from "@/components/home/LatestNewsSection";
@@ -19,6 +23,7 @@ export default async function HomePage() {
       <Navbar />
 
       <main>
+        <HomeWelcomeHero />
         <TopObrasGrid books={books} metaByBookId={metaByBookId} />
 
         <section className="bg-home-dark px-4 py-8 sm:px-6">
@@ -27,6 +32,10 @@ export default async function HomePage() {
             <PlatformCoffeeCTA />
           </div>
         </section>
+
+        <CommunityLinksBar />
+
+        <StartHereSection />
 
         <div className="relative bg-home-cream">
           <div
@@ -41,6 +50,7 @@ export default async function HomePage() {
           <div className="relative">
             <CategoryGrid />
             <LatestNewsSection books={books} metaByBookId={metaByBookId} />
+            <HomeAuthorsSpotlight />
           </div>
         </div>
       </main>

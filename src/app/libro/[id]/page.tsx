@@ -13,8 +13,11 @@ import { BookSynopsis } from "@/components/libro/BookSynopsis";
 import { BookLikeButton } from "@/components/social/BookLikeButton";
 import { SupportAuthorButton } from "@/components/social/SupportAuthorButton";
 import { FollowAuthorButton } from "@/components/perfil/FollowAuthorButton";
+import { BookEngagementStats } from "@/components/libro/BookEngagementStats";
 import { getBookGenreDisplay } from "@/data/mock";
-import { BRAND_NAME } from "@/lib/brand";
+import { buildBookMetadata } from "@/lib/metadata-og";
+import { getBookLikeCount } from "@/lib/social/book-likes-admin";
+import { getBookCommentCount } from "@/lib/social/comments-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -27,10 +30,7 @@ export async function generateMetadata({ params }: BookPageProps) {
   const book = await getBookById(id);
   if (!book) return { title: "Libro no encontrado" };
 
-  return {
-    title: `${book.title} — ${BRAND_NAME}`,
-    description: book.synopsis,
-  };
+  return buildBookMetadata(book);
 }
 
 export default async function BookPage({ params }: BookPageProps) {
@@ -41,6 +41,10 @@ export default async function BookPage({ params }: BookPageProps) {
 
   const chapters = await getChaptersByBookId(id);
   const firstChapter = chapters[0];
+  const [likeCount, commentCount] = await Promise.all([
+    getBookLikeCount(id),
+    getBookCommentCount(id),
+  ]);
 
   return (
     <>
@@ -79,6 +83,8 @@ export default async function BookPage({ params }: BookPageProps) {
               <span className="text-lg font-semibold text-ink">{book.rating.toFixed(1)}</span>
               <span className="text-sm text-muted">/ 5.0</span>
             </div>
+
+            <BookEngagementStats likeCount={likeCount} commentCount={commentCount} />
 
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:items-start">
               {firstChapter && (

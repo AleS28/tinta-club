@@ -37,7 +37,7 @@ interface ReaderViewProps {
 
 type ContentAccess = "premium" | "purchase" | "book_purchase" | "launch" | null;
 
-export function ReaderView({ chapter, book, prevChapter, nextChapter }: ReaderViewProps) {
+export function ReaderView({ chapter, book, chapters, prevChapter, nextChapter }: ReaderViewProps) {
   const searchParams = useSearchParams();
   const { user, userProfile, isSubscriber, loading, openAuthModal, refreshUserProfile } =
     useAuth();

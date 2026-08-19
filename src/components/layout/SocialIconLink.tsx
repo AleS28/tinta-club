@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { Instagram, Send } from "lucide-react";
+import { Facebook, Instagram, Send } from "lucide-react";
 import type { CommunitySocialKey } from "@/lib/social";
 import { getCommunitySocialUrl } from "@/lib/social";
 import { DiscordIcon } from "@/components/ui/DiscordIcon";
@@ -14,6 +14,7 @@ const SOCIAL_META: Record<CommunitySocialKey, { label: string; Icon: IconCompone
   telegram: { label: "Telegram", Icon: Send },
   tiktok: { label: "TikTok", Icon: TikTokIcon },
   x: { label: "X (Twitter)", Icon: XIcon },
+  facebook: { label: "Facebook", Icon: Facebook },
 };
 
 interface SocialIconLinkProps {
